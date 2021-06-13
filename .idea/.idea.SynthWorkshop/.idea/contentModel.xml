@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ContentModelStore">
+    <e p="C:\Users\ryand\AppData\Local\JetBrains\Rider2020.2\extResources" t="IncludeRecursive" />
+    <e p="C:\Users\ryand\AppData\Local\JetBrains\Rider2020.2\resharper-host\Local\Transient\Rider\v202\SolutionCaches\_SynthWorkshop.252499057.00" t="ExcludeRecursive" />
+    <e p="C:\Users\ryand\Dev\Unity\SynthWorkshop" t="IncludeRecursive">
+      <e p="Assembly-CSharp.csproj" t="IncludeRecursive" />
+      <e p="Assets" t="Include">
+        <e p="JsonDotNet" t="Include">
+          <e p="link.xml" t="Include" />
+        </e>
+        <e p="Scripts" t="Include">
+          <e p="Common" t="Include">
+            <e p="Extensions.cs" t="Include" />
+          </e>
+          <e p="Designer" t="Include">
+            <e p="DesignerUIController.cs" t="Include" />
+            <e p="Modules" t="Include">
+              <e p="IOModuleController.cs" t="Include" />
+              <e p="KnobModuleController.cs" t="Include" />
+              <e p="ModuleConnectorController.cs" t="Include" />
+              <e p="ModuleParent.cs" t="Include" />
+              <e p="OscillatorModuleController.cs" t="Include" />
+              <e p="WireController.cs" t="Include" />
+            </e>
+          </e>
+        </e>
+      </e>
+      <e p="obj" t="ExcludeRecursive" />
+      <e p="Packages" t="ExcludeRecursive" />
+      <e p="SynthWorkshop.sln" t="IncludeFlat" />
+      <e p="Temp\Bin" t="ExcludeRecursive" />
+    </e>
+  </component>
+</project>

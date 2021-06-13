@@ -1,0 +1,105 @@
+{
+  "ControlModules": {
+    "ControlModule1": {
+      "name": "PW",
+      "type": "Knob",
+      "min": 0.1,
+      "max": 0.9,
+      "outputId": 8
+    },
+    "ControlModule2": {
+      "name": "freq4",
+      "type": "Knob",
+      "min": 10.0,
+      "max": 500.0,
+      "outputId": 9
+    },
+    "ControlModule3": {
+      "name": "freq3",
+      "type": "Knob",
+      "min": 10.0,
+      "max": 500.0,
+      "outputId": 10
+    },
+    "ControlModule4": {
+      "name": "freq2",
+      "type": "Knob",
+      "min": 10.0,
+      "max": 500.0,
+      "outputId": 11
+    },
+    "ControlModule5": {
+      "name": "freq1",
+      "type": "Knob",
+      "min": 10.0,
+      "max": 500.0,
+      "outputId": 12
+    }
+  },
+  "OscillatorModules": {
+    "OscillatorModule1": {
+      "type": "Saw",
+      "SoundOutputTo": 0,
+      "FreqInputFrom": 12
+    },
+    "OscillatorModule2": {
+      "type": "Pulse",
+      "SoundOutputTo": 1,
+      "FreqInputFrom": 12,
+      "PWInputFrom": 8
+    },
+    "OscillatorModule3": {
+      "type": "Saw",
+      "SoundOutputTo": 2,
+      "FreqInputFrom": 11,
+      "FMInputFrom": 3
+    },
+    "OscillatorModule4": {
+      "type": "Pulse",
+      "SoundOutputTo": 3,
+      "FreqInputFrom": 11,
+      "PWInputFrom": 8
+    },
+    "OscillatorModule5": {
+      "type": "Pulse",
+      "SoundOutputTo": 4,
+      "FreqInputFrom": 9,
+      "FMInputFrom": 6,
+      "PWInputFrom": 8
+    },
+    "OscillatorModule6": {
+      "type": "Pulse",
+      "SoundOutputTo": 5,
+      "FreqInputFrom": 10,
+      "FMInputFrom": 2,
+      "PWInputFrom": 8
+    },
+    "OscillatorModule7": {
+      "type": "Saw",
+      "SoundOutputTo": 6,
+      "FreqInputFrom": 9
+    },
+    "OscillatorModule8": {
+      "type": "Saw",
+      "SoundOutputTo": 7,
+      "FreqInputFrom": 10
+    }
+  },
+  "IOModules": {
+    "IOModule1": {
+      "type": "AudioOutput",
+      "LeftInputFrom": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "RightInputFrom": [
+        5,
+        4,
+        6,
+        7
+      ]
+    }
+  }
+}

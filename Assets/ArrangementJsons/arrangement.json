@@ -1,0 +1,18 @@
+{
+    "ControlModule1": {
+        "type": "Knob",
+        "min": 0,
+        "max": 20000,
+        "outputId": 0
+    },
+    "OscillatorModule1": {
+        "type": "Saw",
+        "freqInputFrom": 0,
+        "soundOutputId": 1
+    },
+    "IOModule1": {
+        "type": "AudioOut",
+        "leftInputFrom": 1,
+        "rightInputFrom": 1
+    }
+}

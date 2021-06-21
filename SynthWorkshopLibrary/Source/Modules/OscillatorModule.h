@@ -11,19 +11,16 @@
 #pragma once
 #include <JuceHeader.h>
 #include <unordered_map>
+#include "../Typedefs.h"
 
 class OscillatorModule
 {
-public:
-
-    enum OscillatorType {
-        Saw, Pulse, Sine, Tri
-    };
+public:    
 
     OscillatorModule(OscillatorType t, std::unordered_map<int, float>& cvLookup, std::unordered_map<int, juce::AudioBuffer<float>>& audioLu, 
-        int freqIdx, int pwIdx, int fmInIdx, int soundIdx, int cvOutIdx)
+        int freqIdx, int pwIdx, int rmInIdx, int soundIdx, int cvOutIdx)
         : type(t), phase(0), frequency(20), pulseWidth(0.5f), cvParamLookup(cvLookup), frequencyInIndex(freqIdx), pulseWidthInIndex(pwIdx),
-          fmInIndex(fmInIdx), soundOutIndex(soundIdx), cvOutIndex(cvOutIdx), audioLookup(audioLu), readyToPlay(false) {}
+          rmInIndex(rmInIdx), soundOutIndex(soundIdx), cvOutIndex(cvOutIdx), audioLookup(audioLu), readyToPlay(false) {}
 
     ~OscillatorModule() {}
 
@@ -35,8 +32,8 @@ public:
     void getNextAudioBlock(int numSamples, int numChannels) {
         if (!readyToPlay || frequencyInIndex == -1) return;
         frequency = cvParamLookup[frequencyInIndex];
-        if (frequency <= 1) {
-            frequency = 1;
+        if (frequency <= 0 ) {
+            frequency = 1e-5;
         }
         pulseWidth = cvParamLookup[pulseWidthInIndex];
         if (pulseWidth < 0) pulseWidth = 0;
@@ -44,15 +41,15 @@ public:
         for (auto sample = 0; sample < numSamples; sample++) {
             auto value = processSample();
             for (auto channel = 0; channel < numChannels; channel++) {
-                if (soundOutIndex != -1) {
-                    if (fmInIndex != -1) {
-                        audioLookup[soundOutIndex].addSample(channel, sample, value * audioLookup[fmInIndex].getSample(channel, sample));
-                    }
-                    else {
-                        audioLookup[soundOutIndex].addSample(channel, sample, value);
-                    }
+                if (soundOutIndex == -1) continue;
+                if (rmInIndex != -1) {
+                    audioLookup[soundOutIndex].setSample(channel, sample, value * audioLookup[rmInIndex].getSample(channel, sample));
+                }
+                else {
+                    audioLookup[soundOutIndex].setSample(channel, sample, value);
                 }
             }
+            cvParamLookup[cvOutIndex] = value;  // not good - this lookup should be a buffer/array so we can do per sample
         }
     }
 
@@ -113,7 +110,7 @@ private:
     OscillatorType type;
     double sampleRate;
     float phase, frequency, pulseWidth;
-    int frequencyInIndex, pulseWidthInIndex, fmInIndex, soundOutIndex, cvOutIndex;
+    const int frequencyInIndex, pulseWidthInIndex, rmInIndex, soundOutIndex, cvOutIndex;
     int samplesPerBlockExpected;
     bool readyToPlay;
 

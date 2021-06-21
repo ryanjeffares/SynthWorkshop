@@ -14,12 +14,14 @@ public class KnobModuleController : ModuleParent
     {
         get => _label;
     }
-    
+
+    private bool _minSet, _maxSet;
+
     protected override void ChildAwake()
     {
         moduleType = ModuleType.ControlModule;
-        minInput.onValueChanged.AddListener(val => min = double.Parse(val));
-        maxInput.onValueChanged.AddListener(val => max = double.Parse(val));
+        minInput.onValueChanged.AddListener(val => { min = double.Parse(val); _minSet = true; });
+        maxInput.onValueChanged.AddListener(val => { max = double.Parse(val); _maxSet = true; });
         labelInput.onValueChanged.AddListener(val => _label = val);
     }
 
@@ -32,6 +34,27 @@ public class KnobModuleController : ModuleParent
         }
         found = res.Count > 0;
         return res;
+    }
+
+    public override List<ModuleException> CheckErrors()
+    {
+        var exceptions = new List<ModuleException>();
+        if (string.IsNullOrEmpty(Label))
+        {
+            var exception = new ModuleException("Knob has no label, and will be hard to identify.", ModuleException.SeverityLevel.Warning);
+            exceptions.Add(exception);
+        }
+        if (string.IsNullOrEmpty(minInput.text))
+        {
+            var exception = new ModuleException("Knob has no minimum set, exporting may not proceed. You must set a minimum.", ModuleException.SeverityLevel.Error);
+            exceptions.Add(exception);
+        }
+        if (string.IsNullOrEmpty(maxInput.text))
+        {
+            var exception = new ModuleException("Knob has no maximum set, exporting may not proceed. You must set a maximum.", ModuleException.SeverityLevel.Error);
+            exceptions.Add(exception);
+        }
+        return exceptions;
     }
 
     public Tuple<double, double> GetRange()

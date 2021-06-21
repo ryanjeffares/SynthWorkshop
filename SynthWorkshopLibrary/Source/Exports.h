@@ -34,11 +34,19 @@ extern "C" {
         return ((MainComponent*)mc)->helloWorld();
     }
 
+    EXPORT void stopAudio(void* mc) {
+        ((MainComponent*)mc)->stopAudio();
+    }
+
     EXPORT bool createModulesFromJson(void* mc, const char* jsonText) {
         return ((MainComponent*)mc)->createModulesFromJson(jsonText);
     }
 
     EXPORT void setCvParam(void* mc, int idx, float val) {
         ((MainComponent*)mc)->setCvParam(idx, val);
+    }
+
+    EXPORT float getCvParam(void* mc, int idx) {
+        return ((MainComponent*)mc)->getCvParam(idx);
     }
 }

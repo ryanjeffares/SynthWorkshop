@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -43,6 +44,27 @@ public class OscillatorModuleController : ModuleParent
         moduleType = ModuleType.OscillatorModule;        
     }
 
+    public override List<ModuleException> CheckErrors()
+    {
+        var exceptions = new List<ModuleException>();
+        if (connectors.All(c => !c.isConnected))
+        {
+            var exception = new ModuleException("Oscillator node not connected to anything and will be ignored.", ModuleException.SeverityLevel.Warning);
+            exceptions.Add(exception);
+        }
+        if (!connectors[1].isConnected && !connectors[0].isConnected)
+        {
+            var exception = new ModuleException("Oscillator's output is not connected to anything, and will have no function.", ModuleException.SeverityLevel.Warning);
+            exceptions.Add(exception); 
+        }
+        if (!connectors[2].isConnected)
+        {
+            var exception = new ModuleException("Oscillator node has no frequency input and will be ignored.", ModuleException.SeverityLevel.Warning);
+            exceptions.Add(exception);
+        }
+        return exceptions;
+    }
+
     public void SetType(OscillatorType t)
     {
         Type = t;
@@ -55,14 +77,14 @@ public class OscillatorModuleController : ModuleParent
             {"SoundOutTo", connectors[0].isConnected},
             {"CVOutTo", connectors[1].isConnected},
             {"FreqInputFrom", connectors[2].isConnected},
-            {"FMInputFrom", connectors[3].isConnected},
+            {"RMInputFrom", connectors[3].isConnected},
             {"PWInputFrom", connectors[4].isConnected}
         };
     }
 
     public void CreateJsonEntry(Dictionary<string, object> jsonDict, Dictionary<ModuleConnectorController, int> outputLookup)
     {
-        var propertyNames = new[] { "SoundOutputTo", "CVOutputTo", "FreqInputFrom", "FMInputFrom", "PWInputFrom" };
+        var propertyNames = new[] { "SoundOutputTo", "CVOutTo", "FreqInputFrom", "RMInputFrom", "PWInputFrom" };
         for(int i = 0; i < connectors.Count; i++)
         {
             if (!connectors[i].isConnected) continue;

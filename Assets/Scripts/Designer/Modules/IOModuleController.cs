@@ -1,11 +1,12 @@
-using System.Collections.Generic;
+using System;
 using System.Linq;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
 public enum AudioCV
 {
-    Audio, CV
+    Audio, CV, Either
 }
 
 public enum InputOutput
@@ -57,6 +58,17 @@ public class IOModuleController : ModuleParent
         moduleType = ModuleType.IOModule;
     }
 
+    public override List<ModuleException> CheckErrors()
+    {
+        var exceptions = new List<ModuleException>();
+        if(connectors.All(c => !c.isConnected))
+        {
+            var exception = new ModuleException("IO Node is not connected to anything and will be ignored.", ModuleException.SeverityLevel.Warning);
+            exceptions.Add(exception);
+        }
+        return exceptions;
+    }
+
     public void SetType(AudioCV t, InputOutput i)
     {
         AudioCv = t;
@@ -94,7 +106,7 @@ public class IOModuleController : ModuleParent
         }
     }  
     
-    public void AddToJsonEntry(Dictionary<string, object> jsonDict, Dictionary<ModuleConnectorController, int> outputLookup)
+    public void CreateJsonEntry(Dictionary<string, object> jsonDict, Dictionary<ModuleConnectorController, int> outputLookup)
     {
         if(AudioCv == AudioCV.Audio)
         {

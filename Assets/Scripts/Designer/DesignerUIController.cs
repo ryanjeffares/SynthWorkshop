@@ -9,20 +9,25 @@ using Newtonsoft.Json.Linq;
 
 public class DesignerUIController : MonoBehaviour
 {
-    [SerializeField] private List<Button> mainButtons, oscillatorButtons, ioButtons, controlsButtons;
-    [SerializeField] private Button exportButton;
+    [SerializeField] private List<Button> mainButtons, oscillatorButtons, ioButtons, controlsButtons, mathsButtons;
+    [SerializeField] private Button numberBoxButton;
+    [SerializeField] private Button playButton, exportJsonButton, stopButton;
+    [SerializeField] private Button closeErrors;
     [SerializeField] private List<GameObject> categoryScrollViews;
     [SerializeField] private AnimationCurve convex;
     [SerializeField] private GameObject mainContent;
     [SerializeField] private GameObject sliderPrefab, paramSliderPanelPrefab;
+    [SerializeField] private GameObject errorScrollView, errorContent, errorPrefab;
 
-    [SerializeField] private GameObject oscillatorModulePrefab, ioModulePrefab, knobModulePrefab;
+    [SerializeField] private GameObject oscillatorModulePrefab, ioModulePrefab, knobModulePrefab, mathsModulePrefab, audioMathsModulePrefab, numberBoxPrefab;
 
     private Dictionary<GameObject, GameObject> _buttonCategoryLookup;
     private Dictionary<GameObject, bool> _categoryVisibleStates;
     private List<GameObject> _instantiatedModules;
-
     private List<GameObject> _instantiatedSliders;
+    private List<GameObject> _errors;
+
+    private GameObject _paramPanel;
 
     private struct CvParam
     {
@@ -46,6 +51,7 @@ public class DesignerUIController : MonoBehaviour
         _instantiatedModules = new List<GameObject>();
         _buttonCategoryLookup = new Dictionary<GameObject, GameObject>();
         _categoryVisibleStates = new Dictionary<GameObject, bool>();
+        _errors = new List<GameObject>();
         for(int i = 0; i < mainButtons.Count; i++)
         {
             var b = mainButtons[i];
@@ -66,7 +72,15 @@ public class DesignerUIController : MonoBehaviour
         {
             b.onClick.AddListener(() => ControlsButtonCallback(b));
         }
-        exportButton.onClick.AddListener(ExportArrangement);
+        foreach(var b in mathsButtons)
+        {
+            b.onClick.AddListener(() => MathsButtonCallback(b));
+        }
+        numberBoxButton.onClick.AddListener(NumberBoxButtonCallback);
+        playButton.onClick.AddListener(() => ExportArrangement(true));
+        stopButton.onClick.AddListener(() => SynthWorkshopLibrary.StopAudio());
+        exportJsonButton.onClick.AddListener(() => ExportArrangement(false));
+        closeErrors.onClick.AddListener(() => errorScrollView.SetActive(false));
     }
 
     private void Start()
@@ -133,20 +147,42 @@ public class DesignerUIController : MonoBehaviour
         }
     }
 
+    private void MathsButtonCallback(Button b)
+    {
+        var idx = mathsButtons.IndexOf(b);
+        bool isAudio = idx > 3;
+        var module = Instantiate(isAudio ? audioMathsModulePrefab : mathsModulePrefab, mainContent.transform);
+        module.GetComponent<MathsModuleController>().SetType((MathsSign)(idx % 4), isAudio ? AudioCV.Audio : AudioCV.CV);
+        _instantiatedModules.Add(module);
+    }
+
+    private void NumberBoxButtonCallback()
+    {
+        _instantiatedModules.Add(Instantiate(numberBoxPrefab, mainContent.transform));
+    }
+
     /// <summary>
     /// Function for creating a JSON from the current arrangement of modules.
     /// </summary>
-    private void ExportArrangement()
+    private void ExportArrangement(bool play)
     {
+        if (ErrorCheck()) return;
+
         int controlModuleCount = 1;
         int oscillatorModuleCount = 1;
         int ioModuleCount = 1;
+        int mathsModuleCount = 1;
+        int numberBoxCount = 1;
+
         int outputId = 0;
+
         var json = new Dictionary<string, Dictionary<string, Dictionary<string, object>>>
         {
             {"ControlModules", new Dictionary<string, Dictionary<string, object>>() },
             {"OscillatorModules", new Dictionary<string, Dictionary<string, object>>() },
-            {"IOModules", new Dictionary<string, Dictionary<string, object>>() }
+            {"IOModules", new Dictionary<string, Dictionary<string, object>>() },
+            {"MathsModules", new Dictionary<string, Dictionary<string, object>>() },
+            {"NumberBoxes", new Dictionary<string, Dictionary<string, object>>() }
         };
         var usedModules = _instantiatedModules.Where(m => m.GetComponent<ModuleParent>().CheckIfUsed()).Select(m => m.GetComponent<ModuleParent>());
         var namedParams = new List<CvParam>();
@@ -192,25 +228,52 @@ public class DesignerUIController : MonoBehaviour
                         CreateIOJToken(ref ioModuleCount, json["IOModules"], (IOModuleController)module, usedOutputs);
                         break;
                     }
+                case ModuleType.MathsModule:
+                    {
+                        CreateMathsJToken(ref mathsModuleCount, json["MathsModules"], (MathsModuleController)module, usedOutputs);
+                        break;
+                    }
+                case ModuleType.NumberBox:
+                    {
+                        CreateNumberBox(ref numberBoxCount, json["NumberBoxes"], (NumberModule)module, usedOutputs);
+                        break;
+                    }
             }
         }
 
         var jsonText = JToken.FromObject(json).ToString();
         File.WriteAllText(Application.dataPath + "/ArrangementJsons/test.json", jsonText);
-        Debug.Log(SynthWorkshopLibrary.CreateModulesFromJson(jsonText));
 
-        foreach(var s in _instantiatedSliders)
+        if (play)
         {
-            Destroy(s);
-        }
-        _instantiatedSliders.Clear();
-        var panel = Instantiate(paramSliderPanelPrefab, transform);
-        foreach(var p in namedParams)
-        {
-            var slider = Instantiate(sliderPrefab, panel.transform.GetChild(0).GetChild(0));
-            slider.GetComponent<ParamSliderController>().Setup(p.name, (float)p.min, (float)p.max, p.target);
-            _instantiatedSliders.Add(slider);
-        }
+            Debug.Log(SynthWorkshopLibrary.CreateModulesFromJson(jsonText));
+
+            foreach (var s in _instantiatedSliders)
+            {
+                Destroy(s);
+            }
+            _instantiatedSliders.Clear();
+            if(_paramPanel != null)
+            {
+                Destroy(_paramPanel);
+            }
+            _paramPanel = Instantiate(paramSliderPanelPrefab, transform);
+            foreach (var p in namedParams)
+            {
+                var slider = Instantiate(sliderPrefab, _paramPanel.transform.GetChild(0).GetChild(0));
+                slider.GetComponent<ParamSliderController>().Setup(p.name, (float)p.min, (float)p.max, p.target);
+                _instantiatedSliders.Add(slider);
+            }
+        }        
+    }
+
+    private void CreateNumberBox(ref int numberBoxCount, Dictionary<string, Dictionary<string, object>> json, 
+        NumberModule module, Dictionary<ModuleConnectorController, int> usedOutputs)
+    {
+        var modName = $"NumberBox{numberBoxCount}";
+        var mod = module.CreateJsonEntry(usedOutputs);
+        json.Add(modName, mod);
+        numberBoxCount++;
     }
 
     private void CreateIOJToken(ref int ioModuleCount, Dictionary<string, Dictionary<string, object>> json, 
@@ -221,7 +284,7 @@ public class DesignerUIController : MonoBehaviour
         {
             {"type", $"{module.AudioCv}{module.InputOutput}"}
         };
-        module.AddToJsonEntry(mod, outputLookup);
+        module.CreateJsonEntry(mod, outputLookup);
         ioModuleCount++;
         json.Add(modName, mod);        
     }
@@ -255,5 +318,54 @@ public class DesignerUIController : MonoBehaviour
         };
         json.Add(modName, mod);
         controlModuleCount++;
+    }
+
+    private void CreateMathsJToken(ref int mathsModuleCount, Dictionary<string, Dictionary<string, object>> json, 
+        MathsModuleController module, Dictionary<ModuleConnectorController, int> outputLookup)
+    {
+        var modName = $"MathsModule{mathsModuleCount}";
+        var mod = new Dictionary<string, object>
+        {
+            {"type", module.audioCV.ToString() }
+        };
+        module.CreateJsonEntry(mod, outputLookup);
+        json.Add(modName, mod);
+        mathsModuleCount++;
+    }
+
+    // returns true if there are any errors that should halt exporting - will allow exporting with warnings only and display them on the screen
+    private bool ErrorCheck()
+    {
+        var exceptions = new List<ModuleParent.ModuleException>();
+        foreach(var module in _instantiatedModules)
+        {
+            var result = module.GetComponent<ModuleParent>().CheckErrors();
+            foreach(var e in result)
+            {
+                exceptions.Add(e);
+            }
+        }
+        if (exceptions.Count == 0) 
+        { 
+            return false; 
+        }
+        errorScrollView.SetActive(true);
+        if (_errors.Count > 0)
+        {
+            foreach (var e in _errors)
+            {
+                Destroy(e);
+            }
+            _errors.Clear();
+        }
+        foreach(var e in exceptions)
+        {
+            var errorMessage = Instantiate(errorPrefab, errorContent.transform);
+            bool isError = e.severityLevel == ModuleParent.ModuleException.SeverityLevel.Error;
+            errorMessage.GetComponent<Text>().text = (isError ? "ERROR: " : "WARNING: ") + e.message;
+            errorMessage.GetComponent<Text>().color = isError ? Color.red : Color.yellow;
+            _errors.Add(errorMessage);
+        }
+        return exceptions.Any(e => e.severityLevel == ModuleParent.ModuleException.SeverityLevel.Error);
     }
 }

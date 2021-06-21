@@ -83,7 +83,8 @@ public class WireController : MonoBehaviour, IPointerClickHandler
         //if (_targetConnector.GetComponentInParent<ModuleParent>() == parent.gameObject.GetComponentInParent<ModuleParent>()) return false;
         // return false if the audio/cv types or input/output do not match
         // return false if there is already a wire going between the same two connectors
-        if (parent.audioCv != targetController.audioCv) return false;
+        
+        if (targetController.audioCv != AudioCV.Either && parent.audioCv != targetController.audioCv) return false;
         if (parent.inputOutput == targetController.inputOutput) return false;
         if (parent.connectedModuleConnectors.Contains(targetController) 
             || targetController.connectedModuleConnectors.Contains(parent)) return false;
@@ -99,6 +100,12 @@ public class WireController : MonoBehaviour, IPointerClickHandler
         targetController.connectedModuleConnectors.Add(parent);
         parent.connectedModuleConnectors.Add(targetController);
         _connected = true;
+
+        if(_targetConnector.transform.parent.parent.TryGetComponent(out MathsModuleController mathsController))
+        {
+            mathsController.SetAudioOrCvIncoming(parent.audioCv, targetController);
+        }
+
         return true;
     }
 

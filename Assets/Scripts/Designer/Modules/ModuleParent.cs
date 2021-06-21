@@ -7,11 +7,28 @@ using UnityEngine.EventSystems;
 
 public enum ModuleType
 {
-    OscillatorModule, ControlModule, IOModule
+    OscillatorModule, ControlModule, IOModule, MathsModule, NumberBox
 }
 
 public abstract class ModuleParent : MonoBehaviour, IDragHandler, IBeginDragHandler, IPointerClickHandler
 {
+    public class ModuleException
+    {
+        public enum SeverityLevel
+        {
+            Warning, Error
+        }
+
+        public readonly string message;
+        public readonly SeverityLevel severityLevel;
+
+        public ModuleException(string m, SeverityLevel s)
+        {
+            message = m;
+            severityLevel = s;
+        }
+    }
+
     public static Action<GameObject> ModuleDestroyed;
     
     [SerializeField] protected Text nameText;
@@ -44,6 +61,8 @@ public abstract class ModuleParent : MonoBehaviour, IDragHandler, IBeginDragHand
     {
         return connectors.Any(c => c.isConnected);
     }
+
+    public abstract List<ModuleException> CheckErrors();
 
     public virtual List<ModuleConnectorController> GetUsedOutputs(out bool found)
     {

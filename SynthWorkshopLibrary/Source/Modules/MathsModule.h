@@ -19,6 +19,9 @@ public:
     MathsModule(std::unordered_map<int, float>& lookup, int leftIn, int rightIn, int output, MathsModuleType t) : cvParamLookup(lookup), 
         leftInput(leftIn), rightInput(rightIn), outputIndex(output), type(t) {}
 
+    MathsModule(std::unordered_map<int, float>& lookup, int leftIn, int rightIn, int output, int inMin, int inMax, int outMin, int outMax, MathsModuleType t) : cvParamLookup(lookup),
+        leftInput(leftIn), rightInput(rightIn), outputIndex(output), minIn(inMin), minOut(outMin), maxIn(inMax), maxOut(outMax), type(t) {}
+
     ~MathsModule() {}
 
     void calculateValues() {
@@ -36,8 +39,40 @@ public:
                 cvParamLookup[outputIndex] = left * right;
                 break;
             case MathsModuleType::Divide:
-                cvParamLookup[outputIndex] = left / right;
+                cvParamLookup[outputIndex] = left / right;                
                 break;
+            case MathsModuleType::Mod:
+                cvParamLookup[outputIndex] = fmod(left, right);
+                break;
+            case MathsModuleType::Sin:
+                cvParamLookup[outputIndex] = sin(left);
+                break;
+            case MathsModuleType::Cos:
+                cvParamLookup[outputIndex] = cos(left);
+                break;
+            case MathsModuleType::Tan:
+                cvParamLookup[outputIndex] = tan(left);
+                break;
+            case MathsModuleType::Asin:
+                cvParamLookup[outputIndex] = asin(left);
+                break;
+            case MathsModuleType::Acos:
+                cvParamLookup[outputIndex] = acos(left);
+                break;
+            case MathsModuleType::Atan:
+                cvParamLookup[outputIndex] = atan(left);
+                break;
+            case MathsModuleType::Abs:
+                cvParamLookup[outputIndex] = fabs(left);
+                break;
+            case MathsModuleType::Exp:
+                cvParamLookup[outputIndex] = pow(left, right);
+                break;
+            case MathsModuleType::Int:
+                cvParamLookup[outputIndex] = (int)left;
+                break;
+            case MathsModuleType::Map:
+                cvParamLookup[outputIndex] = juce::jmap<float>(left, cvParamLookup[minIn], cvParamLookup[maxIn], cvParamLookup[minOut], cvParamLookup[maxOut]);
         }
     }
 
@@ -46,5 +81,8 @@ private:
     std::unordered_map<int, float>& cvParamLookup;
     const int leftInput, rightInput, outputIndex;
     const MathsModuleType type;
+
+    // these are indexes for the lookup
+    int minIn, maxIn, minOut, maxOut;
 
 };

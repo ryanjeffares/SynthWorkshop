@@ -82,6 +82,9 @@ bool MainComponent::createModulesFromJson(const char* jsonText) {
         audioOutputModules.clear();
         mathsModules.clear();
         audioMathsModules.clear();
+        cvParamLookup.clear();
+        audioLookup.clear();
+
 
         auto j = json::parse(jsonText);
         for (auto& moduleType : j.items()) {    // control, oscillator, io
@@ -104,20 +107,21 @@ bool MainComponent::createModulesFromJson(const char* jsonText) {
                     }
                 }
                 else if (modType == "NumberBoxes") {
+                    // all we need to do if we see a number box is set the initial
                     const auto& values = mod.value();
                     float initial = 0;
                     if (values.contains("initialValue")) {
                         initial = values["initialValue"].get<float>();
-                    }
-                    if (values.contains("outputTo")) {
-                        auto idx = values["outputTo"].get<int>();
-                        if (cvParamLookup.find(idx) == cvParamLookup.end()) {
-                            cvParamLookup.emplace(idx, initial);
+                        if (values.contains("outputTo")) {
+                            auto idx = values["outputTo"].get<int>();
+                            if (cvParamLookup.find(idx) == cvParamLookup.end()) {
+                                cvParamLookup.emplace(idx, initial);
+                            }
+                            else {
+                                cvParamLookup[idx] = initial;
+                            }
                         }
-                        else {
-                            cvParamLookup[idx] = initial;
-                        }
-                    }
+                    }                    
                 }
             }
         }
@@ -157,6 +161,30 @@ void MainComponent::createAudioMathsModule(const json& values) {
     else if (sign == "Divide") {
         mathsType = MathsModuleType::Divide;
     }
+    else if (sign == "Sin") {
+        mathsType = MathsModuleType::Sin;
+    }
+    else if (sign == "Cos") {
+        mathsType = MathsModuleType::Cos;
+    }
+    else if (sign == "Tan") {
+        mathsType = MathsModuleType::Tan;
+    }
+    else if (sign == "Asin") {
+        mathsType = MathsModuleType::Asin;
+    }
+    else if (sign == "Acos") {
+        mathsType = MathsModuleType::Acos;
+    }
+    else if (sign == "Atan") {
+        mathsType = MathsModuleType::Atan;
+    }
+    else if (sign == "Abs") {
+        mathsType = MathsModuleType::Abs;
+    }
+    else if (sign == "Exp") {
+        mathsType = MathsModuleType::Exp;
+    }
 
     int leftIn = -1;
     if (values.contains("LeftInputFrom")) {
@@ -192,6 +220,39 @@ void MainComponent::createMathsModule(const json& values) {
     else if (sign == "Divide") {
         mathsType = MathsModuleType::Divide;
     }
+    else if (sign == "Mod") {
+        mathsType = MathsModuleType::Mod;
+    }
+    else if (sign == "Sin") {
+        mathsType = MathsModuleType::Sin;
+    }
+    else if (sign == "Cos") {
+        mathsType = MathsModuleType::Cos;
+    }
+    else if (sign == "Tan") {
+        mathsType = MathsModuleType::Tan;
+    }
+    else if (sign == "Asin") {
+        mathsType = MathsModuleType::Asin;
+    }
+    else if (sign == "Acos") {
+        mathsType = MathsModuleType::Acos;
+    }
+    else if (sign == "Atan") {
+        mathsType = MathsModuleType::Atan;
+    }
+    else if (sign == "Abs") {
+        mathsType = MathsModuleType::Abs;
+    }
+    else if (sign == "Exp") {
+        mathsType = MathsModuleType::Exp;
+    }
+    else if (sign == "Int") {
+        mathsType = MathsModuleType::Int;
+    }
+    else if (sign == "Map") {
+        mathsType = MathsModuleType::Map;
+    }
 
     int leftIn = -1;
     if (values.contains("LeftInputFrom")) {
@@ -215,8 +276,18 @@ void MainComponent::createMathsModule(const json& values) {
         }
     }
 
-    auto mathsModule = std::make_unique<MathsModule>(cvParamLookup, leftIn, rightIn, outputId, mathsType);
-    mathsModules.push_back(std::move(mathsModule));
+    if (mathsType == MathsModuleType::Map) {
+        int minIn = values["minIn"].get<int>();
+        int maxIn = values["maxIn"].get<int>();
+        int minOut = values["minOut"].get<int>();
+        int maxOut = values["maxOut"].get<int>();
+        auto mathsModule = std::make_unique<MathsModule>(cvParamLookup, leftIn, rightIn, outputId, minIn, maxIn, minOut, maxOut, mathsType);
+        mathsModules.push_back(std::move(mathsModule));
+    }
+    else {
+        auto mathsModule = std::make_unique<MathsModule>(cvParamLookup, leftIn, rightIn, outputId, mathsType);
+        mathsModules.push_back(std::move(mathsModule));
+    }
 }
 
 void MainComponent::createAudioOutputModule(const detail::iteration_proxy_value<detail::iter_impl<nlohmann::json>>& mod) {
@@ -271,13 +342,6 @@ void MainComponent::createOscillatorModule(const detail::iteration_proxy_value<d
             cvParamLookup.emplace(pwIdx, 0.5f);
         }
     }
-    int rmIdx = -1;
-    if (values.contains("RMInputFrom")) {
-        rmIdx = values["RMInputFrom"].get<int>();
-        if (cvParamLookup.find(rmIdx) == cvParamLookup.end()) {
-            cvParamLookup.emplace(rmIdx, 1);
-        }
-    }
 
     int cvIdx = -1;
     if (values.contains("CVOutTo")) {
@@ -287,7 +351,7 @@ void MainComponent::createOscillatorModule(const detail::iteration_proxy_value<d
         }
     }
 
-    auto osc = std::make_unique<OscillatorModule>(t, cvParamLookup, audioLookup, freqIdx, pwIdx, rmIdx, soundIdx, cvIdx);
+    auto osc = std::make_unique<OscillatorModule>(t, cvParamLookup, audioLookup, freqIdx, pwIdx, soundIdx, cvIdx);
     osc->prepareToPlay(samplesPerBlockExpected, sampleRate);
     oscillatorModules.push_back(std::move(osc));
 }

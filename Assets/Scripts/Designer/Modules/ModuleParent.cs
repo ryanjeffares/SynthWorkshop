@@ -67,13 +67,7 @@ public abstract class ModuleParent : MonoBehaviour, IDragHandler, IBeginDragHand
     public virtual List<ModuleConnectorController> GetUsedOutputs(out bool found)
     {
         var res = new List<ModuleConnectorController>();
-        foreach (var con in connectors.Where(c => c.inputOutput == InputOutput.Output))
-        {
-            if (con.isConnected)
-            {
-                res.Add(con);
-            }
-        }
+        res.AddRange(connectors.Where(c => c.inputOutput == InputOutput.Output).Where(con => con.isConnected));
         found = res.Count > 0;
         return res;
     }

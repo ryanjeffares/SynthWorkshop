@@ -3,18 +3,78 @@
     "ControlModule1": {
       "name": "freq",
       "type": "Knob",
-      "min": 1.0,
-      "max": 2.0,
+      "min": 0.0,
+      "max": 30.0,
       "outputId": 0
     }
   },
   "OscillatorModules": {
     "OscillatorModule1": {
-      "type": "Sine",
+      "type": "Saw",
+      "SoundOutputTo": 1,
+      "FreqInputFrom": 2
+    },
+    "OscillatorModule2": {
+      "type": "Saw",
+      "CVOutTo": 3,
       "FreqInputFrom": 0
+    },
+    "OscillatorModule3": {
+      "type": "Pulse",
+      "SoundOutputTo": 5,
+      "FreqInputFrom": 2
     }
   },
-  "IOModules": {},
-  "MathsModules": {},
-  "NumberBoxes": {}
+  "IOModules": {
+    "IOModule1": {
+      "type": "AudioOutput",
+      "LeftInputFrom": [
+        1,
+        4
+      ],
+      "RightInputFrom": [
+        1,
+        4
+      ]
+    }
+  },
+  "MathsModules": {
+    "MathsModule1": {
+      "type": "CV",
+      "operator": "Map",
+      "LeftInputFrom": 3,
+      "IncomingSignalType": "CV",
+      "minIn": 8,
+      "maxIn": 7,
+      "minOut": 6,
+      "maxOut": 9,
+      "outputId": 2
+    },
+    "MathsModule2": {
+      "type": "Audio",
+      "operator": "Multiply",
+      "LeftInputFrom": 5,
+      "IncomingSignalType": "Audio",
+      "RightInputFrom": 1,
+      "outputId": 4
+    }
+  },
+  "NumberBoxes": {
+    "NumberBox1": {
+      "outputTo": 6,
+      "initialValue": 100.0
+    },
+    "NumberBox2": {
+      "outputTo": 7,
+      "initialValue": 1.0
+    },
+    "NumberBox3": {
+      "outputTo": 8,
+      "initialValue": -1.0
+    },
+    "NumberBox4": {
+      "outputTo": 9,
+      "initialValue": 200.0
+    }
+  }
 }

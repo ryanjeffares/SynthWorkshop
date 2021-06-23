@@ -52,10 +52,7 @@ public static class Extensions
         {
             return col;
         }
-        else
-        {
-            Debug.LogWarning("Unable to parse HTML string.");
-            return Color.magenta;
-        }
+        Debug.LogWarning("Unable to parse HTML string.");
+        return Color.magenta;
     }
 }

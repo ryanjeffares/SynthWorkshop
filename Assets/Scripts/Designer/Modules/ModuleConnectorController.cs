@@ -159,4 +159,3 @@ public class ModuleConnectorController : MonoBehaviour, IPointerEnterHandler, IP
     }
 }
 
-// TODO - Adsr, maths, fix sine and tri, "compile" time checks for designer, UI!!!!

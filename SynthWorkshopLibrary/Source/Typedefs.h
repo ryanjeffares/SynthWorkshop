@@ -11,7 +11,7 @@
 #pragma once
 
 enum class MathsModuleType {
-    Plus, Minus, Multiply, Divide
+    Plus, Minus, Multiply, Divide, Mod, Sin, Cos, Tan, Asin, Acos, Atan, Abs, Exp, Int, Map
 };
 
 enum class AudioCV {

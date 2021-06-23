@@ -33,8 +33,8 @@ public class OscillatorModuleController : ModuleParent
             nameText.text = Type.ToString();
             if (Type == OscillatorType.Pulse)
             {
-                connectors[4].transform.parent.gameObject.SetActive(true);
-                connectors[3].transform.parent.localPosition = new Vector3(0, 75);
+                connectors[3].transform.parent.gameObject.SetActive(true);
+                connectors[2].transform.parent.localPosition = new Vector3(-50, 75);
             }
         }
     }
@@ -77,14 +77,13 @@ public class OscillatorModuleController : ModuleParent
             {"SoundOutTo", connectors[0].isConnected},
             {"CVOutTo", connectors[1].isConnected},
             {"FreqInputFrom", connectors[2].isConnected},
-            {"RMInputFrom", connectors[3].isConnected},
             {"PWInputFrom", connectors[4].isConnected}
         };
     }
 
     public void CreateJsonEntry(Dictionary<string, object> jsonDict, Dictionary<ModuleConnectorController, int> outputLookup)
     {
-        var propertyNames = new[] { "SoundOutputTo", "CVOutTo", "FreqInputFrom", "RMInputFrom", "PWInputFrom" };
+        var propertyNames = new[] { "SoundOutputTo", "CVOutTo", "FreqInputFrom", "PWInputFrom" };
         for(int i = 0; i < connectors.Count; i++)
         {
             if (!connectors[i].isConnected) continue;

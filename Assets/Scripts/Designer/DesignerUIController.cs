@@ -19,7 +19,7 @@ public class DesignerUIController : MonoBehaviour
     [SerializeField] private GameObject sliderPrefab, paramSliderPanelPrefab;
     [SerializeField] private GameObject errorScrollView, errorContent, errorPrefab;
 
-    [SerializeField] private GameObject oscillatorModulePrefab, ioModulePrefab, knobModulePrefab, mathsModulePrefab, audioMathsModulePrefab, numberBoxPrefab;
+    [SerializeField] private GameObject oscillatorModulePrefab, ioModulePrefab, knobModulePrefab, mathsModulePrefab, audioMathsModulePrefab, mapModulePrefab, numberBoxPrefab;
 
     private Dictionary<GameObject, GameObject> _buttonCategoryLookup;
     private Dictionary<GameObject, bool> _categoryVisibleStates;
@@ -29,11 +29,11 @@ public class DesignerUIController : MonoBehaviour
 
     private GameObject _paramPanel;
 
-    private struct CvParam
+    private readonly struct CvParam
     {
-        public string name;
-        public int target;
-        public double min, max;
+        public readonly string name;
+        public readonly int target;
+        public readonly double min, max;
 
         public CvParam(string n, int t, double mn, double mx)
         {
@@ -97,10 +97,10 @@ public class DesignerUIController : MonoBehaviour
     /// <summary>
     /// Invoked when a Module is destroyed, so we can remove it from our list of instantiated modules.
     /// </summary>
-    /// <param name="obj">The module that was destroyed.</param>
-    private void ModuleDestroyedCallback(GameObject obj)
+    /// <param name="mod">The module that was destroyed.</param>
+    private void ModuleDestroyedCallback(GameObject mod)
     {
-        _instantiatedModules.Remove(obj);
+        _instantiatedModules.Remove(mod);
     }
 
     /// <summary>
@@ -150,9 +150,10 @@ public class DesignerUIController : MonoBehaviour
     private void MathsButtonCallback(Button b)
     {
         var idx = mathsButtons.IndexOf(b);
-        bool isAudio = idx > 3;
-        var module = Instantiate(isAudio ? audioMathsModulePrefab : mathsModulePrefab, mainContent.transform);
-        module.GetComponent<MathsModuleController>().SetType((MathsSign)(idx % 4), isAudio ? AudioCV.Audio : AudioCV.CV);
+        var audioCv  = idx > 14 ? AudioCV.Audio : AudioCV.CV;
+        var sign = (MathsSign)(idx % 15);
+        var module = Instantiate(audioCv == AudioCV.Audio ? audioMathsModulePrefab : (idx == 14 ? mapModulePrefab : mathsModulePrefab), mainContent.transform);
+        module.GetComponent<MathsModuleController>().SetType(sign, audioCv);
         _instantiatedModules.Add(module);
     }
 
@@ -184,25 +185,43 @@ public class DesignerUIController : MonoBehaviour
             {"MathsModules", new Dictionary<string, Dictionary<string, object>>() },
             {"NumberBoxes", new Dictionary<string, Dictionary<string, object>>() }
         };
-        var usedModules = _instantiatedModules.Where(m => m.GetComponent<ModuleParent>().CheckIfUsed()).Select(m => m.GetComponent<ModuleParent>());
+        var usedModules = _instantiatedModules.Where(m => m.GetComponent<ModuleParent>().CheckIfUsed()).Select(m => m.GetComponent<ModuleParent>()).ToList();
         var namedParams = new List<CvParam>();
         // find list of used outputs, and assign them a unique integer id
+        // need to do non-number boxes first, as the number boxes are going to not increment the id so the value can "pass through" and not take up a new place in the map in c++
         var usedOutputs = new Dictionary<ModuleConnectorController, int>();
-        foreach(var module in usedModules)
+        foreach(var module in usedModules.Where(m => m.moduleType != ModuleType.NumberBox))
         {
             var connectors = module.GetUsedOutputs(out bool found);
-            if (found)
+            if (!found) continue;
+            foreach(var c in connectors)
             {
-                foreach(var c in connectors)
+                if (module.moduleType == ModuleType.ControlModule)
+                {
+                    var knob = (KnobModuleController)module;
+                    namedParams.Add(new CvParam(knob.Label, outputId, knob.min, knob.max));
+                }
+                usedOutputs.Add(c, outputId);
+                outputId++;
+            }
+        }
+        // ... then we do the number boxes, and they just use whatever id their source had or a new id if they are a source
+        foreach (var module in usedModules.Where(m => m.moduleType == ModuleType.NumberBox))
+        {
+            var connectors = module.GetUsedOutputs(out bool found);
+            if (!found) continue;
+            foreach (var c in connectors)
+            {
+                var mod = ((NumberModule)module).GetSourceConnector();
+                if (mod != null)
+                {
+                    usedOutputs.Add(c, usedOutputs[mod]);
+                }
+                else
                 {
                     usedOutputs.Add(c, outputId);
-                    if (module.moduleType == ModuleType.ControlModule)
-                    {
-                        var knob = (KnobModuleController)module;
-                        namedParams.Add(new CvParam(knob.Label, outputId, knob.min, knob.max));
-                    }
                     outputId++;
-                }                
+                }
             }
         }
 
@@ -246,25 +265,32 @@ public class DesignerUIController : MonoBehaviour
 
         if (play)
         {
-            Debug.Log(SynthWorkshopLibrary.CreateModulesFromJson(jsonText));
-
-            foreach (var s in _instantiatedSliders)
-            {
-                Destroy(s);
-            }
-            _instantiatedSliders.Clear();
-            if(_paramPanel != null)
-            {
-                Destroy(_paramPanel);
-            }
-            _paramPanel = Instantiate(paramSliderPanelPrefab, transform);
-            foreach (var p in namedParams)
-            {
-                var slider = Instantiate(sliderPrefab, _paramPanel.transform.GetChild(0).GetChild(0));
-                slider.GetComponent<ParamSliderController>().Setup(p.name, (float)p.min, (float)p.max, p.target);
-                _instantiatedSliders.Add(slider);
-            }
+            PlayArrangement(jsonText, namedParams);
         }        
+    }
+
+    private void PlayArrangement(string jsonText, List<CvParam> namedParams)
+    {
+        Debug.Log(SynthWorkshopLibrary.CreateModulesFromJson(jsonText));
+
+        foreach (var s in _instantiatedSliders)
+        {
+            Destroy(s);
+        }
+
+        _instantiatedSliders.Clear();
+        if (_paramPanel != null)
+        {
+            Destroy(_paramPanel);
+        }
+
+        _paramPanel = Instantiate(paramSliderPanelPrefab, transform);
+        foreach (var p in namedParams)
+        {
+            var slider = Instantiate(sliderPrefab, _paramPanel.transform.GetChild(0).GetChild(0));
+            slider.GetComponent<ParamSliderController>().Setup(p.name, (float) p.min, (float) p.max, p.target);
+            _instantiatedSliders.Add(slider);
+        }
     }
 
     private void CreateNumberBox(ref int numberBoxCount, Dictionary<string, Dictionary<string, object>> json, 
@@ -333,7 +359,7 @@ public class DesignerUIController : MonoBehaviour
         mathsModuleCount++;
     }
 
-    // returns true if there are any errors that should halt exporting - will allow exporting with warnings only and display them on the screen
+    // returns true if there are any errors that should halt exporting - will allow exporting with warnings only and display everything on the screen
     private bool ErrorCheck()
     {
         var exceptions = new List<ModuleParent.ModuleException>();

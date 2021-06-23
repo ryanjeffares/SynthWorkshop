@@ -56,7 +56,7 @@ private:
     std::vector<std::unique_ptr<OscillatorModule>> oscillatorModules;
     std::vector<std::unique_ptr<AudioOutputModule>> audioOutputModules;
     std::vector<std::unique_ptr<MathsModule>> mathsModules;
-    std::vector<std::unique_ptr<AudioMathsModule>> audioMathsModules;
+    std::vector<std::unique_ptr<AudioMathsModule>> audioMathsModules;    
 
     std::unordered_map<int, float> cvParamLookup;   // might have to make this a buffer/array so we can do maths per sample 
     std::unordered_map<int, juce::AudioBuffer<float>> audioLookup;

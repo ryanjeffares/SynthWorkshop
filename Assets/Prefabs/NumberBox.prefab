@@ -280,7 +280,7 @@ MonoBehaviour:
   - {fileID: 4210952028623674880}
   moduleType: 4
   draggable: 1
-  _numberInput: {fileID: 6868112673875697905}
+  numberInput: {fileID: 6868112673875697905}
 --- !u!1 &3992319556233030051
 GameObject:
   m_ObjectHideFlags: 0

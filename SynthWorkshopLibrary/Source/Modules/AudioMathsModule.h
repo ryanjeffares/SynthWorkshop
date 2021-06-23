@@ -50,6 +50,30 @@ public:
                     case MathsModuleType::Divide:
                         audioLookup[outputIndex].setSample(channel, sample, inputSampleVal / affectingVal);
                         break;
+                    case MathsModuleType::Sin:
+                        audioLookup[outputIndex].setSample(channel, sample, sin(inputSampleVal));
+                        break;
+                    case MathsModuleType::Cos:
+                        audioLookup[outputIndex].setSample(channel, sample, cos(inputSampleVal));
+                        break;
+                    case MathsModuleType::Tan:
+                        audioLookup[outputIndex].setSample(channel, sample, tan(inputSampleVal));
+                        break;
+                    case MathsModuleType::Asin:
+                        audioLookup[outputIndex].setSample(channel, sample, asin(inputSampleVal));
+                        break;
+                    case MathsModuleType::Acos:
+                        audioLookup[outputIndex].setSample(channel, sample, acos(inputSampleVal));
+                        break;
+                    case MathsModuleType::Atan:
+                        audioLookup[outputIndex].setSample(channel, sample, atan(inputSampleVal));
+                        break;
+                    case MathsModuleType::Abs:
+                        audioLookup[outputIndex].setSample(channel, sample, fabs(inputSampleVal));
+                        break;
+                    case MathsModuleType::Exp:
+                        audioLookup[outputIndex].setSample(channel, sample, pow(inputSampleVal, affectingVal));
+                        break;
                 }
             }
         }

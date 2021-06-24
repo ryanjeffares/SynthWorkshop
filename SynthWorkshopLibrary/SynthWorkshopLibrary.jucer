@@ -8,6 +8,7 @@
     </GROUP>
     <GROUP id="{19819F02-E101-BC10-41DE-1EC631B78EB1}" name="Source">
       <GROUP id="{7C361C90-D1EC-9328-274A-A552DA687561}" name="Modules">
+        <FILE id="E3agle" name="ADSRModule.h" compile="0" resource="0" file="Source/Modules/ADSRModule.h"/>
         <FILE id="RnJBPp" name="AudioMathsModule.h" compile="0" resource="0"
               file="Source/Modules/AudioMathsModule.h"/>
         <FILE id="P6Jw5L" name="AudioOutputModule.h" compile="0" resource="0"

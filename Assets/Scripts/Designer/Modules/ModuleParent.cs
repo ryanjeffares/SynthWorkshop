@@ -7,12 +7,12 @@ using UnityEngine.EventSystems;
 
 public enum ModuleType
 {
-    OscillatorModule, ControlModule, IOModule, MathsModule, NumberBox
+    OscillatorModule, KnobModule, IOModule, MathsModule, NumberBox, ADSR, ButtonModule, ToggleModule
 }
 
 public abstract class ModuleParent : MonoBehaviour, IDragHandler, IBeginDragHandler, IPointerClickHandler
 {
-    public class ModuleException
+    public readonly struct ModuleException
     {
         public enum SeverityLevel
         {

@@ -50,6 +50,9 @@ void MainComponent::getNextAudioBlock(const juce::AudioSourceChannelInfo& buffer
     for (auto& audioMaths : audioMathsModules) {
         audioMaths->getNextAudioBlock(bufferToFill.buffer->getNumChannels(), bufferToFill.numSamples);
     }
+    for (auto& adsr : adsrModules) {
+        adsr->getNextAudioBlock();
+    }
     for (auto& audioOut : audioOutputModules) {
         audioOut->getNextAudioBlock(bufferToFill);
     }
@@ -72,6 +75,18 @@ float MainComponent::getCvParam(int index) {
 
 void MainComponent::stopAudio() {
     shouldStop = true;
+    for (auto& osc : oscillatorModules) {
+        osc->setReady(false);
+    }
+    for (auto& maths : audioMathsModules) {
+        maths->setReady(false);
+    }
+    for (auto& io : audioOutputModules) {
+        io->setReady(false);
+    }
+    for (auto& adsr : adsrModules) {
+        adsr->setReady(false);
+    }
 }
 
 bool MainComponent::createModulesFromJson(const char* jsonText) {
@@ -82,6 +97,7 @@ bool MainComponent::createModulesFromJson(const char* jsonText) {
         audioOutputModules.clear();
         mathsModules.clear();
         audioMathsModules.clear();
+        adsrModules.clear();
         cvParamLookup.clear();
         audioLookup.clear();
 
@@ -91,10 +107,10 @@ bool MainComponent::createModulesFromJson(const char* jsonText) {
             auto& modType = moduleType.key();
             for (auto& mod : moduleType.value().items()) {
                 if (modType == "OscillatorModules") {
-                    createOscillatorModule(mod);
+                    createOscillatorModule(mod.value());
                 }
                 else if (modType == "IOModules") {
-                    createAudioOutputModule(mod);
+                    createAudioOutputModule(mod.value());
                 }
                 else if (modType == "MathsModules") {
                     const auto& values = mod.value();
@@ -105,6 +121,9 @@ bool MainComponent::createModulesFromJson(const char* jsonText) {
                     else if (type == "Audio") {
                         createAudioMathsModule(values);
                     }
+                }
+                else if (modType == "ADSRModules") {
+                    createAdsrModule(mod.value());
                 }
                 else if (modType == "NumberBoxes") {
                     // all we need to do if we see a number box is set the initial
@@ -134,7 +153,10 @@ bool MainComponent::createModulesFromJson(const char* jsonText) {
         for (auto& io : audioOutputModules) {
             io->setReady(true);
         }
-        modulesCreated = true;
+        for (auto& adsr : adsrModules) {
+            adsr->setReady(true);
+        }
+        modulesCreated = true;  
         shouldStop = false;
         return true;
     }
@@ -253,6 +275,12 @@ void MainComponent::createMathsModule(const json& values) {
     else if (sign == "Map") {
         mathsType = MathsModuleType::Map;
     }
+    else if (sign == "Mtof") {
+        mathsType = MathsModuleType::Mtof;
+    }
+    else if (sign == "Ftom") {
+        mathsType = MathsModuleType::Ftom;
+    }
 
     int leftIn = -1;
     if (values.contains("LeftInputFrom")) {
@@ -290,8 +318,7 @@ void MainComponent::createMathsModule(const json& values) {
     }
 }
 
-void MainComponent::createAudioOutputModule(const detail::iteration_proxy_value<detail::iter_impl<nlohmann::json>>& mod) {
-    const auto& values = mod.value();
+void MainComponent::createAudioOutputModule(const json& values) {
     std::vector<int> leftIndexes, rightIndexes;
     if (values.contains("LeftInputFrom")) {
         auto indexes = values["LeftInputFrom"].get<std::vector<int>>();
@@ -306,8 +333,7 @@ void MainComponent::createAudioOutputModule(const detail::iteration_proxy_value<
     audioOutputModules.push_back(std::move(audioOut));
 }
 
-void MainComponent::createOscillatorModule(const detail::iteration_proxy_value<detail::iter_impl<nlohmann::json>>& mod) {
-    const auto& values = mod.value();
+void MainComponent::createOscillatorModule(const json& values) {
     const auto& typeStr = values["type"].get<std::string>();
     OscillatorType t;
     if (typeStr == "Saw") {
@@ -354,4 +380,30 @@ void MainComponent::createOscillatorModule(const detail::iteration_proxy_value<d
     auto osc = std::make_unique<OscillatorModule>(t, cvParamLookup, audioLookup, freqIdx, pwIdx, soundIdx, cvIdx);
     osc->prepareToPlay(samplesPerBlockExpected, sampleRate);
     oscillatorModules.push_back(std::move(osc));
+}
+
+void MainComponent::createAdsrModule(const json& values) {
+    std::vector<int> inputIndexes;
+    if (values.contains("inputFrom")) {
+        inputIndexes.swap(values["inputFrom"].get<std::vector<int>>());
+    }
+    int triggerInput = -1;
+    if (values.contains("triggerInput")) {
+        triggerInput = values["triggerInput"].get<int>();
+    }
+    int outputIndex = -1;
+    if (values.contains("outputTo")) {
+        outputIndex = values["outputTo"].get<int>();
+        juce::AudioBuffer<float> buff(2, samplesPerBlockExpected);
+        audioLookup.emplace(outputIndex, buff);
+    }
+    // for now, these are required to exist
+    int attack = values["attackFrom"].get<int>();
+    int decay = values["decayFrom"].get<int>();
+    int sustain = values["sustainFrom"].get<int>();
+    int release = values["releaseFrom"].get<int>();
+
+    auto adsr = std::make_unique<ADSRModule>(audioLookup, cvParamLookup, inputIndexes, outputIndex, 2, attack, decay, sustain, release, triggerInput);
+    adsr->prepareToPlay(samplesPerBlockExpected, sampleRate);
+    adsrModules.push_back(std::move(adsr));
 }

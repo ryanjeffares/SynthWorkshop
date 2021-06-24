@@ -73,6 +73,13 @@ public:
                 break;
             case MathsModuleType::Map:
                 cvParamLookup[outputIndex] = juce::jmap<float>(left, cvParamLookup[minIn], cvParamLookup[maxIn], cvParamLookup[minOut], cvParamLookup[maxOut]);
+                break;
+            case MathsModuleType::Mtof:
+                cvParamLookup[outputIndex] = swMtof((int)cvParamLookup[leftInput]);
+                break;
+            case MathsModuleType::Ftom:
+                cvParamLookup[outputIndex] = swFtom(cvParamLookup[leftInput]);
+                break;
         }
     }
 

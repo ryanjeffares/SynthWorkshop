@@ -6,11 +6,12 @@ A game about building modular synths.
     * Make modules smaller, more like Max
     * General make it actually look good
 * Default values on the modules like in Pd/Max
-* ADSR
+* Load arrangement from json
 * More maths - increment/decrement...
 * Counter
-* Triggers
-* Range map
+* Table
+* Triggers - i guess this system exists as 1 or 0, as we have in adsr already, and is just up to implementation per module?
+* Repeating trigger
 * Basic effects
 * Delay lines
 * Buffers

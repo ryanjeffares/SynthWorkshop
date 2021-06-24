@@ -9,20 +9,16 @@ public class KnobModuleController : ModuleParent
 
     public double min, max;
 
-    private string _label;
-    public string Label
-    {
-        get => _label;
-    }
+    public string Label { get; private set; }
 
     private bool _minSet, _maxSet;
 
     protected override void ChildAwake()
     {
-        moduleType = ModuleType.ControlModule;
+        moduleType = ModuleType.KnobModule;
         minInput.onValueChanged.AddListener(val => { min = double.Parse(val); _minSet = true; });
         maxInput.onValueChanged.AddListener(val => { max = double.Parse(val); _maxSet = true; });
-        labelInput.onValueChanged.AddListener(val => _label = val);
+        labelInput.onValueChanged.AddListener(val => Label = val);
     }
 
     public override List<ModuleConnectorController> GetUsedOutputs(out bool found)

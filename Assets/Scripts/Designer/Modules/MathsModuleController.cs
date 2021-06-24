@@ -1,18 +1,16 @@
-using System;
 using System.Linq;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Animations;
 
 public enum MathsSign
 {
-    Plus, Minus, Multiply, Divide, Sin, Cos, Tan, Asin, Acos, Atan, Abs, Exp, Int, Mod, Map
+    Plus, Minus, Multiply, Divide, Sin, Cos, Tan, Asin, Acos, Atan, Abs, Exp, Int, Mod, Map, Mtof, Ftom
 }
 
 public class MathsModuleController : ModuleParent
 {
     public MathsSign mathsSign;
-    public AudioCV audioCV;
+    public AudioCV audioCv;
 
     private AudioCV _incomingSignalType;
 
@@ -24,61 +22,61 @@ public class MathsModuleController : ModuleParent
     public void SetType(MathsSign sign, AudioCV acv)
     {
         mathsSign = sign;
-        audioCV = acv;
+        audioCv = acv;
         switch (mathsSign)
         {
             case MathsSign.Plus:
-                nameText.text = audioCV == AudioCV.Audio ? "+~" : "+";
+                nameText.text = audioCv == AudioCV.Audio ? "+~" : "+";
                 break;
             case MathsSign.Minus:
-                nameText.text = audioCV == AudioCV.Audio ? "-~" : "-";
+                nameText.text = audioCv == AudioCV.Audio ? "-~" : "-";
                 break;
             case MathsSign.Multiply:
-                nameText.text = audioCV == AudioCV.Audio ? "*~" : "*";
+                nameText.text = audioCv == AudioCV.Audio ? "*~" : "*";
                 break;
             case MathsSign.Divide:
-                nameText.text = audioCV == AudioCV.Audio ? "/~" : "/";
+                nameText.text = audioCv == AudioCV.Audio ? "/~" : "/";
                 break;
             case MathsSign.Mod:
                 nameText.text = "%";
                 break;
             case MathsSign.Sin:
-                nameText.text = audioCV == AudioCV.Audio ? "sin~" : "sin";
+                nameText.text = audioCv == AudioCV.Audio ? "sin~" : "sin";
                 connectors[1].gameObject.transform.parent.gameObject.SetActive(false);
                 connectors[0].gameObject.transform.parent.gameObject.transform.localPosition = new Vector3(0, 75);
                 break;
             case MathsSign.Cos:
-                nameText.text = audioCV == AudioCV.Audio ? "cos~" : "cos";
+                nameText.text = audioCv == AudioCV.Audio ? "cos~" : "cos";
                 connectors[1].gameObject.transform.parent.gameObject.SetActive(false);
                 connectors[0].gameObject.transform.parent.gameObject.transform.localPosition = new Vector3(0, 75);
                 break;
             case MathsSign.Tan:
-                nameText.text = audioCV == AudioCV.Audio ? "tan~" : "tan";
+                nameText.text = audioCv == AudioCV.Audio ? "tan~" : "tan";
                 connectors[1].gameObject.transform.parent.gameObject.SetActive(false);
                 connectors[0].gameObject.transform.parent.gameObject.transform.localPosition = new Vector3(0, 75);
                 break;
             case MathsSign.Asin:
-                nameText.text = audioCV == AudioCV.Audio ? "asin~" : "asin";
+                nameText.text = audioCv == AudioCV.Audio ? "asin~" : "asin";
                 connectors[1].gameObject.transform.parent.gameObject.SetActive(false);
                 connectors[0].gameObject.transform.parent.gameObject.transform.localPosition = new Vector3(0, 75);
                 break;
             case MathsSign.Acos:
-                nameText.text = audioCV == AudioCV.Audio ? "acos~" : "acos";
+                nameText.text = audioCv == AudioCV.Audio ? "acos~" : "acos";
                 connectors[1].gameObject.transform.parent.gameObject.SetActive(false);
                 connectors[0].gameObject.transform.parent.gameObject.transform.localPosition = new Vector3(0, 75);
                 break;
             case MathsSign.Atan:
-                nameText.text = audioCV == AudioCV.Audio ? "atan~" : "atan";
+                nameText.text = audioCv == AudioCV.Audio ? "atan~" : "atan";
                 connectors[1].gameObject.transform.parent.gameObject.SetActive(false);
                 connectors[0].gameObject.transform.parent.gameObject.transform.localPosition = new Vector3(0, 75);
                 break;
             case MathsSign.Abs:
-                nameText.text = audioCV == AudioCV.Audio ? "abs~" : "abs";
+                nameText.text = audioCv == AudioCV.Audio ? "abs~" : "abs";
                 connectors[1].gameObject.transform.parent.gameObject.SetActive(false);
                 connectors[0].gameObject.transform.parent.gameObject.transform.localPosition = new Vector3(0, 75);
                 break;
             case MathsSign.Exp:
-                nameText.text = audioCV == AudioCV.Audio ? "exp~" : "exp";
+                nameText.text = audioCv == AudioCV.Audio ? "exp~" : "exp";
                 break;
             case MathsSign.Int:
                 nameText.text = "int";
@@ -87,6 +85,16 @@ public class MathsModuleController : ModuleParent
                 break;
             case MathsSign.Map:
                 nameText.text = "map";
+                break;
+            case MathsSign.Mtof:
+                nameText.text = "mtof";
+                connectors[1].gameObject.transform.parent.gameObject.SetActive(false);
+                connectors[0].gameObject.transform.parent.gameObject.transform.localPosition = new Vector3(0, 75);
+                break;
+            case MathsSign.Ftom:
+                nameText.text = "ftom";
+                connectors[1].gameObject.transform.parent.gameObject.SetActive(false);
+                connectors[0].gameObject.transform.parent.gameObject.transform.localPosition = new Vector3(0, 75);
                 break;
             default:
                 nameText.text = "Error Type";
@@ -160,7 +168,7 @@ public class MathsModuleController : ModuleParent
         }
         else
         {
-            if (connectors[1].gameObject.activeSelf && !connectors[1].isConnected)
+            if (connectors[1].transform.parent.gameObject.activeSelf && !connectors[1].isConnected)
             {
                 var exception = new ModuleException("Maths node left input not connected to anything and will have no effect.", ModuleException.SeverityLevel.Warning);
                 exceptions.Add(exception);

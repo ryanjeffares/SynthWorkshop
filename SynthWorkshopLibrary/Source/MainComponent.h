@@ -20,6 +20,7 @@
 #include "Modules/AudioOutputModule.h"
 #include "Modules/MathsModule.h"
 #include "Modules/AudioMathsModule.h"
+#include "Modules/ADSRModule.h"
 #include "../Include/json.h"
 
 using namespace nlohmann;
@@ -48,15 +49,17 @@ public:
 
 private:
 
-    void createAudioMathsModule(const nlohmann::json& values);
-    void createMathsModule(const nlohmann::json& values);
-    void createAudioOutputModule(const nlohmann::detail::iteration_proxy_value<nlohmann::detail::iter_impl<nlohmann::json>>& mod);
-    void createOscillatorModule(const nlohmann::detail::iteration_proxy_value<nlohmann::detail::iter_impl<nlohmann::json>>& mod);
+    void createAudioMathsModule(const json& values);
+    void createMathsModule(const json& values);
+    void createAudioOutputModule(const json& values);
+    void createOscillatorModule(const json& values);
+    void createAdsrModule(const json& values);
 
     std::vector<std::unique_ptr<OscillatorModule>> oscillatorModules;
     std::vector<std::unique_ptr<AudioOutputModule>> audioOutputModules;
     std::vector<std::unique_ptr<MathsModule>> mathsModules;
     std::vector<std::unique_ptr<AudioMathsModule>> audioMathsModules;    
+    std::vector<std::unique_ptr<ADSRModule>> adsrModules;    
 
     std::unordered_map<int, float> cvParamLookup;   // might have to make this a buffer/array so we can do maths per sample 
     std::unordered_map<int, juce::AudioBuffer<float>> audioLookup;

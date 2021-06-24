@@ -912,10 +912,10 @@ MonoBehaviour:
   - {fileID: 6060656291307392987}
   - {fileID: 6295995865297299363}
   - {fileID: 5216665573192017417}
-  moduleType: 0
+  moduleType: 3
   draggable: 1
   mathsSign: 0
-  audioCV: 0
+  audioCv: 0
 --- !u!1 &8283721099930255035
 GameObject:
   m_ObjectHideFlags: 0

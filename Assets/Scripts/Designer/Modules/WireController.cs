@@ -64,12 +64,15 @@ public class WireController : MonoBehaviour, IPointerClickHandler
         col.offset = new Vector2(0, rect.sizeDelta.y / (up ? 2 : -2));
         var opposite = parentPos.y - targetPos.y;
         var adjacent = parentPos.x - targetPos.x;
-        var angle = (Mathf.Atan(opposite / adjacent) * Mathf.Rad2Deg) - 90;
-        if (angle >= -180 && angle <= -90)
+        if (opposite != 0 && adjacent != 0)
         {
-            angle += 180;
+            var angle = (Mathf.Atan(opposite / adjacent) * Mathf.Rad2Deg) - 90;
+            if (angle >= -180 && angle <= -90)
+            {
+                angle += 180;
+            }
+            rect.eulerAngles = new Vector3(0, 0, angle);
         }
-        rect.eulerAngles = new Vector3(0, 0, angle);
     }
 
     public bool CheckTarget(ModuleConnectorController parent)

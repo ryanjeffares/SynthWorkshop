@@ -64,6 +64,8 @@ private:
     std::unordered_map<int, float> cvParamLookup;   // might have to make this a buffer/array so we can do maths per sample 
     std::unordered_map<int, juce::AudioBuffer<float>> audioLookup;
 
+    std::unordered_map<MathsModuleType, std::function<float(float, float)>> mathsFunctionLookup;
+
     bool modulesCreated;
     bool shouldStop = false;
     double sampleRate;

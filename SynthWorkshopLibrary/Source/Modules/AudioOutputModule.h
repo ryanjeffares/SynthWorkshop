@@ -37,19 +37,20 @@ public:
 
     void getNextAudioBlock(const juce::AudioSourceChannelInfo& bufferToFill) override {        
         if (!readyToPlay) return;
-        for (int sample = 0; sample < bufferToFill.numSamples; sample++) {
-            for (auto channel = 0; channel < numChannels; channel++) {
+        auto write = bufferToFill.buffer->getArrayOfWritePointers();        
+        for (auto channel = 0; channel < numChannels; channel++) {
+            for (int sample = 0; sample < bufferToFill.numSamples; sample++) {
                 switch (channel) {
-                case 0:
-                    for (auto i : leftInputIndexes) {
-                        bufferToFill.buffer->addSample(channel, sample, audioLookup[i].getSample(channel, sample));
-                    }
-                    break;
-                case 1:
-                    for (auto i : rightInputIndexes) {
-                        bufferToFill.buffer->addSample(channel, sample, audioLookup[i].getSample(channel, sample));
-                    }
-                    break;
+                    case 0:
+                        for (auto i : leftInputIndexes) {
+                            write[channel][sample] += audioLookup[i].getSample(channel, sample);                        
+                        }
+                        break;
+                    case 1:
+                        for (auto i : rightInputIndexes) {
+                            write[channel][sample] += audioLookup[i].getSample(channel, sample);
+                        }
+                        break;
                 }
             }
         }        

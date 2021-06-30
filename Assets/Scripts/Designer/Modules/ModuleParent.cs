@@ -103,7 +103,7 @@ public abstract class ModuleParent : MonoBehaviour, IDragHandler, IBeginDragHand
             newPos.y = startLocalPos.y + y;
         }
         transform.localPosition = newPos;
-        var connectors = GetComponentsInChildren<ModuleConnectorController>();
+        //var connectors = GetComponentsInChildren<ModuleConnectorController>();
         foreach(var c in connectors)
         {            
             c.UpdateWirePositions();

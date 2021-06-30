@@ -16,6 +16,24 @@ using namespace nlohmann;
 //==============================================================================
 MainComponent::MainComponent() : modulesCreated(false) {
     setAudioChannels(0, 2);
+    mathsFunctionLookup = {
+        { MathsModuleType::Plus, [](float left, float right) {return left + right; } },
+        { MathsModuleType::Minus,[](float left, float right) {return left - right; }},
+        { MathsModuleType::Multiply,[](float left, float right) {return left * right; }},
+        { MathsModuleType::Divide,[](float left, float right) {return left / right; }},
+        { MathsModuleType::Mod,[](float left, float right) {return std::fmod(left, right); }},
+        { MathsModuleType::Sin, [](float left, float right) {return std::sin(left); }},
+        { MathsModuleType::Cos, [](float left, float right) {return std::cos(left); }},
+        { MathsModuleType::Tan, [](float left, float right) {return std::tan(left); }},
+        { MathsModuleType::Asin, [](float left, float right) {return std::asin(left); }},
+        { MathsModuleType::Acos, [](float left, float right) {return std::acos(left); }},
+        { MathsModuleType::Atan, [](float left, float right) {return std::atan(left); }},
+        { MathsModuleType::Abs, [](float left, float right) {return std::fabs(left); }},
+        { MathsModuleType::Exp, [](float left, float right) {return std::pow(left, right); }},
+        { MathsModuleType::Int, [](float left, float right) {return (int)left; }},
+        { MathsModuleType::Mtof, [](float left, float right) {return std::powf(2, ((int)left - 69) / 12.f) * 440.f; }},
+        { MathsModuleType::Ftom, [](float left, float right) {return (int)(69 + (12 * std::log2f(left / 440.f))); }}
+    };
 }
 
 MainComponent::~MainComponent() {
@@ -207,6 +225,9 @@ void MainComponent::createAudioMathsModule(const json& values) {
     else if (sign == "Exp") {
         mathsType = MathsModuleType::Exp;
     }
+    else {
+        mathsType == MathsModuleType::Plus;
+    }
 
     int leftIn = -1;
     if (values.contains("LeftInputFrom")) {
@@ -222,7 +243,7 @@ void MainComponent::createAudioMathsModule(const json& values) {
         juce::AudioBuffer<float> buff(2, samplesPerBlockExpected);
         audioLookup.emplace(outputId, buff);
     }
-    auto mathsModule = std::make_unique<AudioMathsModule>(cvParamLookup, audioLookup, leftIn, rightIn, outputId, mathsType, audioCv);
+    auto mathsModule = std::make_unique<AudioMathsModule>(cvParamLookup, audioLookup, leftIn, rightIn, outputId, audioCv, mathsFunctionLookup[mathsType]);
     mathsModule->prepareToPlay(samplesPerBlockExpected, sampleRate);
     audioMathsModules.push_back(std::move(mathsModule));
 }
@@ -281,6 +302,9 @@ void MainComponent::createMathsModule(const json& values) {
     else if (sign == "Ftom") {
         mathsType = MathsModuleType::Ftom;
     }
+    else {
+        mathsType = MathsModuleType::Plus;
+    }
 
     int leftIn = -1;
     if (values.contains("LeftInputFrom")) {
@@ -313,7 +337,7 @@ void MainComponent::createMathsModule(const json& values) {
         mathsModules.push_back(std::move(mathsModule));
     }
     else {
-        auto mathsModule = std::make_unique<MathsModule>(cvParamLookup, leftIn, rightIn, outputId, mathsType);
+        auto mathsModule = std::make_unique<MathsModule>(cvParamLookup, leftIn, rightIn, outputId, mathsType, mathsFunctionLookup[mathsType]);
         mathsModules.push_back(std::move(mathsModule));
     }
 }

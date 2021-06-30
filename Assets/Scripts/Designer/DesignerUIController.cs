@@ -6,7 +6,6 @@ using UnityEngine;
 using UnityEngine.UI;
 using Newtonsoft.Json.Linq;
 
-
 public class DesignerUIController : MonoBehaviour
 {
     [SerializeField] private List<Button> mainButtons, oscillatorButtons, ioButtons, controlsButtons, utilButtons, mathsButtons;
@@ -276,29 +275,28 @@ public class DesignerUIController : MonoBehaviour
             switch (type)
             {
                 case ModuleType.KnobModule:
-                    CreateKnobJToken(ref controlModuleCount, json["ControlModules"], (KnobModuleController) module,
+                    CreateKnobJToken(ref controlModuleCount, json["ControlModules"], module as KnobModuleController, 
                         usedOutputs);
                     break;
                 case ModuleType.ButtonModule:
-                    CreateButtonJToken(ref controlModuleCount, json["ControlModules"], (ButtonModuleController) module,
+                    CreateButtonJToken(ref controlModuleCount, json["ControlModules"], module as ButtonModuleController, 
                         usedOutputs);
                     break;
                 case ModuleType.OscillatorModule:
-                    CreateOscillatorJToken(ref oscillatorModuleCount, json["OscillatorModules"],
-                        (OscillatorModuleController) module, usedOutputs);
+                    CreateOscillatorJToken(ref oscillatorModuleCount, json["OscillatorModules"], module as OscillatorModuleController, usedOutputs);
                     break;
                 case ModuleType.IOModule:
-                    CreateIOJToken(ref ioModuleCount, json["IOModules"], (IOModuleController) module, usedOutputs);
+                    CreateIOJToken(ref ioModuleCount, json["IOModules"], module as IOModuleController, usedOutputs);
                     break;
                 case ModuleType.MathsModule:
-                    CreateMathsJToken(ref mathsModuleCount, json["MathsModules"], (MathsModuleController) module,
+                    CreateMathsJToken(ref mathsModuleCount, json["MathsModules"], module as MathsModuleController, 
                         usedOutputs);
                     break;
                 case ModuleType.NumberBox:
-                    CreateNumberBox(ref numberBoxCount, json["NumberBoxes"], (NumberModule) module, usedOutputs);
+                    CreateNumberBox(ref numberBoxCount, json["NumberBoxes"], module as NumberModule, usedOutputs);
                     break;
                 case ModuleType.ADSR:
-                    CreateADSRJToken(ref adsrCount, json["ADSRModules"], (ADSRModuleController) module, usedOutputs);
+                    CreateADSRJToken(ref adsrCount, json["ADSRModules"], module as ADSRModuleController, usedOutputs);
                     break;
             }
         }
@@ -431,7 +429,7 @@ public class DesignerUIController : MonoBehaviour
         mathsModuleCount++;
     }
     
-    private void CreateADSRJToken(ref int adsrCount, Dictionary<string, Dictionary<string, object>> json, 
+    private void CreateADSRJToken(ref int adsrCount, Dictionary<string, Dictionary<string, object>> json,
         ADSRModuleController module, Dictionary<ModuleConnectorController, int> outputLookup)
     {
         var modName = $"ADSRModule{adsrCount}";

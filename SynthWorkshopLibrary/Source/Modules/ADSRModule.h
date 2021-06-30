@@ -38,11 +38,12 @@ public:
         if (!readyToPlay || audioOutputIndex == -1) return;
         checkParams();
         audioLookup[audioOutputIndex].clear();
+        auto write = audioLookup[audioOutputIndex].getArrayOfWritePointers();
         for (int sample = 0; sample < audioLookup[audioOutputIndex].getNumSamples(); sample++) {
             float value = adsr.getNextSample();
             for (int channel = 0; channel < audioLookup[audioOutputIndex].getNumChannels(); channel++) {
                 for (const int& i : audioInputIndexes) {
-                    audioLookup[audioOutputIndex].addSample(channel, sample, audioLookup[i].getSample(channel, sample) * value);
+                    write[channel][sample] += (audioLookup[i].getSample(channel, sample) * value);
                 }
             }
         }

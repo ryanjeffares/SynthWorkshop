@@ -24,7 +24,7 @@ public class KnobModuleController : ModuleParent
     public override List<ModuleConnectorController> GetUsedOutputs(out bool found)
     {
         var res = new List<ModuleConnectorController>();
-        if (CheckIfUsed())
+        if (connectors[0].isConnected)
         {
             res.Add(connectors[0]);
         }

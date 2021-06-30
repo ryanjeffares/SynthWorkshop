@@ -36,6 +36,11 @@ public class OscillatorModuleController : ModuleParent
                 connectors[3].transform.parent.gameObject.SetActive(true);
                 connectors[2].transform.parent.localPosition = new Vector3(-50, 75);
             }
+            else
+            {
+                Destroy(connectors[3].transform.parent.gameObject);
+                connectors.RemoveAt(3);
+            }
         }
     }
 

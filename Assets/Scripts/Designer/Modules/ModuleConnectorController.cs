@@ -64,9 +64,16 @@ public class ModuleConnectorController : MonoBehaviour, IPointerEnterHandler, IP
     
     public void UpdateWirePositions()
     {
-        foreach(var w in _wires)
+        try
         {
-            w.GetComponent<WireController>().UpdatePosition();
+            foreach (var w in _wires)
+            {
+                w.GetComponent<WireController>().UpdatePosition();
+            }
+        }
+        catch
+        {
+            Debug.Log(transform.parent.name);
         }
     }
 

@@ -9,16 +9,17 @@
 */
 
 #pragma once
-#include <unordered_map>
 #include <JuceHeader.h>
+#include <unordered_map>
+#include <functional>
 #include "../Typedefs.h"
 
 class AudioMathsModule
 {
 public:
 
-    AudioMathsModule(std::unordered_map<int, float>& cvLookup, std::unordered_map<int, juce::AudioBuffer<float>>& audioLu, int leftIn, int rightIn, int output, MathsModuleType t, AudioCV acv)
-        : cvParamLookup(cvLookup), audioLookup(audioLu), leftInput(leftIn), rightInput(rightIn), outputIndex(output), type(t), audioCvIncoming(acv) {}
+    AudioMathsModule(std::unordered_map<int, float>& cvLookup, std::unordered_map<int, juce::AudioBuffer<float>>& audioLu, int leftIn, int rightIn, int output, AudioCV acv, const std::function<float(float, float)>& func)
+        : cvParamLookup(cvLookup), audioLookup(audioLu), leftInput(leftIn), rightInput(rightIn), outputIndex(output), audioCvIncoming(acv), currentFunction(func) {}
 
     ~AudioMathsModule() {}
 
@@ -33,48 +34,13 @@ public:
 
     void getNextAudioBlock(int numChannels, int numSamples) {
         if (!readyToPlay || outputIndex == -1) return;
+        auto write = audioLookup[outputIndex].getArrayOfWritePointers();
         for (int sample = 0; sample < numSamples; sample++) {
             for (int channel = 0; channel < numChannels; channel++) {
+                // checks are performed in C# so that the module will always have the necessary connections, this is just to avoid indexing the lookup at -1
                 float inputSampleVal = leftInput == -1 ? 1 : audioLookup[leftInput].getSample(channel, sample);
                 float affectingVal = rightInput == -1 ? 1 : (audioCvIncoming == AudioCV::Audio ? audioLookup[rightInput].getSample(channel, sample) : cvParamLookup[rightInput]);
-                switch (type) {
-                    case MathsModuleType::Plus:
-                        audioLookup[outputIndex].setSample(channel, sample, inputSampleVal + affectingVal);
-                        break;
-                    case MathsModuleType::Minus:
-                        audioLookup[outputIndex].setSample(channel, sample, inputSampleVal - affectingVal);
-                        break;
-                    case MathsModuleType::Multiply:
-                        audioLookup[outputIndex].setSample(channel, sample, inputSampleVal * affectingVal);
-                        break;
-                    case MathsModuleType::Divide:
-                        audioLookup[outputIndex].setSample(channel, sample, inputSampleVal / affectingVal);
-                        break;
-                    case MathsModuleType::Sin:
-                        audioLookup[outputIndex].setSample(channel, sample, sin(inputSampleVal));
-                        break;
-                    case MathsModuleType::Cos:
-                        audioLookup[outputIndex].setSample(channel, sample, cos(inputSampleVal));
-                        break;
-                    case MathsModuleType::Tan:
-                        audioLookup[outputIndex].setSample(channel, sample, tan(inputSampleVal));
-                        break;
-                    case MathsModuleType::Asin:
-                        audioLookup[outputIndex].setSample(channel, sample, asin(inputSampleVal));
-                        break;
-                    case MathsModuleType::Acos:
-                        audioLookup[outputIndex].setSample(channel, sample, acos(inputSampleVal));
-                        break;
-                    case MathsModuleType::Atan:
-                        audioLookup[outputIndex].setSample(channel, sample, atan(inputSampleVal));
-                        break;
-                    case MathsModuleType::Abs:
-                        audioLookup[outputIndex].setSample(channel, sample, fabs(inputSampleVal));
-                        break;
-                    case MathsModuleType::Exp:
-                        audioLookup[outputIndex].setSample(channel, sample, pow(inputSampleVal, affectingVal));
-                        break;
-                }
+                write[channel][sample] = currentFunction(inputSampleVal, affectingVal);
             }
         }
     }
@@ -88,8 +54,9 @@ private:
     std::unordered_map<int, float>& cvParamLookup;
     std::unordered_map<int, juce::AudioBuffer<float>>& audioLookup;
 
+    std::function<float(float, float)> currentFunction;
+
     const int leftInput, rightInput, outputIndex;
-    const MathsModuleType type;
     const AudioCV audioCvIncoming;
 
     double sampleRate;

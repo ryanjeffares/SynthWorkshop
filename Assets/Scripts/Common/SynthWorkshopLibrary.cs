@@ -38,7 +38,7 @@ static internal class SynthWorkshopLibrary
     {
         _mainComponent = initialise();
         Application.quitting += Shutdown;
-        IsLoaded = true;
+        IsLoaded = true;        
     }
 
     public static void Shutdown()

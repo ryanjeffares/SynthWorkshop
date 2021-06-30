@@ -22,10 +22,3 @@ enum class OscillatorType {
     Saw, Pulse, Sine, Tri
 };
 
-static int swFtom(float frequency) {
-    return (int)(69 + (12 * std::log2f(frequency / 440.f)));
-}
-
-static float swMtof(int midiNote) {
-    return std::powf(2, (midiNote - 69) / 12.f) * 440.f;
-}

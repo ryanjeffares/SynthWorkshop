@@ -145,7 +145,7 @@ public class MathsModuleController : ModuleParent
         var exceptions = new List<ModuleException>();
         if (!connectors[0].isConnected)
         {
-            var exception = new ModuleException("Maths node has no input and will be ignored.", ModuleException.SeverityLevel.Warning);
+            var exception = new ModuleException("Maths node has no input. You must set an input (left input connector).", ModuleException.SeverityLevel.Error);
             exceptions.Add(exception);
         }
         if (connectors.All(c => !c.isConnected))
@@ -170,7 +170,7 @@ public class MathsModuleController : ModuleParent
         {
             if (connectors[1].transform.parent.gameObject.activeSelf && !connectors[1].isConnected)
             {
-                var exception = new ModuleException("Maths node left input not connected to anything and will have no effect.", ModuleException.SeverityLevel.Warning);
+                var exception = new ModuleException($"Maths node right input not connected to anything. You must connect a right input for this type of module: {mathsSign}", ModuleException.SeverityLevel.Error);
                 exceptions.Add(exception);
             }
             if (!connectors[2].isConnected)

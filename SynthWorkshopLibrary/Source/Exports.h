@@ -11,7 +11,12 @@
 #pragma once
 #include "MainComponent.h"
 
+#ifdef SW_WINDOWS
 #define EXPORT _declspec(dllexport)
+#endif
+#ifdef SW_APPLE
+#define EXPORT __attribute__((visibility("default")))
+#endif
 
 extern "C" {
 

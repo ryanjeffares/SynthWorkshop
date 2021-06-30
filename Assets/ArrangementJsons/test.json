@@ -4,63 +4,89 @@
     "OscillatorModule1": {
       "type": "Saw",
       "SoundOutputTo": 0,
-      "FreqInputFrom": 4
+      "FreqInputFrom": 6
     },
     "OscillatorModule2": {
       "type": "Pulse",
-      "CVOutTo": 2,
-      "FreqInputFrom": 7
+      "SoundOutputTo": 1,
+      "FreqInputFrom": 3,
+      "PWInputFrom": 5
+    },
+    "OscillatorModule3": {
+      "type": "Sine",
+      "CVOutTo": 4,
+      "FreqInputFrom": 12
     }
   },
   "IOModules": {
     "IOModule1": {
       "type": "AudioOutput",
       "LeftInputFrom": [
-        1
+        2
       ],
       "RightInputFrom": [
-        1
+        2
       ]
     }
   },
   "MathsModules": {
     "MathsModule1": {
-      "type": "CV",
-      "operator": "Abs",
-      "LeftInputFrom": 2,
+      "type": "Audio",
+      "operator": "Plus",
+      "LeftInputFrom": 0,
       "IncomingSignalType": "Audio",
+      "RightInputFrom": 1,
+      "outputId": 2
+    },
+    "MathsModule2": {
+      "type": "CV",
+      "operator": "Divide",
+      "LeftInputFrom": 6,
+      "IncomingSignalType": "CV",
+      "RightInputFrom": 7,
       "outputId": 3
+    },
+    "MathsModule3": {
+      "type": "CV",
+      "operator": "Map",
+      "LeftInputFrom": 4,
+      "IncomingSignalType": "CV",
+      "minIn": 10,
+      "maxIn": 9,
+      "minOut": 8,
+      "maxOut": 11,
+      "outputId": 5
     }
   },
   "NumberBoxes": {
     "NumberBox1": {
-      "outputTo": 4,
-      "initialValue": 100.0
+      "outputTo": 6,
+      "initialValue": 200.0
     },
     "NumberBox2": {
-      "outputTo": 5,
-      "initialValue": 1.0
+      "outputTo": 7,
+      "initialValue": 2.0
     },
     "NumberBox3": {
-      "outputTo": 6,
-      "initialValue": 0.0
+      "outputTo": 8,
+      "initialValue": 0.2
     },
     "NumberBox4": {
-      "outputTo": 7,
+      "outputTo": 9,
+      "initialValue": 1.0
+    },
+    "NumberBox5": {
+      "outputTo": 10,
+      "initialValue": -1.0
+    },
+    "NumberBox6": {
+      "outputTo": 11,
+      "initialValue": 0.8
+    },
+    "NumberBox7": {
+      "outputTo": 12,
       "initialValue": 0.5
     }
   },
-  "ADSRModules": {
-    "ADSRModule1": {
-      "inputFrom": [
-        0
-      ],
-      "attackFrom": 6,
-      "decayFrom": 6,
-      "sustainFrom": 5,
-      "releaseFrom": 5,
-      "triggerInput": 3,
-      "outputTo": 1
-    }
-  }
+  "ADSRModules": {}
 }

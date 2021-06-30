@@ -112,16 +112,8 @@ public class IOModuleController : ModuleParent
         {
             if (InputOutput == InputOutput.Output)
             {
-                var leftInputNums = new List<int>();
-                var rightInputNums = new List<int>();
-                foreach (var con in connectors[0].connectedModuleConnectors)
-                {
-                    leftInputNums.Add(outputLookup[con]);
-                }
-                foreach (var con in connectors[1].connectedModuleConnectors)
-                {
-                    rightInputNums.Add(outputLookup[con]);
-                }
+                var leftInputNums = connectors[0].connectedModuleConnectors.Select(c => outputLookup[c]);
+                var rightInputNums = connectors[1].connectedModuleConnectors.Select(c => outputLookup[c]);
                 jsonDict.Add("LeftInputFrom", leftInputNums);
                 jsonDict.Add("RightInputFrom", rightInputNums);
             }

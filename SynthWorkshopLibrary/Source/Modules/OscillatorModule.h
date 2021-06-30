@@ -40,11 +40,12 @@ public:
             if (pulseWidth > 1.f) pulseWidth = 1.f;
         }
         float value;
+        auto write = audioLookup[soundOutIndex].getArrayOfWritePointers();
         for (auto sample = 0; sample < numSamples; sample++) {
             value = getNextSample();
             if (soundOutIndex != -1) {
                 for (auto channel = 0; channel < numChannels; channel++) {
-                    audioLookup[soundOutIndex].setSample(channel, sample, value);                    
+                    write[channel][sample] = value;
                 }
             }
         }

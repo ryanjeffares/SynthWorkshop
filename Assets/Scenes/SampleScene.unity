@@ -15842,6 +15842,7 @@ MonoBehaviour:
   exportJsonButton: {fileID: 1165845572}
   stopButton: {fileID: 442304463}
   clearButton: {fileID: 644152018}
+  importButton: {fileID: 801526807}
   closeErrors: {fileID: 249624441}
   categoryScrollViews:
   - {fileID: 1897890499}

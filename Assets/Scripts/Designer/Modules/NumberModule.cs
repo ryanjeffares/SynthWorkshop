@@ -27,6 +27,12 @@ public class NumberModule : ModuleParent
         });
     }
 
+    public void SetNumber(double val)
+    {
+        _currentValue = val;
+        numberInput.text = _currentValue.ToString();
+    }
+    
     public override List<ModuleException> CheckErrors()
     {
         var exceptions = new List<ModuleException>();
@@ -60,6 +66,7 @@ public class NumberModule : ModuleParent
             res.Add("outputTo", _ioIndex);
         }
         res.Add("initialValue", _currentValue);
+        res.Add("position", transform.localPosition);
         return res;
     }
     

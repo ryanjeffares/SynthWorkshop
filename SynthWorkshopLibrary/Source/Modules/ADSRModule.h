@@ -64,10 +64,10 @@ private:
         if (triggerInput != -1 && noteOnState != cvParamLookup[triggerInput]) {
             noteOnState = cvParamLookup[triggerInput];
             if (noteOnState) { 
-                adsr.noteOn(); 
+                adsr.noteOn();                
             }
             else { 
-                adsr.noteOff(); 
+                adsr.noteOff();
             }
         }
     }
@@ -80,7 +80,7 @@ private:
     const int attackIndex, decayIndex, sustainIndex, releaseIndex;
     const int triggerInput;
 
-    int noteOnState = 0;
+    float noteOnState = 0;
 
     int numChannels, samplesPerBlockExpected;
     double sampleRate;

@@ -11,14 +11,22 @@ public class KnobModuleController : ModuleParent
 
     public string Label { get; private set; }
 
-    private bool _minSet, _maxSet;
-
     protected override void ChildAwake()
     {
         moduleType = ModuleType.KnobModule;
-        minInput.onValueChanged.AddListener(val => { min = double.Parse(val); _minSet = true; });
-        maxInput.onValueChanged.AddListener(val => { max = double.Parse(val); _maxSet = true; });
+        minInput.onValueChanged.AddListener(val => min = double.Parse(val));
+        maxInput.onValueChanged.AddListener(val => max = double.Parse(val));
         labelInput.onValueChanged.AddListener(val => Label = val);
+    }
+
+    public void SetValues(string label, double mn, double mx)
+    {
+        Label = label;
+        labelInput.text = Label;
+        min = mn;
+        minInput.text = min.ToString();
+        max = mx;
+        maxInput.text = max.ToString();
     }
 
     public override List<ModuleConnectorController> GetUsedOutputs(out bool found)

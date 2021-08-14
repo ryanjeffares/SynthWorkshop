@@ -118,5 +118,6 @@ public class IOModuleController : ModuleParent
                 jsonDict.Add("RightInputFrom", rightInputNums);
             }
         }
+        jsonDict.Add("position", transform.localPosition);
     }
 }

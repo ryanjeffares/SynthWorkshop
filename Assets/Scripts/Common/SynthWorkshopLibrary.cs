@@ -36,7 +36,7 @@ static class SynthWorkshopLibrary
 
     private static readonly IntPtr MainComponent;
 
-    private static bool IsLoaded { get; }
+    public static bool IsLoaded { get; }
 
     static SynthWorkshopLibrary()
     {

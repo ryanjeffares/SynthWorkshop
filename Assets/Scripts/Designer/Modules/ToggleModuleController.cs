@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -14,6 +13,12 @@ public class ToggleModuleController : ModuleParent
         labelInput.onValueChanged.AddListener(val => Label = val);
     }
 
+    public void SetLabel(string label)
+    {
+        Label = label;
+        labelInput.text = Label;
+    }
+    
     public override List<ModuleException> CheckErrors()
     {
         var exceptions = new List<ModuleException>();

@@ -4,13 +4,14 @@ using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEditor;
 using Newtonsoft.Json.Linq;
 
 public class DesignerUIController : MonoBehaviour
 {
     [SerializeField] private List<Button> mainButtons, oscillatorButtons, ioButtons, controlsButtons, utilButtons, mathsButtons;
     [SerializeField] private Button numberBoxButton;
-    [SerializeField] private Button playButton, exportJsonButton, stopButton;
+    [SerializeField] private Button playButton, exportJsonButton, stopButton, clearButton, importButton;
     [SerializeField] private Button closeErrors;
     [SerializeField] private List<GameObject> categoryScrollViews;
     [SerializeField] private AnimationCurve convex;
@@ -92,6 +93,12 @@ public class DesignerUIController : MonoBehaviour
         stopButton.onClick.AddListener(() => SynthWorkshopLibrary.StopAudio());
         exportJsonButton.onClick.AddListener(() => ExportArrangement(false));
         closeErrors.onClick.AddListener(() => errorScrollView.SetActive(false));
+        clearButton.onClick.AddListener(ClearAllModules);
+        importButton.onClick.AddListener(() =>
+        {
+            var path = EditorUtility.OpenFilePanel("Choose .json file to import.", Path.Combine(Application.dataPath, "ArrangementJsons"), "json");
+            ImportArrangement(path);
+        });
     }
 
     private void Start()
@@ -183,6 +190,170 @@ public class DesignerUIController : MonoBehaviour
         _instantiatedModules.Add(Instantiate(numberBoxPrefab, mainContent.transform));
     }
 
+    private void ClearAllModules()
+    {
+        foreach (var m in _instantiatedModules)
+        {
+            Destroy(m);
+        }
+        _instantiatedModules.Clear();
+    }
+
+    private readonly struct ParsedModule
+    {
+        public readonly GameObject obj;
+        public readonly int output;
+        
+    }
+    
+    private void ImportArrangement(string path)
+    {
+        if (string.IsNullOrEmpty(path) || !File.Exists(path)) return;
+        ClearAllModules();
+        
+        var json = JObject.Parse(File.ReadAllText(path));
+        // get every module in the arrangement with its inputs/outputs
+        // make the modules
+        // connect the wires
+
+        var lookup = new Dictionary<GameObject, JObject>();
+        foreach (var category in json)
+        {
+            foreach (var module in category.Value)
+            {
+                try
+                {
+                    var contents = module.First as JObject;
+                    switch (category.Key)
+                    {
+                        case "ControlModules":
+                        {
+                            var type = contents["type"].ToString();
+                            switch (type)
+                            {
+                                case "Knob":
+                                    ControlsButtonCallback(controlsButtons[0]);
+                                    _instantiatedModules.Last().GetComponent<KnobModuleController>()
+                                        .SetValues(contents["name"].ToString(), contents["min"].ToObject<double>(),
+                                            contents["max"].ToObject<double>());
+                                    break;
+                                case "Button":
+                                    ControlsButtonCallback(controlsButtons[1]);
+                                    _instantiatedModules.Last().GetComponent<ButtonModuleController>()
+                                        .SetLabel(contents["name"].ToString());
+                                    break;
+                                case "Toggle":
+                                    ControlsButtonCallback(controlsButtons[2]);
+                                    _instantiatedModules.Last().GetComponent<ToggleModuleController>()
+                                        .SetLabel(contents["name"].ToString());
+                                    break;
+                            }
+                            break;
+                        }
+                        case "OscillatorModules":
+                        {
+                            OscillatorButtonCallback(oscillatorButtons[contents["type"].ToString() switch
+                            {
+                                "Sine" => 0,
+                                "Saw" => 1,
+                                "Pulse" => 2,
+                                "Tri" => 3
+                            }]);
+                            break;
+                        }
+                        case "IOModules":
+                        {
+                            IOButtonCallback(ioButtons[contents["type"].ToString() switch
+                            {
+                                "AudioOutput" => 0,
+                                "AudioInput" => 1,
+                                "CVOutput" => 2,
+                                "CVInput" => 3
+                            }]);
+                            break;
+                        }
+                        case "MathsModules":
+                        {
+                            MathsButtonCallback(mathsButtons[contents["operator"].ToString() switch
+                            {
+                                "Plus" => 0,
+                                "Minus" => 1,
+                                "Multiply" => 2,
+                                "Divide" => 3,
+                                "Sin" => 4,
+                                "Cos" => 5, 
+                                "Tan" => 6, 
+                                "Asin" => 7, 
+                                "Acos" => 8, 
+                                "Atan" => 9, 
+                                "Abs" => 10, 
+                                "Exp" => 11, 
+                                "Int" => 12, 
+                                "Mod" => 13, 
+                                "Map" => 14, 
+                                "Mtof" => 15, 
+                                "Ftom" => 16
+                            } + (contents["type"].ToString() == "Audio" ? 17 : 0)]);
+                            break;
+                        }
+                        case "NumberBoxes":
+                        {
+                            NumberBoxButtonCallback();
+                            _instantiatedModules.Last().GetComponent<NumberModule>()
+                                .SetNumber(contents["initialValue"].ToObject<double>());
+                            break;
+                        }
+                        case "ADSRModules":
+                        {
+                            UtilButtonCallback(utilButtons[0]);   
+                            break;
+                        }
+                    }
+                    _instantiatedModules.Last().transform.localPosition =
+                        new Vector3(
+                            contents["position"]["x"].ToObject<float>(),
+                            contents["position"]["y"].ToObject<float>(),
+                            contents["position"]["z"].ToObject<float>()
+                        );
+                    lookup.Add(_instantiatedModules.Last(), contents);
+                }
+                catch (Exception e)
+                {
+                    Debug.LogException(e);
+                }
+            }
+        }
+
+        foreach (var kvp in lookup)
+        {
+            var module = kvp.Key;
+            var token = kvp.Value;
+            
+            switch (module.GetComponent<ModuleParent>().moduleType)
+            {
+                case ModuleType.OscillatorModule:
+                    //module.GetComponent<OscillatorModuleController>().
+                    break;
+                case ModuleType.KnobModule:
+                    break;
+                case ModuleType.IOModule:
+                    break;
+                case ModuleType.MathsModule:
+                    break;
+                case ModuleType.NumberBox:
+                    break;
+                case ModuleType.ADSR:
+                    break;
+                case ModuleType.ButtonModule:
+                    break;
+                case ModuleType.ToggleModule:
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+        }
+    }
+    
     /// <summary>
     /// Function for creating a JSON from the current arrangement of modules.
     /// </summary>
@@ -282,8 +453,13 @@ public class DesignerUIController : MonoBehaviour
                     CreateButtonJToken(ref controlModuleCount, json["ControlModules"], module as ButtonModuleController, 
                         usedOutputs);
                     break;
+                case ModuleType.ToggleModule:
+                    CreateToggleJToken(ref controlModuleCount, json["ControlModules"], module as ToggleModuleController,
+                        usedOutputs);
+                    break;
                 case ModuleType.OscillatorModule:
-                    CreateOscillatorJToken(ref oscillatorModuleCount, json["OscillatorModules"], module as OscillatorModuleController, usedOutputs);
+                    CreateOscillatorJToken(ref oscillatorModuleCount, json["OscillatorModules"],
+                        module as OscillatorModuleController, usedOutputs);
                     break;
                 case ModuleType.IOModule:
                     CreateIOJToken(ref ioModuleCount, json["IOModules"], module as IOModuleController, usedOutputs);
@@ -397,6 +573,7 @@ public class DesignerUIController : MonoBehaviour
             {"min", min},
             {"max", max},
             {"outputId", module.GetOutputIdOfConnector(outputLookup)},
+            {"position", module.transform.localPosition}
         };
         json.Add(modName, mod);
         controlModuleCount++;
@@ -410,12 +587,27 @@ public class DesignerUIController : MonoBehaviour
         {
             {"name", module.Label},
             {"type", "Button"},
-            {"outputId", module.GetOutputIdOfConnector(usedOutputs)}
+            {"outputId", module.GetOutputIdOfConnector(usedOutputs)},
+            {"position", module.transform.localPosition}
         };
         jsonDict.Add(modName, mod);
         controlModuleCount++;
     }
 
+    private void CreateToggleJToken(ref int controlModuleCount, Dictionary<string, Dictionary<string, object>> jsonDict,
+        ToggleModuleController module, Dictionary<ModuleConnectorController, int> usedOutputs)
+    {
+        var modName = $"ControlModule{controlModuleCount}";
+        var mod = new Dictionary<string, object>
+        {
+            {"name", module.Label},
+            {"type", "Toggle"},
+            {"outputId", module.GetOutputIdOfConnector(usedOutputs)},
+            {"position", module.transform.localPosition}
+        };
+        jsonDict.Add(modName, mod);
+        controlModuleCount++;
+    }
     private void CreateMathsJToken(ref int mathsModuleCount, Dictionary<string, Dictionary<string, object>> json, 
         MathsModuleController module, Dictionary<ModuleConnectorController, int> outputLookup)
     {

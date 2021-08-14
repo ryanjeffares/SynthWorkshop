@@ -101,5 +101,6 @@ public class OscillatorModuleController : ModuleParent
                 jsonDict.Add(propertyNames[i], outputLookup[connectors[i].sourceConnector]);
             }
         }
+        jsonDict.Add("position", transform.localPosition);
     }
 }

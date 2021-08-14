@@ -113,8 +113,16 @@ public class MathsModuleController : ModuleParent
         jsonDict.Add("operator", mathsSign.ToString());
         if (connectors[0].isConnected)
         {
-            jsonDict.Add("LeftInputFrom", outputLookup[connectors[0].sourceConnector]);
-        }
+            jsonDict.Add("LeftInputFrom", connectors[0].connectedModuleConnectors.Select(c => outputLookup[c]));
+            //if (audioCv == AudioCV.Audio)
+            //{
+            //}
+            //else
+            //{
+            //    jsonDict.Add("LeftInputFrom", outputLookup[connectors[0].sourceConnector]);
+            //}
+        }  
+        
         jsonDict.Add("IncomingSignalType", _incomingSignalType.ToString());
         if (mathsSign == MathsSign.Map)
         {
@@ -131,13 +139,14 @@ public class MathsModuleController : ModuleParent
         {
             if (connectors[1].isConnected) 
             { 
-                jsonDict.Add("RightInputFrom", outputLookup[connectors[1].sourceConnector]); 
+                jsonDict.Add("RightInputFrom", connectors[1].connectedModuleConnectors.Select(c => outputLookup[c])); 
             }
             if (outputLookup.ContainsKey(connectors[2]))
             {
                 jsonDict.Add("outputId", outputLookup[connectors[2]]);
             }   
         }
+        jsonDict.Add("position", transform.localPosition);
     }
 
     public override List<ModuleException> CheckErrors()

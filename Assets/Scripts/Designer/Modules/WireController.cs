@@ -92,9 +92,6 @@ public class WireController : MonoBehaviour, IPointerClickHandler
         if (parent.connectedModuleConnectors.Contains(targetController) 
             || targetController.connectedModuleConnectors.Contains(parent)) return false;
 
-        // TODO: return false if its a CV input that already has a connection - we should allow this at some point but figure that out later
-        if (targetController.audioCv != AudioCV.Audio && targetController.isConnected) return false;
-
         WireType = parent.audioCv;
         _parentConnector = parent.gameObject;
         _targetConnector.GetComponent<Image>().color = Color.green;

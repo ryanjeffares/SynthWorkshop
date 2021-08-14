@@ -5,7 +5,7 @@ A game about building modular synths.
 * UI!!!!
     * Make modules smaller, more like Max
     * General make it actually look good
-* Audio maths modules need multiple audio inputs in same connector
+* Everything should be able to have multiple inputs
 * Default values on the modules like in Pd/Max
 * Load arrangement from json
 * More maths - increment/decrement, constants like pi, two pi, e...

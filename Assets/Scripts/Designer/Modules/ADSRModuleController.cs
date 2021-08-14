@@ -45,12 +45,7 @@ public class ADSRModuleController : ModuleParent
     {
         if (connectors.First().isConnected)
         {
-            var inputNums = new List<int>();
-            foreach (var input in connectors.First().connectedModuleConnectors)
-            {
-                inputNums.Add(outputLookup[input]);
-            }
-            jsonDict.Add("inputFrom", inputNums);
+            jsonDict.Add("inputFrom", connectors.First().connectedModuleConnectors.Select(c => outputLookup[c]));
         }
         jsonDict.Add("attackFrom", outputLookup[connectors[1].sourceConnector]);
         jsonDict.Add("decayFrom", outputLookup[connectors[2].sourceConnector]);
@@ -65,5 +60,6 @@ public class ADSRModuleController : ModuleParent
         {
             jsonDict.Add("outputTo", outputLookup[connectors.Last()]);
         }
+        jsonDict.Add("position", transform.localPosition);
     }
 }

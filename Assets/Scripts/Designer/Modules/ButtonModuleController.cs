@@ -14,6 +14,12 @@ public class ButtonModuleController : ModuleParent
         labelInput.onValueChanged.AddListener(val => Label = val);
     }
 
+    public void SetLabel(string label)
+    {
+        Label = label;
+        labelInput.text = Label;
+    }
+    
     public override List<ModuleException> CheckErrors()
     {
         var exceptions = new List<ModuleException>();

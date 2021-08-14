@@ -18,8 +18,8 @@ class AudioMathsModule
 {
 public:
 
-    AudioMathsModule(std::unordered_map<int, float>& cvLookup, std::unordered_map<int, juce::AudioBuffer<float>>& audioLu, int leftIn, int rightIn, int output, AudioCV acv, const std::function<float(float, float)>& func)
-        : cvParamLookup(cvLookup), audioLookup(audioLu), leftInput(leftIn), rightInput(rightIn), outputIndex(output), audioCvIncoming(acv), currentFunction(func) {}
+    AudioMathsModule(std::unordered_map<int, float>& cvLookup, std::unordered_map<int, juce::AudioBuffer<float>>& audioLu, std::vector<int> leftIn, int rightIn, int output, AudioCV acv, const std::function<float(float, float)>& func)
+        : cvParamLookup(cvLookup), audioLookup(audioLu), leftInputs(leftIn), rightInput(rightIn), outputIndex(output), audioCvIncoming(acv), currentFunction(func) {}
 
     ~AudioMathsModule() {}
 
@@ -38,8 +38,14 @@ public:
         for (int sample = 0; sample < numSamples; sample++) {
             for (int channel = 0; channel < numChannels; channel++) {
                 // checks are performed in C# so that the module will always have the necessary connections, this is just to avoid indexing the lookup at -1
-                float inputSampleVal = leftInput == -1 ? 1 : audioLookup[leftInput].getSample(channel, sample);
+                
                 float affectingVal = rightInput == -1 ? 1 : (audioCvIncoming == AudioCV::Audio ? audioLookup[rightInput].getSample(channel, sample) : cvParamLookup[rightInput]);
+                
+                float inputSampleVal = 0.f;
+                for (auto l : leftInputs) {
+                    inputSampleVal += audioLookup[l].getSample(channel, sample);
+                }
+                
                 write[channel][sample] = currentFunction(inputSampleVal, affectingVal);
             }
         }
@@ -56,7 +62,10 @@ private:
 
     std::function<float(float, float)> currentFunction;
 
-    const int leftInput, rightInput, outputIndex;
+    std::vector<int> leftInputs;
+    
+    const int rightInput;
+    const int outputIndex;
     const AudioCV audioCvIncoming;
 
     double sampleRate;

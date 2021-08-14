@@ -59,14 +59,14 @@ void MainComponent::releaseResources() {
 
 void MainComponent::getNextAudioBlock(const juce::AudioSourceChannelInfo& bufferToFill) {
     if (!modulesCreated || shouldStop) return;
-    for (auto& osc : oscillatorModules) {
-        osc->getNextAudioBlock(bufferToFill.numSamples, bufferToFill.buffer->getNumChannels());
-    }
     for (auto& maths : mathsModules) {
         maths->calculateValues();
     }
     for (auto& audioMaths : audioMathsModules) {
         audioMaths->getNextAudioBlock(bufferToFill.buffer->getNumChannels(), bufferToFill.numSamples);
+    }
+    for (auto& osc : oscillatorModules) {
+        osc->getNextAudioBlock(bufferToFill.numSamples, bufferToFill.buffer->getNumChannels());
     }
     for (auto& adsr : adsrModules) {
         adsr->getNextAudioBlock();
@@ -229,9 +229,9 @@ void MainComponent::createAudioMathsModule(const json& values) {
         mathsType = MathsModuleType::Plus;
     }
 
-    int leftIn = -1;
+    std::vector<int> leftInputs;
     if (values.contains("LeftInputFrom")) {
-        leftIn = values["LeftInputFrom"].get<int>();
+        leftInputs = values["LeftInputFrom"].get<std::vector<int>>();
     }
     int rightIn = -1;
     if (values.contains("RightInputFrom")) {
@@ -243,7 +243,7 @@ void MainComponent::createAudioMathsModule(const json& values) {
         juce::AudioBuffer<float> buff(2, samplesPerBlockExpected);
         audioLookup.emplace(outputId, buff);
     }
-    auto mathsModule = std::make_unique<AudioMathsModule>(cvParamLookup, audioLookup, leftIn, rightIn, outputId, audioCv, mathsFunctionLookup[mathsType]);
+    auto mathsModule = std::make_unique<AudioMathsModule>(cvParamLookup, audioLookup, leftInputs, rightIn, outputId, audioCv, mathsFunctionLookup[mathsType]);
     mathsModule->prepareToPlay(samplesPerBlockExpected, sampleRate);
     audioMathsModules.push_back(std::move(mathsModule));
 }
@@ -306,18 +306,22 @@ void MainComponent::createMathsModule(const json& values) {
         mathsType = MathsModuleType::Plus;
     }
 
-    int leftIn = -1;
+    std::vector<int> leftIn;
     if (values.contains("LeftInputFrom")) {
-        leftIn = values["LeftInputFrom"].get<int>();
-        if (cvParamLookup.find(leftIn) == cvParamLookup.end()) {
-            cvParamLookup.emplace(leftIn, 1);
+        leftIn = values["LeftInputFrom"].get<std::vector<int>>();
+        for (auto i : leftIn) {
+            if (cvParamLookup.find(i) == cvParamLookup.end()) {
+                cvParamLookup.emplace(i, 1);
+            }
         }
     }
-    int rightIn = -1;
+    std::vector<int> rightIn;
     if (values.contains("RightInputFrom")) {
-        rightIn = values["RightInputFrom"].get<int>();
-        if (cvParamLookup.find(rightIn) == cvParamLookup.end()) {
-            cvParamLookup.emplace(rightIn, 1);
+        rightIn = values["RightInputFrom"].get<std::vector<int>>();
+        for (auto i : rightIn) {
+            if (cvParamLookup.find(i) == cvParamLookup.end()) {
+                cvParamLookup.emplace(i, 1);
+            }
         }
     }
     int outputId = -1;

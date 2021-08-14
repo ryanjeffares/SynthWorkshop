@@ -14,9 +14,12 @@ public class NumberModule : ModuleParent
     protected override void ChildAwake()
     {
         moduleType = ModuleType.NumberBox;
-        numberInput.onValueChanged.AddListener(val =>
+        numberInput.onValueChanged.AddListener(text =>
         {
-            _currentValue = double.Parse(val);
+            if (double.TryParse(text, out var val))
+            {
+                _currentValue = val;
+            }
             if(_ioIndex != -1)
             {
                 SynthWorkshopLibrary.SetCvParam(_ioIndex, (float)_currentValue);

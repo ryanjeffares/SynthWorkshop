@@ -2,41 +2,45 @@
 using System.Runtime.InteropServices;
 using UnityEngine;
 
-static internal class SynthWorkshopLibrary
+static class SynthWorkshopLibrary
 {
-    private const string _libName = "SynthWorkshopLibrary";
+#if UNITY_EDITOR_OSX || UNITY_STANDALONE_OSX
+    private const string LibName = "SynthWorkshopBundle";
+#elif UNITY_EDITOR_WIN || UNITY_STANDALONE_WIND
+    private const string LibName = "SynthWorkshopLibrary";
+#endif
 
-    [DllImport(_libName, CallingConvention = CallingConvention.Cdecl)]
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
     private static extern IntPtr helloWorld();
 
-    [DllImport(_libName, CallingConvention = CallingConvention.Cdecl)]
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
     private static extern IntPtr initialise();
 
-    [DllImport(_libName, CallingConvention = CallingConvention.Cdecl)]
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
     private static extern void shutdown(IntPtr mc);
 
-    [DllImport(_libName, CallingConvention = CallingConvention.Cdecl)]
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
     private static extern IntPtr helloWorldFromMain(IntPtr mc);
 
-    [DllImport(_libName, CallingConvention = CallingConvention.Cdecl)]
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
     private static extern void stopAudio(IntPtr mc);
 
-    [DllImport(_libName, CallingConvention = CallingConvention.Cdecl)]
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
     private static extern bool createModulesFromJson(IntPtr mc, string jsonText);
 
-    [DllImport(_libName, CallingConvention = CallingConvention.Cdecl)]
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
     private static extern void setCvParam(IntPtr mc, int index, float value);
     
-    [DllImport(_libName, CallingConvention = CallingConvention.Cdecl)]
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
     private static extern float getCvParam(IntPtr mc, int index);
 
-    private static readonly IntPtr _mainComponent;
+    private static readonly IntPtr MainComponent;
 
-    public static bool IsLoaded { get; }
+    private static bool IsLoaded { get; }
 
     static SynthWorkshopLibrary()
     {
-        _mainComponent = initialise();
+        MainComponent = initialise();
         Application.quitting += Shutdown;
         IsLoaded = true;        
     }
@@ -44,13 +48,13 @@ static internal class SynthWorkshopLibrary
     public static void Shutdown()
     {
         if (!IsLoaded) return;
-        shutdown(_mainComponent);
+        shutdown(MainComponent);
     }
 
     public static void HelloWorldFromMain()
     {
         if (!IsLoaded) return;
-        var res = helloWorldFromMain(_mainComponent);
+        var res = helloWorldFromMain(MainComponent);
         var str = Marshal.PtrToStringAnsi(res);
         Debug.Log(str);
     }
@@ -65,22 +69,22 @@ static internal class SynthWorkshopLibrary
 
     public static void StopAudio()
     {
-        stopAudio(_mainComponent);
+        stopAudio(MainComponent);
     }
 
     public static bool CreateModulesFromJson(string jsonText)
     {
-        return createModulesFromJson(_mainComponent, jsonText);
+        return createModulesFromJson(MainComponent, jsonText);
     }
 
     public static void SetCvParam(int index, float value)
     {
-        setCvParam(_mainComponent, index, value);
+        setCvParam(MainComponent, index, value);
     }
 
     public static float GetCvParam(int index)
     {
-        return getCvParam(_mainComponent, index);
+        return getCvParam(MainComponent, index);
     }
 }
 

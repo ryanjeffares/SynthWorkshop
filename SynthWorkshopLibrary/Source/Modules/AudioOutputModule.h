@@ -20,8 +20,8 @@ public:
 
     AudioOutputModule(std::unordered_map<int, juce::AudioBuffer<float>>& lookup, std::vector<int> left, std::vector<int> right, int nc) 
         : audioLookup(lookup), numChannels(nc), readyToPlay(false) {
-        leftInputIndexes.swap(left);
-        rightInputIndexes.swap(right);
+        leftInputIndexes = left;
+        rightInputIndexes = right;
     }
 
     ~AudioOutputModule() override {}

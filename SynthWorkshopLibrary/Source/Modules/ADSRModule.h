@@ -21,7 +21,7 @@ public:
         int a, int d, int s, int r, int t) 
         : audioLookup(audioLu), cvParamLookup(cvLookup), audioOutputIndex(outputIndex), numChannels(numCh), attackIndex(a), decayIndex(d), sustainIndex(s), releaseIndex(r), triggerInput(t) 
     {
-        audioInputIndexes.swap(inputIndexes);
+        audioInputIndexes = inputIndexes;
     }
 
     void prepareToPlay(int spbe, double sr) {
@@ -36,7 +36,7 @@ public:
 
     void getNextAudioBlock() {
         if (!readyToPlay || audioOutputIndex == -1) return;
-        checkParams();
+        updateEnvelope();
         audioLookup[audioOutputIndex].clear();
         auto write = audioLookup[audioOutputIndex].getArrayOfWritePointers();
         for (int sample = 0; sample < audioLookup[audioOutputIndex].getNumSamples(); sample++) {
@@ -54,29 +54,13 @@ public:
     }
 
 private:
-
-    // should write our own adsr where we dont have to do this shit
-    void checkParams() {
-        bool needToChangeParams = false;
-        if (currentParameters.attack != cvParamLookup[attackIndex]) {
-            currentParameters.attack = cvParamLookup[attackIndex];
-            needToChangeParams = true;
-        }
-        if (currentParameters.decay != cvParamLookup[decayIndex]) {
-            currentParameters.decay = cvParamLookup[decayIndex];
-            needToChangeParams = true;
-        }
-        if (currentParameters.sustain != cvParamLookup[sustainIndex]) {
-            currentParameters.sustain = cvParamLookup[sustainIndex];
-            needToChangeParams = true;
-        }
-        if (currentParameters.release != cvParamLookup[releaseIndex]) {
-            currentParameters.release = cvParamLookup[releaseIndex];
-            needToChangeParams = true;
-        }
-        if (needToChangeParams) {            
-            adsr.setParameters(currentParameters);
-        }
+    
+    void updateEnvelope() {
+        currentParameters.attack = cvParamLookup[attackIndex];
+        currentParameters.decay = cvParamLookup[decayIndex];
+        currentParameters.sustain = cvParamLookup[sustainIndex];
+        currentParameters.release = cvParamLookup[releaseIndex];
+        adsr.setParameters(currentParameters);
         if (triggerInput != -1 && noteOnState != cvParamLookup[triggerInput]) {
             noteOnState = cvParamLookup[triggerInput];
             if (noteOnState) { 

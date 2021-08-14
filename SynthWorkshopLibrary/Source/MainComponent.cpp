@@ -226,7 +226,7 @@ void MainComponent::createAudioMathsModule(const json& values) {
         mathsType = MathsModuleType::Exp;
     }
     else {
-        mathsType == MathsModuleType::Plus;
+        mathsType = MathsModuleType::Plus;
     }
 
     int leftIn = -1;
@@ -409,7 +409,7 @@ void MainComponent::createOscillatorModule(const json& values) {
 void MainComponent::createAdsrModule(const json& values) {
     std::vector<int> inputIndexes;
     if (values.contains("inputFrom")) {
-        inputIndexes.swap(values["inputFrom"].get<std::vector<int>>());
+        inputIndexes = values["inputFrom"].get<std::vector<int>>();
     }
     int triggerInput = -1;
     if (values.contains("triggerInput")) {

@@ -1,6 +1,8 @@
 # SynthWorkshop
 A game about building modular synths.
 
+Note: any recent work I've done on this for MacOS has been done on an M1 chip, so if you want to run this on MacOS with an Intel CPU you should build the library with the MacOS_x86 exporter in Projucer, put the bundle in Plugins/macOs_x86/, and adjust the string in Scripts/Common/SynthWorkshopLibrary.cs line 8.
+
 # To Do
 * UI!!!!
     * Make modules smaller, more like Max

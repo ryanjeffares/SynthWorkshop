@@ -5,9 +5,9 @@ using UnityEngine;
 static class SynthWorkshopLibrary
 {
 #if UNITY_EDITOR_OSX || UNITY_STANDALONE_OSX
-    private const string LibName = "SynthWorkshopBundle";
+    private const string LibName = "SynthWorkshopBundle_M1";
 #elif UNITY_EDITOR_WIN || UNITY_STANDALONE_WIND
-    private const string LibName = "SynthWorkshopLibrary";
+    private const string LibName = "SynthWorkshopLibrary_x86";
 #endif
 
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]

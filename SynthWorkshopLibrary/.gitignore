@@ -31,6 +31,8 @@ contents.xcworkspacedata
 .dirstamp
 profile
 **/MacOSX/build
+**/MacOSX_M1/build
+**/MacOSX_x86/build
 **/iOS/build
 **/IDEWorkspaceChecks.plist
 **/Linux/build
@@ -43,6 +45,7 @@ profile
 **/CodeBlocks/obj
 **/CodeBlocks/*.depend
 **/CodeBlocks/*.layout
+
 **/Builds/Android/.gradle
 **/Builds/Android/.idea
 **/Builds/Android/build
@@ -57,6 +60,11 @@ profile
 **/Builds/CLion/.idea
 **/Builds/MacOSX/**/Index
 **/Builds/MacOSX/**/Intermediates.noindex
+**/Builds/MacOSX_M1/**/Index
+**/Builds/MacOSX_M1/**/Intermediates.noindex
+**/Builds/MacOSX_x86/**/Index
+**/Builds/MacOSX_x86/**/Intermediates.noindex
+
 **/doxygen/doc
 **/doxygen/build
 **/.idea

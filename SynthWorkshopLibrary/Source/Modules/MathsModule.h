@@ -19,34 +19,44 @@ class MathsModule : public Module
 public:    
 
     // used for all other modules
-    MathsModule(std::unordered_map<int, float>& lookup, std::vector<int> leftIn, std::vector<int> rightIn, int output, MathsModuleType t, const std::function<float(float, float)>& func) : cvParamLookup(lookup),
-        leftInputs(leftIn), rightInputs(rightIn), outputIndex(output), type(t), currentFunction(func) {}
+    MathsModule(std::unordered_map<int, float>& lookup, std::vector<int> leftIn, std::vector<int> rightIn, int output, MathsModuleType t, const std::function<float(float, float)>& func)
+        : cvParamLookup(lookup), leftInputs(leftIn), rightInputs(rightIn), outputIndex(output), type(t), currentFunction(func) {}
 
     // used only for Map module
-    MathsModule(std::unordered_map<int, float>& lookup, std::vector<int> leftIn, std::vector<int> rightIn, int output, int inMin, int inMax, int outMin, int outMax, MathsModuleType t) : cvParamLookup(lookup),
-        leftInputs(leftIn), rightInputs(rightIn), outputIndex(output), minIn(inMin), minOut(outMin), maxIn(inMax), maxOut(outMax), type(t) {}
+    MathsModule(std::unordered_map<int, float>& lookup, std::vector<int> leftIn, std::vector<int> rightIn, int output, int inMin, int inMax, int outMin, int outMax, MathsModuleType t)
+        : cvParamLookup(lookup), leftInputs(leftIn), rightInputs(rightIn), outputIndex(output), minIn(inMin), minOut(outMin), maxIn(inMax), maxOut(outMax), type(t) {}
 
-    ~MathsModule() {}
+    ~MathsModule() = default;
 
-    void calculateValues() {
+    void calculateValues() 
+    {
         if (outputIndex == -1 || !readyToPlay) return;
         
         float left = 0.f;
         float right = 0.f;
         
-        for (auto i : leftInputs) {
+        for (auto i : leftInputs) 
+        {
             left += cvParamLookup[i];
         }
-        for (auto i : rightInputs) {
+        for (auto i : rightInputs) 
+        {
             right += cvParamLookup[i];
         }
         
-        if (type == MathsModuleType::Map) {
+        if (type == MathsModuleType::Map)
+        {
             cvParamLookup[outputIndex] = juce::jmap<float>(left, cvParamLookup[minIn], cvParamLookup[maxIn], cvParamLookup[minOut], cvParamLookup[maxOut]);
         }
-        else {
+        else 
+        {
             cvParamLookup[outputIndex] = currentFunction(left, right);
         }
+    }
+
+    void setReady(bool state) override 
+    {
+        readyToPlay = state;
     }
 
 private:

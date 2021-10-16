@@ -10,15 +10,18 @@
 
 #pragma once
 
-enum class MathsModuleType {
+enum class MathsModuleType
+{
     Plus, Minus, Multiply, Divide, Sin, Cos, Tan, Asin, Acos, Atan, Abs, Exp, Int, Mod, Map, Mtof, Ftom
 };
 
-enum class AudioCV {
+enum class AudioCV 
+{
     Audio, CV
 };
 
-enum class OscillatorType {
+enum class OscillatorType 
+{
     Sine, Saw, Pulse, Tri
 };
 

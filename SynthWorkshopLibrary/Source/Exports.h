@@ -18,44 +18,54 @@
 #define EXPORT __attribute__((visibility("default")))
 #endif
 
-extern "C" {
+extern "C" 
+{
 
-    EXPORT const char* helloWorld() {
+    EXPORT const char* helloWorld() 
+    {
         return "Hello World!";
     }
 
-    EXPORT void* initialise() {
+    EXPORT void* initialise() 
+    {
         juce::initialiseJuce_GUI();
         auto ptr = new MainComponent();
         return (void*)ptr;
     }
 
-    EXPORT void shutdown(void* mc) {
+    EXPORT void shutdown(void* mc) 
+    {
         delete (MainComponent*)mc;
         juce::shutdownJuce_GUI();
     }
 
-    EXPORT const char* helloWorldFromMain(void* mc) {
+    EXPORT const char* helloWorldFromMain(void* mc) 
+    {
         return ((MainComponent*)mc)->helloWorld();
     }
 
-    EXPORT void stopAudio(void* mc) {
+    EXPORT void stopAudio(void* mc) 
+    {
         ((MainComponent*)mc)->stopAudio();
     }
 
-    EXPORT const char* createModulesFromJson(void* mc, const char* jsonText) {
+    EXPORT const char* createModulesFromJson(void* mc, const char* jsonText) 
+    {
         return ((MainComponent*)mc)->createModulesFromJson(jsonText);
     }
 
-    EXPORT void setCvParam(void* mc, int idx, float val) {
+    EXPORT void setCvParam(void* mc, int idx, float val) 
+    {
         ((MainComponent*)mc)->setCvParam(idx, val);
     }
 
-    EXPORT float getCvParam(void* mc, int idx) {
+    EXPORT float getCvParam(void* mc, int idx)
+    {
         return ((MainComponent*)mc)->getCvParam(idx);
     }
 
-    EXPORT void setMasterVolume(void* mc, float value) {
+    EXPORT void setMasterVolume(void* mc, float value) 
+    {
         ((MainComponent*)mc)->setMasterVolume(value);
     }
 }

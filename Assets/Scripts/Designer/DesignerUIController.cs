@@ -490,11 +490,8 @@ public class DesignerUIController : MonoBehaviour
     {
         var result = SynthWorkshopLibrary.CreateModulesFromJson(jsonText);
 
-        if (result != "Success")
-        {
-            Debug.Log(result);
-            return;
-        }
+        Debug.Log(result);
+        if (result != "Success") return;
 
         foreach (var s in _instantiatedParamControls)
         {

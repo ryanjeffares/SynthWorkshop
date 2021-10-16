@@ -26,7 +26,7 @@ static class SynthWorkshopLibrary
     private static extern void stopAudio(IntPtr mc);
 
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
-    private static extern string createModulesFromJson(IntPtr mc, string jsonText);
+    private static extern IntPtr createModulesFromJson(IntPtr mc, string jsonText);
 
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
     private static extern void setCvParam(IntPtr mc, int index, float value);
@@ -77,7 +77,8 @@ static class SynthWorkshopLibrary
 
     public static string CreateModulesFromJson(string jsonText)
     {
-        return createModulesFromJson(MainComponent, jsonText);
+        var result =createModulesFromJson(MainComponent, jsonText);
+        return Marshal.PtrToStringAnsi(result);
     }
 
     public static void SetCvParam(int index, float value)

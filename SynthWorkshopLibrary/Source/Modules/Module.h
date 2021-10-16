@@ -21,9 +21,7 @@ public:
     virtual void getNextAudioBlock(int numSamples, int numChannels) {}
     virtual void releaseResources() {}
     
-    void setReady(bool state) {
-        readyToPlay = state;
-    }
+    virtual void setReady(bool) = 0;
     
 protected:
     bool readyToPlay = false;

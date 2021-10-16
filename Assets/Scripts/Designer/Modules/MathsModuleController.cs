@@ -114,7 +114,7 @@ public class MathsModuleController : ModuleParent
         
         if (connectors[0].isConnected)
         {
-            jsonDict.Add("left_input_operator", connectors[0].connectedModuleConnectors.Select(c => outputLookup[c]));
+            jsonDict.Add("left_input_from", connectors[0].connectedModuleConnectors.Select(c => outputLookup[c]));
         }  
         
         jsonDict.Add("incoming_signal_type", _incomingSignalType.ToString());

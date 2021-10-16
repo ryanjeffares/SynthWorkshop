@@ -49,7 +49,8 @@ public:
     
     void setMasterVolume(float);
 
-    const char* helloWorld() {
+    const char* helloWorld() 
+    {
         return "Hello World from MainComponent";
     }
 
@@ -69,7 +70,7 @@ private:
 
     std::unordered_map<MathsModuleType, std::function<float(float, float)>> mathsFunctionLookup;
 
-    float masterVolume = 0.5f;
+    float masterVolume;
     
     std::atomic<bool> modulesCreated;
     std::atomic<bool> shouldStop;
@@ -78,6 +79,7 @@ private:
     std::mutex mtx;
     
     bool firstRun = true;
+    bool threadNotified = false;
     
     double sampleRate;
     int samplesPerBlockExpected;

@@ -22,30 +22,40 @@ public:
     AudioMathsModule(std::unordered_map<int, float>& cvLookup, std::unordered_map<int, juce::AudioBuffer<float>>& audioLu, std::vector<int> leftIn, int rightIn, int output, AudioCV acv, const std::function<float(float, float)>& func)
         : cvParamLookup(cvLookup), audioLookup(audioLu), leftInputs(leftIn), rightInput(rightIn), outputIndex(output), audioCvIncoming(acv), currentFunction(func) {}
 
-    ~AudioMathsModule() {}
+    ~AudioMathsModule() = default;
 
-    void prepareToPlay(int spbe, double sr) override {
+    void prepareToPlay(int spbe, double sr) override 
+    {
         sampleRate = sr;
         samplesPerBlockExpected = spbe;
     }
 
-    void getNextAudioBlock(int numSamples, int numChannels) override {
+    void getNextAudioBlock(int numSamples, int numChannels) override 
+    {
         if (!readyToPlay || outputIndex == -1) return;
         auto write = audioLookup[outputIndex].getArrayOfWritePointers();
-        for (int sample = 0; sample < numSamples; sample++) {
-            for (int channel = 0; channel < numChannels; channel++) {
+        for (int sample = 0; sample < numSamples; sample++) 
+        {
+            for (int channel = 0; channel < numChannels; channel++) 
+            {
                 // checks are performed in C# so that the module will always have the necessary connections, this is just to avoid indexing the lookup at -1
                 
                 float affectingVal = rightInput == -1 ? 1 : (audioCvIncoming == AudioCV::Audio ? audioLookup[rightInput].getSample(channel, sample) : cvParamLookup[rightInput]);
                 
                 float inputSampleVal = 0.f;
-                for (auto l : leftInputs) {
+                for (auto l : leftInputs) 
+                {
                     inputSampleVal += audioLookup[l].getSample(channel, sample);
                 }
                 
                 write[channel][sample] = currentFunction(inputSampleVal, affectingVal);
             }
         }
+    }
+
+    void setReady(bool state) override 
+    {
+        readyToPlay = state;
     }
 
 private:

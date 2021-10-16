@@ -7,8 +7,20 @@
       "max": 400.0,
       "output_id": 0,
       "position": {
-        "x": 203.0,
-        "y": 197.0,
+        "x": -175.823547,
+        "y": 387.588257,
+        "z": 0.0
+      }
+    },
+    "control_module_2": {
+      "name": "div",
+      "type": "Knob",
+      "min": 1.0,
+      "max": 2.0,
+      "output_id": 1,
+      "position": {
+        "x": 171.764771,
+        "y": 305.8824,
         "z": 0.0
       }
     }
@@ -17,11 +29,11 @@
     "oscillator_module_1": {
       "type_string": "Saw",
       "type_int": 1,
-      "sound_output_to": 1,
-      "freq_input_from": 0,
+      "sound_output_to": 3,
+      "freq_input_from": 2,
       "position": {
-        "x": -98.0,
-        "y": 0.0,
+        "x": -25.8823853,
+        "y": -89.41174,
         "z": 0.0
       }
     }
@@ -30,19 +42,38 @@
     "io_module_1": {
       "type": "AudioOutput",
       "left_input_from": [
-        1
+        3
       ],
       "right_input_from": [
-        1
+        3
       ],
       "position": {
-        "x": -161.0,
-        "y": -315.0,
+        "x": -137.470642,
+        "y": -385.588257,
         "z": 0.0
       }
     }
   },
-  "maths_modules": {},
+  "maths_modules": {
+    "maths_module_1": {
+      "type_string": "CV",
+      "type_int": 2,
+      "operator": "Multiply",
+      "left_input_from": [
+        0
+      ],
+      "incoming_signal_type": "CV",
+      "right_input_from": [
+        1
+      ],
+      "output_id": 2,
+      "position": {
+        "x": -77.6470947,
+        "y": 131.764771,
+        "z": 0.0
+      }
+    }
+  },
   "number_boxes": {},
   "adsr_modules": {}
 }

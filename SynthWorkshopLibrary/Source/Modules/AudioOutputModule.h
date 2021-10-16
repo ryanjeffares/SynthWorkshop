@@ -19,35 +19,41 @@ class AudioOutputModule : juce::AudioSource
 public:
 
     AudioOutputModule(std::unordered_map<int, juce::AudioBuffer<float>>& lookup, std::vector<int> left, std::vector<int> right, int nc) 
-        : audioLookup(lookup), numChannels(nc), readyToPlay(false) {
+        : audioLookup(lookup), numChannels(nc), readyToPlay(false) 
+    {
         leftInputIndexes = left;
         rightInputIndexes = right;
     }
 
     ~AudioOutputModule() override {}
 
-    void prepareToPlay(int spbe, double sr) override {
+    void prepareToPlay(int spbe, double sr) override 
+    {
         sampleRate = sr;
         samplesPerBlockExpected = spbe;
     }
 
-    void releaseResources() override {
+    void releaseResources() override {}
 
-    }
-
-    void getNextAudioBlock(const juce::AudioSourceChannelInfo& bufferToFill) override {        
+    void getNextAudioBlock(const juce::AudioSourceChannelInfo& bufferToFill) override 
+    {        
         if (!readyToPlay) return;
         auto write = bufferToFill.buffer->getArrayOfWritePointers();        
-        for (auto channel = 0; channel < numChannels; channel++) {
-            for (int sample = 0; sample < bufferToFill.numSamples; sample++) {
-                switch (channel) {
+        for (auto channel = 0; channel < numChannels; channel++) 
+        {
+            for (int sample = 0; sample < bufferToFill.numSamples; sample++) 
+            {
+                switch (channel) 
+                {
                     case 0:
-                        for (auto i : leftInputIndexes) {
+                        for (auto i : leftInputIndexes) 
+                        {
                             write[channel][sample] += audioLookup[i].getSample(channel, sample);                        
                         }
                         break;
                     case 1:
-                        for (auto i : rightInputIndexes) {
+                        for (auto i : rightInputIndexes) 
+                        {
                             write[channel][sample] += audioLookup[i].getSample(channel, sample);
                         }
                         break;
@@ -56,7 +62,8 @@ public:
         }        
     }
 
-    void setReady(bool state) {
+    void setReady(bool state) 
+    {
         readyToPlay = state;
     }
 

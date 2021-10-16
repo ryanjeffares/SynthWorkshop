@@ -25,24 +25,27 @@ public:
         audioInputIndexes = inputIndexes;
     }
 
-    void prepareToPlay(int spbe, double sr) override {
+    void prepareToPlay(int spbe, double sr) override 
+    {
         samplesPerBlockExpected = spbe;
         sampleRate = sr;
         adsr.setSampleRate(sampleRate);
     }
 
-    void getNextAudioBlock(int numSamples, int numChannels) override {
+    void getNextAudioBlock(int numSamples, int numChannels) override 
+    {
         if (!readyToPlay || audioOutputIndex == -1) return;
         
         updateEnvelope();
         audioLookup[audioOutputIndex].clear();
         auto write = audioLookup[audioOutputIndex].getArrayOfWritePointers();
         
-        for (int sample = 0; sample < numSamples; sample++) {
-            
+        for (int sample = 0; sample < numSamples; sample++) 
+        {            
             float value = adsr.getNextSample();
             
-            for (int channel = 0; channel < numChannels; channel++) {
+            for (int channel = 0; channel < numChannels; channel++) 
+            {
                 for (const int& i : audioInputIndexes) {
                     write[channel][sample] += (audioLookup[i].getSample(channel, sample) * value);
                 }
@@ -50,20 +53,31 @@ public:
         }
     }
 
+    void setReady(bool state) override 
+    {
+        readyToPlay = state;
+    }
+
 private:
     
-    void updateEnvelope() {
+    void updateEnvelope()
+    {
         currentParameters.attack = cvParamLookup[attackIndex];
         currentParameters.decay = cvParamLookup[decayIndex];
         currentParameters.sustain = cvParamLookup[sustainIndex];
         currentParameters.release = cvParamLookup[releaseIndex];
+
         adsr.setParameters(currentParameters);
-        if (triggerInput != -1 && noteOnState != cvParamLookup[triggerInput]) {
+
+        if (triggerInput != -1 && noteOnState != cvParamLookup[triggerInput]) 
+        {
             noteOnState = cvParamLookup[triggerInput];
-            if (noteOnState) { 
+            if (noteOnState) 
+            { 
                 adsr.noteOn();                
             }
-            else { 
+            else 
+            { 
                 adsr.noteOff();
             }
         }

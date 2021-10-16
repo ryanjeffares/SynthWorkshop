@@ -15,13 +15,17 @@
 #include <memory>
 #include <unordered_map>
 #include <utility>
+#include <mutex>
+#include <condition_variable>
+
+#include "../Include/json.h"
 
 #include "Modules/OscillatorModule.h"
 #include "Modules/AudioOutputModule.h"
 #include "Modules/MathsModule.h"
 #include "Modules/AudioMathsModule.h"
 #include "Modules/ADSRModule.h"
-#include "../Include/json.h"
+#include "Modules/Module.h"
 
 using namespace nlohmann;
 
@@ -36,12 +40,14 @@ public:
     void getNextAudioBlock(const juce::AudioSourceChannelInfo& bufferToFill) override;
     void releaseResources() override;
 
-    bool createModulesFromJson(const char* jsonText);
+    const char* createModulesFromJson(const char* jsonText);
 
     void stopAudio();
 
     void setCvParam(int index, float value);
     float getCvParam(int index);
+    
+    void setMasterVolume(float);
 
     const char* helloWorld() {
         return "Hello World from MainComponent";
@@ -55,19 +61,24 @@ private:
     void createOscillatorModule(const json& values);
     void createAdsrModule(const json& values);
 
-    std::vector<std::unique_ptr<OscillatorModule>> oscillatorModules;
     std::vector<std::unique_ptr<AudioOutputModule>> audioOutputModules;
-    std::vector<std::unique_ptr<MathsModule>> mathsModules;
-    std::vector<std::unique_ptr<AudioMathsModule>> audioMathsModules;    
-    std::vector<std::unique_ptr<ADSRModule>> adsrModules;    
+    std::vector<std::unique_ptr<Module>> processorModules;
 
     std::unordered_map<int, float> cvParamLookup;   // might have to make this a buffer/array so we can do maths per sample 
     std::unordered_map<int, juce::AudioBuffer<float>> audioLookup;
 
     std::unordered_map<MathsModuleType, std::function<float(float, float)>> mathsFunctionLookup;
 
-    bool modulesCreated;
-    bool shouldStop = false;
+    float masterVolume = 0.5f;
+    
+    std::atomic<bool> modulesCreated;
+    std::atomic<bool> shouldStop;
+    std::atomic<bool> moduleCreationCanProceed;
+    std::condition_variable cv;
+    std::mutex mtx;
+    
+    bool firstRun = true;
+    
     double sampleRate;
     int samplesPerBlockExpected;
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MainComponent)

@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
 using UnityEngine;
 using UnityEngine.UI;
@@ -18,6 +19,7 @@ public class DesignerUIController : MonoBehaviour
     [SerializeField] private GameObject mainContent;
     [SerializeField] private GameObject panelSliderPrefab, panelButtonPrefab, paramSliderPanelPrefab, panelTogglePrefab;
     [SerializeField] private GameObject errorScrollView, errorContent, errorPrefab;
+    [SerializeField] private Slider masterVolume;
 
     [SerializeField] private GameObject oscillatorModulePrefab, ioModulePrefab, knobModulePrefab, mathsModulePrefab, 
         audioMathsModulePrefab, mapModulePrefab, adsrModulePrefab, numberBoxPrefab, buttonModulePrefab, toggleModulePrefab;
@@ -99,6 +101,8 @@ public class DesignerUIController : MonoBehaviour
             var path = EditorUtility.OpenFilePanel("Choose .json file to import.", Path.Combine(Application.dataPath, "ArrangementJsons"), "json");
             ImportArrangement(path);
         });
+        
+        masterVolume.onValueChanged.AddListener(SynthWorkshopLibrary.SetMasterVolume);
     }
 
     private void Start()
@@ -226,7 +230,7 @@ public class DesignerUIController : MonoBehaviour
                     var contents = module.First as JObject;
                     switch (category.Key)
                     {
-                        case "ControlModules":
+                        case "control_modules":
                         {
                             var type = contents["type"].ToString();
                             switch (type)
@@ -250,29 +254,24 @@ public class DesignerUIController : MonoBehaviour
                             }
                             break;
                         }
-                        case "OscillatorModules":
+                        case "oscillator_modules":
                         {
-                            OscillatorButtonCallback(oscillatorButtons[contents["type"].ToString() switch
-                            {
-                                "Sine" => 0,
-                                "Saw" => 1,
-                                "Pulse" => 2,
-                                "Tri" => 3
-                            }]);
+                            OscillatorButtonCallback(oscillatorButtons[contents["type_int"].ToObject<int>()]);
                             break;
                         }
-                        case "IOModules":
+                        case "io_modules":
                         {
                             IOButtonCallback(ioButtons[contents["type"].ToString() switch
                             {
                                 "AudioOutput" => 0,
                                 "AudioInput" => 1,
                                 "CVOutput" => 2,
-                                "CVInput" => 3
+                                "CVInput" => 3,
+                                _ => throw new ArgumentException(contents["type"].ToString())
                             }]);
                             break;
                         }
-                        case "MathsModules":
+                        case "maths_modules":
                         {
                             MathsButtonCallback(mathsButtons[contents["operator"].ToString() switch
                             {
@@ -292,18 +291,19 @@ public class DesignerUIController : MonoBehaviour
                                 "Mod" => 13, 
                                 "Map" => 14, 
                                 "Mtof" => 15, 
-                                "Ftom" => 16
-                            } + (contents["type"].ToString() == "Audio" ? 17 : 0)]);
+                                "Ftom" => 16,
+                                _ => throw new ArgumentException(contents["operator"].ToString())
+                            } + (contents["type_string"].ToString() == "Audio" ? 17 : 0)]);
                             break;
                         }
-                        case "NumberBoxes":
+                        case "number_boxes":
                         {
                             NumberBoxButtonCallback();
                             _instantiatedModules.Last().GetComponent<NumberModule>()
-                                .SetNumber(contents["initialValue"].ToObject<double>());
+                                .SetNumber(contents["initial_value"].ToObject<double>());
                             break;
                         }
-                        case "ADSRModules":
+                        case "adsr_modules":
                         {
                             UtilButtonCallback(utilButtons[0]);   
                             break;
@@ -372,12 +372,12 @@ public class DesignerUIController : MonoBehaviour
 
         var json = new Dictionary<string, Dictionary<string, Dictionary<string, object>>>
         {
-            {"ControlModules", new Dictionary<string, Dictionary<string, object>>()},
-            {"OscillatorModules", new Dictionary<string, Dictionary<string, object>>()},
-            {"IOModules", new Dictionary<string, Dictionary<string, object>>()},
-            {"MathsModules", new Dictionary<string, Dictionary<string, object>>()},
-            {"NumberBoxes", new Dictionary<string, Dictionary<string, object>>()},
-            {"ADSRModules", new Dictionary<string, Dictionary<string, object>>()}
+            {"control_modules", new Dictionary<string, Dictionary<string, object>>()},
+            {"oscillator_modules", new Dictionary<string, Dictionary<string, object>>()},
+            {"io_modules", new Dictionary<string, Dictionary<string, object>>()},
+            {"maths_modules", new Dictionary<string, Dictionary<string, object>>()},
+            {"number_boxes", new Dictionary<string, Dictionary<string, object>>()},
+            {"adsr_modules", new Dictionary<string, Dictionary<string, object>>()}
         };
         var usedModules = _instantiatedModules.Where(m => m.GetComponent<ModuleParent>().CheckIfUsed())
             .Select(m => m.GetComponent<ModuleParent>()).ToList();
@@ -446,33 +446,33 @@ public class DesignerUIController : MonoBehaviour
             switch (type)
             {
                 case ModuleType.KnobModule:
-                    CreateKnobJToken(ref controlModuleCount, json["ControlModules"], module as KnobModuleController, 
+                    CreateKnobJToken(ref controlModuleCount, json["control_modules"], module as KnobModuleController, 
                         usedOutputs);
                     break;
                 case ModuleType.ButtonModule:
-                    CreateButtonJToken(ref controlModuleCount, json["ControlModules"], module as ButtonModuleController, 
+                    CreateButtonJToken(ref controlModuleCount, json["control_modules"], module as ButtonModuleController, 
                         usedOutputs);
                     break;
                 case ModuleType.ToggleModule:
-                    CreateToggleJToken(ref controlModuleCount, json["ControlModules"], module as ToggleModuleController,
+                    CreateToggleJToken(ref controlModuleCount, json["control_modules"], module as ToggleModuleController,
                         usedOutputs);
                     break;
                 case ModuleType.OscillatorModule:
-                    CreateOscillatorJToken(ref oscillatorModuleCount, json["OscillatorModules"],
+                    CreateOscillatorJToken(ref oscillatorModuleCount, json["oscillator_modules"],
                         module as OscillatorModuleController, usedOutputs);
                     break;
                 case ModuleType.IOModule:
-                    CreateIOJToken(ref ioModuleCount, json["IOModules"], module as IOModuleController, usedOutputs);
+                    CreateIOJToken(ref ioModuleCount, json["io_modules"], module as IOModuleController, usedOutputs);
                     break;
                 case ModuleType.MathsModule:
-                    CreateMathsJToken(ref mathsModuleCount, json["MathsModules"], module as MathsModuleController, 
+                    CreateMathsJToken(ref mathsModuleCount, json["maths_modules"], module as MathsModuleController, 
                         usedOutputs);
                     break;
                 case ModuleType.NumberBox:
-                    CreateNumberBox(ref numberBoxCount, json["NumberBoxes"], module as NumberModule, usedOutputs);
+                    CreateNumberBox(ref numberBoxCount, json["number_boxes"], module as NumberModule, usedOutputs);
                     break;
                 case ModuleType.ADSR:
-                    CreateADSRJToken(ref adsrCount, json["ADSRModules"], module as ADSRModuleController, usedOutputs);
+                    CreateADSRJToken(ref adsrCount, json["adsr_modules"], module as ADSRModuleController, usedOutputs);
                     break;
             }
         }
@@ -488,7 +488,13 @@ public class DesignerUIController : MonoBehaviour
 
     private void PlayArrangement(string jsonText, List<CvParam> namedParams)
     {
-        Debug.Log(SynthWorkshopLibrary.CreateModulesFromJson(jsonText));
+        var result = SynthWorkshopLibrary.CreateModulesFromJson(jsonText);
+
+        if (result != "Success")
+        {
+            Debug.Log(result);
+            return;
+        }
 
         foreach (var s in _instantiatedParamControls)
         {
@@ -528,7 +534,7 @@ public class DesignerUIController : MonoBehaviour
     private void CreateNumberBox(ref int numberBoxCount, Dictionary<string, Dictionary<string, object>> json, 
         NumberModule module, Dictionary<ModuleConnectorController, int> usedOutputs)
     {
-        var modName = $"NumberBox{numberBoxCount}";
+        var modName = $"number_box_{numberBoxCount}";
         var mod = module.CreateJsonEntry(usedOutputs);
         json.Add(modName, mod);
         numberBoxCount++;
@@ -537,7 +543,7 @@ public class DesignerUIController : MonoBehaviour
     private void CreateIOJToken(ref int ioModuleCount, Dictionary<string, Dictionary<string, object>> json, 
         IOModuleController module, Dictionary<ModuleConnectorController, int> outputLookup)
     {
-        var modName = $"IOModule{ioModuleCount}";
+        var modName = $"io_module_{ioModuleCount}";
         var mod = new Dictionary<string, object>
         {
             {"type", $"{module.AudioCv}{module.InputOutput}"}
@@ -551,10 +557,11 @@ public class DesignerUIController : MonoBehaviour
         OscillatorModuleController module, Dictionary<ModuleConnectorController, int> outputLookup)
     {
         var oscType = module.Type;
-        var modName = $"OscillatorModule{oscillatorModuleCount}";
+        var modName = $"oscillator_module_{oscillatorModuleCount}";
         var mod = new Dictionary<string, object>
         {
-            {"type", oscType.ToString()}
+            {"type_string", oscType.ToString() },
+            {"type_int", (int)oscType }
         };
         module.CreateJsonEntry(mod, outputLookup);
         oscillatorModuleCount++;
@@ -565,14 +572,14 @@ public class DesignerUIController : MonoBehaviour
         KnobModuleController module, Dictionary<ModuleConnectorController, int> outputLookup)
     {
         var (min, max) = module.GetRange();
-        var modName = $"ControlModule{controlModuleCount}";
+        var modName = $"control_module_{controlModuleCount}";
         var mod = new Dictionary<string, object>
         {
             {"name", module.Label },
             {"type", "Knob"},
             {"min", min},
             {"max", max},
-            {"outputId", module.GetOutputIdOfConnector(outputLookup)},
+            {"output_id", module.GetOutputIdOfConnector(outputLookup)},
             {"position", module.transform.localPosition}
         };
         json.Add(modName, mod);
@@ -582,12 +589,12 @@ public class DesignerUIController : MonoBehaviour
     private void CreateButtonJToken(ref int controlModuleCount, Dictionary<string, Dictionary<string, object>> jsonDict, 
         ButtonModuleController module, Dictionary<ModuleConnectorController, int> usedOutputs)
     {
-        var modName = $"ControlModule{controlModuleCount}";
+        var modName = $"control_module_{controlModuleCount}";
         var mod = new Dictionary<string, object>
         {
             {"name", module.Label},
             {"type", "Button"},
-            {"outputId", module.GetOutputIdOfConnector(usedOutputs)},
+            {"output_id", module.GetOutputIdOfConnector(usedOutputs)},
             {"position", module.transform.localPosition}
         };
         jsonDict.Add(modName, mod);
@@ -597,12 +604,12 @@ public class DesignerUIController : MonoBehaviour
     private void CreateToggleJToken(ref int controlModuleCount, Dictionary<string, Dictionary<string, object>> jsonDict,
         ToggleModuleController module, Dictionary<ModuleConnectorController, int> usedOutputs)
     {
-        var modName = $"ControlModule{controlModuleCount}";
+        var modName = $"control_module_{controlModuleCount}";
         var mod = new Dictionary<string, object>
         {
             {"name", module.Label},
             {"type", "Toggle"},
-            {"outputId", module.GetOutputIdOfConnector(usedOutputs)},
+            {"output_id", module.GetOutputIdOfConnector(usedOutputs)},
             {"position", module.transform.localPosition}
         };
         jsonDict.Add(modName, mod);
@@ -611,10 +618,11 @@ public class DesignerUIController : MonoBehaviour
     private void CreateMathsJToken(ref int mathsModuleCount, Dictionary<string, Dictionary<string, object>> json, 
         MathsModuleController module, Dictionary<ModuleConnectorController, int> outputLookup)
     {
-        var modName = $"MathsModule{mathsModuleCount}";
+        var modName = $"maths_module_{mathsModuleCount}";
         var mod = new Dictionary<string, object>
         {
-            {"type", module.audioCv.ToString() }
+            {"type_string", module.audioCv.ToString() },
+            {"type_int", (int)module.mathsSign }
         };
         module.CreateJsonEntry(mod, outputLookup);
         json.Add(modName, mod);
@@ -624,7 +632,7 @@ public class DesignerUIController : MonoBehaviour
     private void CreateADSRJToken(ref int adsrCount, Dictionary<string, Dictionary<string, object>> json,
         ADSRModuleController module, Dictionary<ModuleConnectorController, int> outputLookup)
     {
-        var modName = $"ADSRModule{adsrCount}";
+        var modName = $"adsr_module_{adsrCount}";
         var mod = new Dictionary<string, object>();
         module.CreateJsonEntry(mod, outputLookup);
         json.Add(modName, mod);
@@ -644,7 +652,7 @@ public class DesignerUIController : MonoBehaviour
             return false; 
         }
         errorScrollView.SetActive(true);
-        if (_errors.Count > 0)
+        if (_errors.Any())
         {
             foreach (var e in _errors)
             {

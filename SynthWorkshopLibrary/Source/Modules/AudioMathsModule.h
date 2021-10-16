@@ -13,8 +13,9 @@
 #include <unordered_map>
 #include <functional>
 #include "../Typedefs.h"
+#include "Module.h"
 
-class AudioMathsModule
+class AudioMathsModule : public Module
 {
 public:
 
@@ -23,16 +24,12 @@ public:
 
     ~AudioMathsModule() {}
 
-    void prepareToPlay(int spbe, double sr) {
+    void prepareToPlay(int spbe, double sr) override {
         sampleRate = sr;
         samplesPerBlockExpected = spbe;
     }
 
-    void releaseResources() {
-
-    }
-
-    void getNextAudioBlock(int numChannels, int numSamples) {
+    void getNextAudioBlock(int numSamples, int numChannels) override {
         if (!readyToPlay || outputIndex == -1) return;
         auto write = audioLookup[outputIndex].getArrayOfWritePointers();
         for (int sample = 0; sample < numSamples; sample++) {
@@ -49,10 +46,6 @@ public:
                 write[channel][sample] = currentFunction(inputSampleVal, affectingVal);
             }
         }
-    }
-
-    void setReady(bool state) {
-        readyToPlay = state;
     }
 
 private:

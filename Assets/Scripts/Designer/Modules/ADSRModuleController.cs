@@ -45,20 +45,20 @@ public class ADSRModuleController : ModuleParent
     {
         if (connectors.First().isConnected)
         {
-            jsonDict.Add("inputFrom", connectors.First().connectedModuleConnectors.Select(c => outputLookup[c]));
+            jsonDict.Add("input_from", connectors.First().connectedModuleConnectors.Select(c => outputLookup[c]));
         }
-        jsonDict.Add("attackFrom", outputLookup[connectors[1].sourceConnector]);
-        jsonDict.Add("decayFrom", outputLookup[connectors[2].sourceConnector]);
-        jsonDict.Add("sustainFrom", outputLookup[connectors[3].sourceConnector]);
-        jsonDict.Add("releaseFrom", outputLookup[connectors[4].sourceConnector]);
+        jsonDict.Add("attack_from", outputLookup[connectors[1].sourceConnector]);
+        jsonDict.Add("decay_from", outputLookup[connectors[2].sourceConnector]);
+        jsonDict.Add("sustain_from", outputLookup[connectors[3].sourceConnector]);
+        jsonDict.Add("release_from", outputLookup[connectors[4].sourceConnector]);
         if (connectors[5].isConnected)
         {
-            jsonDict.Add("triggerInput", outputLookup[connectors[5].sourceConnector]);
+            jsonDict.Add("trigger_input", outputLookup[connectors[5].sourceConnector]);
         }
 
         if (connectors.Last().isConnected)
         {
-            jsonDict.Add("outputTo", outputLookup[connectors.Last()]);
+            jsonDict.Add("output_to", outputLookup[connectors.Last()]);
         }
         jsonDict.Add("position", transform.localPosition);
     }

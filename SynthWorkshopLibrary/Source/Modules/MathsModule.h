@@ -12,8 +12,9 @@
 #include <unordered_map>
 #include <functional>
 #include "../Typedefs.h"
+#include "Module.h"
 
-class MathsModule
+class MathsModule : public Module
 {
 public:    
 
@@ -28,7 +29,7 @@ public:
     ~MathsModule() {}
 
     void calculateValues() {
-        if (outputIndex == -1) return;
+        if (outputIndex == -1 || !readyToPlay) return;
         
         float left = 0.f;
         float right = 0.f;

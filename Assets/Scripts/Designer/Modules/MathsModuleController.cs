@@ -111,39 +111,33 @@ public class MathsModuleController : ModuleParent
     public void CreateJsonEntry(Dictionary<string, object> jsonDict, Dictionary<ModuleConnectorController, int> outputLookup)
     {
         jsonDict.Add("operator", mathsSign.ToString());
+        
         if (connectors[0].isConnected)
         {
-            jsonDict.Add("LeftInputFrom", connectors[0].connectedModuleConnectors.Select(c => outputLookup[c]));
-            //if (audioCv == AudioCV.Audio)
-            //{
-            //}
-            //else
-            //{
-            //    jsonDict.Add("LeftInputFrom", outputLookup[connectors[0].sourceConnector]);
-            //}
+            jsonDict.Add("left_input_operator", connectors[0].connectedModuleConnectors.Select(c => outputLookup[c]));
         }  
         
-        jsonDict.Add("IncomingSignalType", _incomingSignalType.ToString());
+        jsonDict.Add("incoming_signal_type", _incomingSignalType.ToString());
         if (mathsSign == MathsSign.Map)
         {
-            jsonDict.Add("minIn", outputLookup[connectors[1].sourceConnector]);
-            jsonDict.Add("maxIn", outputLookup[connectors[2].sourceConnector]);
-            jsonDict.Add("minOut", outputLookup[connectors[3].sourceConnector]);
-            jsonDict.Add("maxOut", outputLookup[connectors[4].sourceConnector]);
+            jsonDict.Add("min_in", outputLookup[connectors[1].sourceConnector]);
+            jsonDict.Add("max_in", outputLookup[connectors[2].sourceConnector]);
+            jsonDict.Add("min_out", outputLookup[connectors[3].sourceConnector]);
+            jsonDict.Add("max_out", outputLookup[connectors[4].sourceConnector]);
             if (outputLookup.ContainsKey(connectors[5]))
             {
-                jsonDict.Add("outputId", outputLookup[connectors[5]]);
+                jsonDict.Add("output_id", outputLookup[connectors[5]]);
             }
         }
         else
         {
             if (connectors[1].isConnected) 
             { 
-                jsonDict.Add("RightInputFrom", connectors[1].connectedModuleConnectors.Select(c => outputLookup[c])); 
+                jsonDict.Add("right_input_from", connectors[1].connectedModuleConnectors.Select(c => outputLookup[c])); 
             }
             if (outputLookup.ContainsKey(connectors[2]))
             {
-                jsonDict.Add("outputId", outputLookup[connectors[2]]);
+                jsonDict.Add("output_id", outputLookup[connectors[2]]);
             }   
         }
         jsonDict.Add("position", transform.localPosition);

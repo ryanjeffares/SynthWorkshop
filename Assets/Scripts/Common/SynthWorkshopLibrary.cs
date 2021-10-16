@@ -26,7 +26,7 @@ static class SynthWorkshopLibrary
     private static extern void stopAudio(IntPtr mc);
 
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
-    private static extern bool createModulesFromJson(IntPtr mc, string jsonText);
+    private static extern string createModulesFromJson(IntPtr mc, string jsonText);
 
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
     private static extern void setCvParam(IntPtr mc, int index, float value);
@@ -34,9 +34,12 @@ static class SynthWorkshopLibrary
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
     private static extern float getCvParam(IntPtr mc, int index);
 
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    private static extern void setMasterVolume(IntPtr mc, float value);
+
     private static readonly IntPtr MainComponent;
 
-    public static bool IsLoaded { get; }
+    private static readonly bool IsLoaded;
 
     static SynthWorkshopLibrary()
     {
@@ -45,7 +48,7 @@ static class SynthWorkshopLibrary
         IsLoaded = true;        
     }
 
-    public static void Shutdown()
+    private static void Shutdown()
     {
         if (!IsLoaded) return;
         shutdown(MainComponent);
@@ -72,7 +75,7 @@ static class SynthWorkshopLibrary
         stopAudio(MainComponent);
     }
 
-    public static bool CreateModulesFromJson(string jsonText)
+    public static string CreateModulesFromJson(string jsonText)
     {
         return createModulesFromJson(MainComponent, jsonText);
     }
@@ -85,6 +88,11 @@ static class SynthWorkshopLibrary
     public static float GetCvParam(int index)
     {
         return getCvParam(MainComponent, index);
+    }
+
+    public static void SetMasterVolume(float value)
+    {
+        setMasterVolume(MainComponent, value);
     }
 }
 

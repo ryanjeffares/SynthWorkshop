@@ -11,7 +11,7 @@
 #pragma once
 
 enum class MathsModuleType {
-    Plus, Minus, Multiply, Divide, Mod, Sin, Cos, Tan, Asin, Acos, Atan, Abs, Exp, Int, Map, Mtof, Ftom
+    Plus, Minus, Multiply, Divide, Sin, Cos, Tan, Asin, Acos, Atan, Abs, Exp, Int, Mod, Map, Mtof, Ftom
 };
 
 enum class AudioCV {
@@ -19,6 +19,6 @@ enum class AudioCV {
 };
 
 enum class OscillatorType {
-    Saw, Pulse, Sine, Tri
+    Sine, Saw, Pulse, Tri
 };
 

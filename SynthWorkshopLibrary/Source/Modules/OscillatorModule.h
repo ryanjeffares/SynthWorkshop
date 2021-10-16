@@ -13,8 +13,9 @@
 #include <unordered_map>
 #include <functional>
 #include "../Typedefs.h"
+#include "Module.h"
 
-class OscillatorModule
+class OscillatorModule : public Module
 {
 public:    
 
@@ -25,12 +26,12 @@ public:
 
     ~OscillatorModule() {}
 
-    void prepareToPlay(int samplesPerBlock, double sr) {
+    void prepareToPlay(int samplesPerBlock, double sr) override {
         sampleRate = sr;
         samplesPerBlockExpected = samplesPerBlock;
     }
 
-    void getNextAudioBlock(int numSamples, int numChannels) {
+    void getNextAudioBlock(int numSamples, int numChannels) override {
         if (!readyToPlay || frequencyInIndex == -1) return;
 
         frequency = cvParamLookup[frequencyInIndex];
@@ -51,20 +52,12 @@ public:
         cvParamLookup[cvOutIndex] = value;  // not good - this lookup should be a buffer/array so we can do per sample
     }
 
-    void releaseResources() {
-
-    }
-
-    const OscillatorType& getType() {
+    const OscillatorType& getType() const {
         return type;
     }
 
     void setType(OscillatorType newType) {
         type = newType;
-    }
-
-    void setReady(bool state) {
-        readyToPlay = state;
     }
 
 private:

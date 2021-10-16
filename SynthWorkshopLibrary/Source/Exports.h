@@ -43,7 +43,7 @@ extern "C" {
         ((MainComponent*)mc)->stopAudio();
     }
 
-    EXPORT bool createModulesFromJson(void* mc, const char* jsonText) {
+    EXPORT const char* createModulesFromJson(void* mc, const char* jsonText) {
         return ((MainComponent*)mc)->createModulesFromJson(jsonText);
     }
 
@@ -53,5 +53,9 @@ extern "C" {
 
     EXPORT float getCvParam(void* mc, int idx) {
         return ((MainComponent*)mc)->getCvParam(idx);
+    }
+
+    EXPORT void setMasterVolume(void* mc, float value) {
+        ((MainComponent*)mc)->setMasterVolume(value);
     }
 }

@@ -63,9 +63,9 @@ public class NumberModule : ModuleParent
         _ioIndex = outputLookup[connectors[0].isConnected ? connectors[0].sourceConnector : connectors[1]];
         if (connectors[1].isConnected)
         {
-            res.Add("outputTo", _ioIndex);
+            res.Add("output_to", _ioIndex);
         }
-        res.Add("initialValue", _currentValue);
+        res.Add("initial_value", _currentValue);
         res.Add("position", transform.localPosition);
         return res;
     }

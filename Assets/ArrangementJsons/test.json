@@ -1,72 +1,48 @@
 {
-  "ControlModules": {
-    "ControlModule1": {
-      "name": "freq",
+  "control_modules": {
+    "control_module_1": {
+      "name": "f",
       "type": "Knob",
-      "min": 36.0,
-      "max": 48.0,
-      "outputId": 1,
+      "min": 20.0,
+      "max": 400.0,
+      "output_id": 0,
       "position": {
-        "x": 478.0,
-        "y": 154.0,
+        "x": 203.0,
+        "y": 197.0,
         "z": 0.0
       }
     }
   },
-  "OscillatorModules": {
-    "OscillatorModule1": {
-      "type": "Saw",
-      "SoundOutputTo": 0,
-      "FreqInputFrom": 2,
+  "oscillator_modules": {
+    "oscillator_module_1": {
+      "type_string": "Saw",
+      "type_int": 1,
+      "sound_output_to": 1,
+      "freq_input_from": 0,
       "position": {
-        "x": 0.0,
+        "x": -98.0,
         "y": 0.0,
         "z": 0.0
       }
     }
   },
-  "IOModules": {
-    "IOModule1": {
+  "io_modules": {
+    "io_module_1": {
       "type": "AudioOutput",
-      "LeftInputFrom": [
-        0
-      ],
-      "RightInputFrom": [
-        0
-      ],
-      "position": {
-        "x": -124.0,
-        "y": -329.0,
-        "z": 0.0
-      }
-    }
-  },
-  "MathsModules": {
-    "MathsModule1": {
-      "type": "CV",
-      "operator": "Mtof",
-      "LeftInputFrom": [
+      "left_input_from": [
         1
       ],
-      "IncomingSignalType": "Audio",
-      "outputId": 2,
+      "right_input_from": [
+        1
+      ],
       "position": {
-        "x": -52.0,
-        "y": 300.0,
+        "x": -161.0,
+        "y": -315.0,
         "z": 0.0
       }
     }
   },
-  "NumberBoxes": {
-    "NumberBox1": {
-      "outputTo": 1,
-      "initialValue": 30.042858123779297,
-      "position": {
-        "x": 135.0,
-        "y": 393.0,
-        "z": 0.0
-      }
-    }
-  },
-  "ADSRModules": {}
+  "maths_modules": {},
+  "number_boxes": {},
+  "adsr_modules": {}
 }

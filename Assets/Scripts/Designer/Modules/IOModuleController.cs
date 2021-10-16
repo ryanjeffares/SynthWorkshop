@@ -114,8 +114,8 @@ public class IOModuleController : ModuleParent
             {
                 var leftInputNums = connectors[0].connectedModuleConnectors.Select(c => outputLookup[c]);
                 var rightInputNums = connectors[1].connectedModuleConnectors.Select(c => outputLookup[c]);
-                jsonDict.Add("LeftInputFrom", leftInputNums);
-                jsonDict.Add("RightInputFrom", rightInputNums);
+                jsonDict.Add("left_input_from", leftInputNums);
+                jsonDict.Add("right_input_from", rightInputNums);
             }
         }
         jsonDict.Add("position", transform.localPosition);

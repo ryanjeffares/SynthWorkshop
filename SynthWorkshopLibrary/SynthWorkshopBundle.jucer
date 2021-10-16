@@ -14,6 +14,7 @@
         <FILE id="P6Jw5L" name="AudioOutputModule.h" compile="0" resource="0"
               file="Source/Modules/AudioOutputModule.h"/>
         <FILE id="dhPSpp" name="MathsModule.h" compile="0" resource="0" file="Source/Modules/MathsModule.h"/>
+        <FILE id="OJipmS" name="Module.h" compile="0" resource="0" file="Source/Modules/Module.h"/>
         <FILE id="CtkmQL" name="OscillatorModule.h" compile="0" resource="0"
               file="Source/Modules/OscillatorModule.h"/>
       </GROUP>

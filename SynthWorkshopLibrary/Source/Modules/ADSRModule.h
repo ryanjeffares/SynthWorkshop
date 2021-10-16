@@ -12,8 +12,9 @@
 #include <JuceHeader.h>
 #include <vector>
 #include <unordered_map>
+#include "Module.h"
 
-class ADSRModule
+class ADSRModule : public Module
 {
 public:
 
@@ -24,33 +25,29 @@ public:
         audioInputIndexes = inputIndexes;
     }
 
-    void prepareToPlay(int spbe, double sr) {
+    void prepareToPlay(int spbe, double sr) override {
         samplesPerBlockExpected = spbe;
         sampleRate = sr;
         adsr.setSampleRate(sampleRate);
     }
 
-    void releaseResources() {
-
-    }
-
-    void getNextAudioBlock() {
+    void getNextAudioBlock(int numSamples, int numChannels) override {
         if (!readyToPlay || audioOutputIndex == -1) return;
+        
         updateEnvelope();
         audioLookup[audioOutputIndex].clear();
         auto write = audioLookup[audioOutputIndex].getArrayOfWritePointers();
-        for (int sample = 0; sample < audioLookup[audioOutputIndex].getNumSamples(); sample++) {
+        
+        for (int sample = 0; sample < numSamples; sample++) {
+            
             float value = adsr.getNextSample();
-            for (int channel = 0; channel < audioLookup[audioOutputIndex].getNumChannels(); channel++) {
+            
+            for (int channel = 0; channel < numChannels; channel++) {
                 for (const int& i : audioInputIndexes) {
                     write[channel][sample] += (audioLookup[i].getSample(channel, sample) * value);
                 }
             }
         }
-    }
-
-    void setReady(bool status) {
-        readyToPlay = status;
     }
 
 private:

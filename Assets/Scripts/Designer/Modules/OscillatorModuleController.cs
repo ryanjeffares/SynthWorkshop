@@ -75,20 +75,9 @@ public class OscillatorModuleController : ModuleParent
         Type = t;
     }
 
-    public Dictionary<string, bool> GetConnectorStates()
-    {
-        return new Dictionary<string, bool>
-        {
-            {"SoundOutTo", connectors[0].isConnected},
-            {"CVOutTo", connectors[1].isConnected},
-            {"FreqInputFrom", connectors[2].isConnected},
-            {"PWInputFrom", connectors[4].isConnected}
-        };
-    }
-
     public void CreateJsonEntry(Dictionary<string, object> jsonDict, Dictionary<ModuleConnectorController, int> outputLookup)
     {
-        var propertyNames = new[] { "SoundOutputTo", "CVOutTo", "FreqInputFrom", "PWInputFrom" };
+        var propertyNames = new[] { "sound_output_to", "cv_out_to", "freq_input_from", "pw_input_from" };
         for(int i = 0; i < connectors.Count; i++)
         {
             if (!connectors[i].isConnected) continue;

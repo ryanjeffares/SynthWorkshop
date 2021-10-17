@@ -2,21 +2,37 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.Events;
 
 public class KnobModuleController : ModuleParent
 {
     [SerializeField] private InputField minInput, maxInput, labelInput;
 
     public double min, max;
-
     public string Label { get; private set; }
+
+    public UnityEvent<string> onLabelChanged = new UnityEvent<string>();
+    public UnityEvent<double> onMinChanged = new UnityEvent<double>();
+    public UnityEvent<double> onMaxChanged = new UnityEvent<double>();
 
     protected override void ChildAwake()
     {
         moduleType = ModuleType.KnobModule;
-        minInput.onValueChanged.AddListener(val => min = double.Parse(val));
-        maxInput.onValueChanged.AddListener(val => max = double.Parse(val));
-        labelInput.onValueChanged.AddListener(val => Label = val);
+        minInput.onValueChanged.AddListener(val =>
+        {
+            min = double.Parse(val);
+            onMinChanged.Invoke(min);
+        });
+        maxInput.onValueChanged.AddListener(val =>
+        {
+            max = double.Parse(val);
+            onMaxChanged.Invoke(max);
+        });
+        labelInput.onValueChanged.AddListener(val =>
+        {
+            Label = val;
+            onLabelChanged.Invoke(Label);
+        });
     }
 
     public void SetValues(string label, double mn, double mx)

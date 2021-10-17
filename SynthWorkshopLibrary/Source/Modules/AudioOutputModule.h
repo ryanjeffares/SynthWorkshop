@@ -18,9 +18,10 @@ class AudioOutputModule : juce::AudioSource
 {
 public:
 
-    AudioOutputModule(std::unordered_map<int, juce::AudioBuffer<float>>& lookup, std::vector<int> left, std::vector<int> right, int nc) 
+    AudioOutputModule(std::unordered_map<int, juce::AudioBuffer<float>>& lookup, std::vector<int> left, std::vector<int> right, int nc, int id) 
         : audioLookup(lookup), numChannels(nc), readyToPlay(false) 
     {
+        moduleId = id;
         leftInputIndexes = left;
         rightInputIndexes = right;
     }
@@ -67,11 +68,19 @@ public:
         readyToPlay = state;
     }
 
+    int getModuleId() const 
+    { 
+        return moduleId; 
+    }
+
 private:
     
     std::unordered_map<int, juce::AudioBuffer<float>>& audioLookup;
     std::vector<int> leftInputIndexes, rightInputIndexes;
+
     int samplesPerBlockExpected, numChannels;
+    int moduleId;
+
     double sampleRate;
     bool readyToPlay;
 

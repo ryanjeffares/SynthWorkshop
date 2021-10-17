@@ -29,10 +29,16 @@ static class SynthWorkshopLibrary
     private static extern bool createModulesFromJson(IntPtr mc, string jsonText);
 
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    private static extern bool createSingleModule(IntPtr mc, int type, string jsonText);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
     private static extern void setCvParam(IntPtr mc, int index, float value);
     
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
     private static extern float getCvParam(IntPtr mc, int index);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    private static extern void createCvBufferWithKey(IntPtr mc, int key);
 
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
     private static extern void setMasterVolume(IntPtr mc, float value);
@@ -80,6 +86,12 @@ static class SynthWorkshopLibrary
         return createModulesFromJson(MainComponent, jsonText);
     }
 
+    public static bool CreateNewModule(int type, string jsonText)
+    {
+        return true;
+        return createSingleModule(MainComponent, type, jsonText);
+    }
+    
     public static void SetCvParam(int index, float value)
     {
         setCvParam(MainComponent, index, value);
@@ -90,6 +102,11 @@ static class SynthWorkshopLibrary
         return getCvParam(MainComponent, index);
     }
 
+    public static void CreateCvBufferWithKey(int key)
+    {
+        createCvBufferWithKey(MainComponent, key);
+    }
+    
     public static void SetMasterVolume(float value)
     {
         setMasterVolume(MainComponent, value);

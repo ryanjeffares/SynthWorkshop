@@ -2,16 +2,22 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.Events;
 
 public class ButtonModuleController : ModuleParent
 {
     [SerializeField] private InputField labelInput;
 
+    public UnityEvent<string> onLabelChanged = new UnityEvent<string>();
     public string Label { get; private set; }
 
     protected override void ChildAwake()
     {
-        labelInput.onValueChanged.AddListener(val => Label = val);
+        labelInput.onValueChanged.AddListener(val =>
+        {
+            Label = val;
+            onLabelChanged.Invoke(Label);
+        });
     }
 
     public void SetLabel(string label)

@@ -19,8 +19,11 @@ class AudioMathsModule : public Module
 {
 public:
 
-    AudioMathsModule(std::unordered_map<int, std::vector<float>>& cvLookup, std::unordered_map<int, juce::AudioBuffer<float>>& audioLu, std::vector<int> leftIn, std::vector<int> rightIns, int output, AudioCV acv, const std::function<float(float, float)>& func)
-        : cvParamLookup(cvLookup), audioLookup(audioLu), leftInputs(leftIn), rightInputs(rightIns), outputIndex(output), audioCvIncoming(acv), currentFunction(func) {}
+    AudioMathsModule(std::unordered_map<int, std::vector<float>>& cvLookup, std::unordered_map<int, juce::AudioBuffer<float>>& audioLu, std::vector<int> leftIn, std::vector<int> rightIns, int output, AudioCV acv, const std::function<float(float, float)>& func, int id)
+        : cvParamLookup(cvLookup), audioLookup(audioLu), leftInputs(leftIn), rightInputs(rightIns), outputIndex(output), audioCvIncoming(acv), currentFunction(func) 
+    {
+        moduleId = id;
+    }
 
     ~AudioMathsModule() = default;
 

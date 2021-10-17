@@ -19,12 +19,18 @@ class MathsModule : public Module
 public:    
 
     // used for all other modules
-    MathsModule(std::unordered_map<int, std::vector<float>>& lookup, std::vector<int> leftIn, std::vector<int> rightIn, int output, MathsModuleType t, const std::function<float(float, float)>& func)
-        : cvParamLookup(lookup), leftInputs(leftIn), rightInputs(rightIn), outputIndex(output), type(t), currentFunction(func) {}
+    MathsModule(std::unordered_map<int, std::vector<float>>& lookup, std::vector<int> leftIn, std::vector<int> rightIn, int output, MathsModuleType t, const std::function<float(float, float)>& func, int id)
+        : cvParamLookup(lookup), leftInputs(leftIn), rightInputs(rightIn), outputIndex(output), type(t), currentFunction(func) 
+    {
+        moduleId = id;
+    }
 
     // used only for Map module
-    MathsModule(std::unordered_map<int, std::vector<float>>& lookup, std::vector<int> leftIn, std::vector<int> rightIn, int output, int inMin, int inMax, int outMin, int outMax, MathsModuleType t)
-        : cvParamLookup(lookup), leftInputs(leftIn), rightInputs(rightIn), outputIndex(output), minIn(inMin), minOut(outMin), maxIn(inMax), maxOut(outMax), type(t) {}
+    MathsModule(std::unordered_map<int, std::vector<float>>& lookup, std::vector<int> leftIn, std::vector<int> rightIn, int output, int inMin, int inMax, int outMin, int outMax, MathsModuleType t, int id)
+        : cvParamLookup(lookup), leftInputs(leftIn), rightInputs(rightIn), outputIndex(output), minIn(inMin), minOut(outMin), maxIn(inMax), maxOut(outMax), type(t) 
+    {
+        moduleId = id;
+    }
 
     ~MathsModule() = default;
 

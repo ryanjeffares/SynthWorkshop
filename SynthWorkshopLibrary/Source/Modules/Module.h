@@ -23,6 +23,9 @@ public:
     
     virtual void setReady(bool) = 0;
     
+    int getModuleId() const { moduleId; }
+
 protected:
     bool readyToPlay = false;
+    int moduleId;
 };

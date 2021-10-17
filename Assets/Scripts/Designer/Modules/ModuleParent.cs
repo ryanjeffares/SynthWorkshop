@@ -39,6 +39,9 @@ public abstract class ModuleParent : MonoBehaviour, IDragHandler, IBeginDragHand
 
     public ModuleType moduleType;
     public bool draggable = true;
+    
+    public string IdentifierName { get; private set; }
+    public int GlobalIndex { get; private set; }
 
     private void Awake()
     {
@@ -60,6 +63,12 @@ public abstract class ModuleParent : MonoBehaviour, IDragHandler, IBeginDragHand
     public virtual bool CheckIfUsed()
     {
         return connectors.Any(c => c.isConnected);
+    }
+
+    public void SetIdentifier(string id, int idx)
+    {
+        IdentifierName = id;
+        GlobalIndex = idx;
     }
 
     public abstract List<ModuleException> CheckErrors();
@@ -91,9 +100,11 @@ public abstract class ModuleParent : MonoBehaviour, IDragHandler, IBeginDragHand
     public virtual void OnDrag(PointerEventData eventData)
     {
         if (!draggable) return;
+        
         var x = eventData.position.x - mousePosition.x;
         var y = eventData.position.y - mousePosition.y;
         var newPos = transform.localPosition;
+        
         if (startLocalPos.x + x < maxHorizontal && startLocalPos.x + x > -maxHorizontal)
         {
             newPos.x = startLocalPos.x + x;
@@ -102,12 +113,13 @@ public abstract class ModuleParent : MonoBehaviour, IDragHandler, IBeginDragHand
         {
             newPos.y = startLocalPos.y + y;
         }
+        
         transform.localPosition = newPos;
-        //var connectors = GetComponentsInChildren<ModuleConnectorController>();
-        foreach(var c in connectors)
-        {            
-            c.UpdateWirePositions();
-        }
+    }
+
+    public int GetIndexOfConnector(ModuleConnectorController controller)
+    {
+        return connectors.IndexOf(controller);
     }
 }
 

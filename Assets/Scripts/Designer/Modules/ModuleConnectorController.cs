@@ -1,10 +1,10 @@
 using System;
-using System.Linq;
-using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
-using UnityEngine.UI;
 using UnityEngine.EventSystems;
+using UnityEngine.UI;
+using UnityEngine.UI.Extensions;
 
 public class ModuleConnectorController : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IDragHandler, IBeginDragHandler, IEndDragHandler
 {
@@ -21,16 +21,16 @@ public class ModuleConnectorController : MonoBehaviour, IPointerEnterHandler, IP
     [NonSerialized]
     public List<ModuleConnectorController> connectedModuleConnectors;
 
-    private ModuleParent _parent;
-    private List<GameObject> _wires;
-    private Vector3 _mousePosition;
+    [NonSerialized]
+    public ModuleParent parentModule;
+
+    private readonly List<GameObject> _instantiatedWires = new List<GameObject>();
     private bool _dragging;
 
     private void Awake()
     {
         ModuleParent.ModuleDestroyed += ModuleDestroyedCallback;
-        _wires = new List<GameObject>();
-        _parent = GetComponentInParent<ModuleParent>();
+        parentModule = GetComponentInParent<ModuleParent>();
         connectedModuleConnectors = new List<ModuleConnectorController>();
     }
 
@@ -38,21 +38,102 @@ public class ModuleConnectorController : MonoBehaviour, IPointerEnterHandler, IP
     {
         Cursor.SetCursor(null, Vector2.zero, CursorMode.ForceSoftware);
         ModuleParent.ModuleDestroyed -= ModuleDestroyedCallback;
-        foreach (var w in _wires)
+    }
+
+    public void OnBeginDrag(PointerEventData eventData)
+    {
+        _dragging = true;
+        var wire = Instantiate(wirePrefab, transform);
+        wire.GetComponent<WireDragController>().parentController = this;
+        _instantiatedWires.Add(wire);
+    }
+
+    public void OnDrag(PointerEventData eventData)
+    {
+        var wire = _instantiatedWires.Last();
+        wire.transform.position = eventData.position;
+
+        var diff = wire.transform.position - transform.position;
+        wire.GetComponent<UILineRenderer>().Points[0] = diff;
+        wire.GetComponent<UILineRenderer>().SetAllDirty();
+    }
+
+    public void OnEndDrag(PointerEventData eventData)
+    {
+        parentModule.draggable = true;
+        _dragging = false;
+        
+        var wire = _instantiatedWires.Last();
+        var wireController = wire.GetComponent<WireDragController>();
+        if (CheckTarget(wireController.targetController))
         {
-            Destroy(w);
+            _instantiatedWires.Remove(wire);
+            Destroy(wire);
+            return;
         }
+
+        var target = wireController.targetController;
+
+        target.GetComponent<Image>().color = Color.green;
+        GetComponent<Image>().color = Color.green;
+
+        target.sourceConnector = this;
+        target.connectedModuleConnectors.Add(this);
+        connectedModuleConnectors.Add(target);
+
+        if (target.transform.parent.parent.TryGetComponent(out MathsModuleController mathsController))
+        {
+            mathsController.SetAudioOrCvIncoming(audioCv, target);
+        }
+
+        // need to know which of the target inputs we're connecting to
+        // and the output_id of this connector
+        switch (target.parentModule.moduleType)
+        {
+            case ModuleType.OscillatorModule:
+            {
+                var osc = target.parentModule as OscillatorModuleController;
+                var idx = osc.GetIndexOfConnector(target);
+                
+                break;
+            }
+        }
+
+        wireController.isConnected = true;
+        isConnected = true;
+    }
+
+    // returns true if a condition is present that should prevent the wire from connecting
+    private bool CheckTarget(ModuleConnectorController target)
+    {
+        return target == null
+               || (target.audioCv != AudioCV.Either && audioCv != target.audioCv)
+               || (inputOutput == target.inputOutput)
+               || connectedModuleConnectors.Contains(target)
+               || target.connectedModuleConnectors.Contains(this);
     }
 
     private void ModuleDestroyedCallback(GameObject g)
     {
         var destroyedConnectors = g.GetComponentsInChildren<ModuleConnectorController>();
-        foreach(var dc in destroyedConnectors)
+
+        var anyConnected = false;
+        foreach (var dc in destroyedConnectors)
         {
             if (connectedModuleConnectors.Contains(dc))
             {
+                anyConnected = true;
                 connectedModuleConnectors.Remove(dc);
             }
+        }
+
+        if (!anyConnected) return;
+        
+        _instantiatedWires.Clear();
+
+        if (connectedModuleConnectors.Count == 0)
+        {
+            GetComponent<Image>().color = Color.white;
         }
     }
 
@@ -64,104 +145,29 @@ public class ModuleConnectorController : MonoBehaviour, IPointerEnterHandler, IP
 
     public void AddWire(GameObject wire)
     {
-        _wires.Add(wire);
         isConnected = true;
-    }
-    
-    public void UpdateWirePositions()
-    {
-        try
-        {
-            foreach (var w in _wires)
-            {
-                w.GetComponent<WireController>().UpdatePosition();
-            }
-        }
-        catch
-        {
-            Debug.Log(transform.parent.name);
-        }
     }
 
     public void OnPointerEnter(PointerEventData eventData)
     {
+        if (inputOutput == InputOutput.Input) return;
         Cursor.SetCursor(altCursor, Vector2.zero, CursorMode.ForceSoftware);
-        _parent.draggable = false;
-        StartCoroutine(gameObject.InterpolateSize(new Vector3(33, 33), 0.05f));
+        parentModule.draggable = false;
     }
 
     public void OnPointerExit(PointerEventData eventData)
     {
+        if (inputOutput == InputOutput.Input) return;
         Cursor.SetCursor(null, Vector2.zero, CursorMode.ForceSoftware);
+
         if (!_dragging)
         {
-            _parent.draggable = true;
-        }        
-        StartCoroutine(gameObject.InterpolateSize(new Vector3(30, 30), 0.05f));
-    }
-
-    public void OnBeginDrag(PointerEventData eventData)
-    {
-        _wires.Add(Instantiate(wirePrefab, transform));
-        _mousePosition = eventData.position;
-        _dragging = true;
-    }
-
-    public void OnDrag(PointerEventData eventData)
-    {
-        try
-        {
-            // yikes, this also throws a load of assertion failures lol
-            var w = _wires.Last();
-            var rect = w.GetComponent<RectTransform>();
-            var up = eventData.position.y > _mousePosition.y;
-            rect.pivot = new Vector2(0.5f, up ? 0 : 1);
-            rect.sizeDelta = new Vector2(10, Vector3.Distance(eventData.position, _mousePosition));
-            w.GetComponent<BoxCollider2D>().size = rect.sizeDelta;
-            w.GetComponent<BoxCollider2D>().offset = new Vector2(0, rect.sizeDelta.y / (up ? 2 : -2));
-            var opposite = eventData.position.y - _mousePosition.y;
-            var adjacent = eventData.position.x - _mousePosition.x;
-            if(opposite != 0 && adjacent != 0)
-            {
-                var angle = (Mathf.Atan(opposite / adjacent) * Mathf.Rad2Deg) - 90;
-                // HAAAA this is absolute dog shit
-                if (angle >= -180 && angle <= -90)
-                {
-                    angle += 180;
-                }
-                rect.eulerAngles = new Vector3(0, 0, angle);
-            }            
-        }
-        catch(Exception e)
-        {
-            Debug.Log(e.Message);
-        }
-    }
-
-    public void OnEndDrag(PointerEventData eventData)
-    {
-        _dragging = false;
-        _parent.draggable = true;
-        if (_wires.Last().GetComponent<WireController>().CheckTarget(this))
-        {
-            isConnected = true;
-            GetComponent<Image>().color = Color.green;
-        }
-        else
-        {
-            Destroy(_wires.Last());
-            _wires.Remove(_wires.Last());
+            parentModule.draggable = true;
         }
     }
 
     public void RemoveWire(GameObject wire)
     {
-        _wires.Remove(wire);
-        if (_wires.Count == 0)
-        {
-            GetComponent<Image>().color = Color.white;
-            isConnected = false;
-        }
         var wireController = wire.GetComponent<WireController>();
         if(connectedModuleConnectors.Contains(wireController.GetParent()))
         {

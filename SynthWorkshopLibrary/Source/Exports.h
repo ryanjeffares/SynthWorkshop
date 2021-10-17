@@ -54,6 +54,26 @@ extern "C"
         return ((MainComponent*)mc)->createModulesFromJson(jsonText);
     }
 
+    EXPORT bool createSingleModule(void* mc, int type, const char* jsonText)
+    {
+        auto mainComponent = (MainComponent*)mc;
+        switch (type)
+        {
+            case 0:
+                return mainComponent->createAudioMathsModule(jsonText);
+            case 1:
+                return mainComponent->createMathsModule(jsonText);
+            case 2:
+                return mainComponent->createAudioOutputModule(jsonText);
+            case 3:
+                return mainComponent->createOscillatorModule(jsonText);
+            case 4:
+                return mainComponent->createAdsrModule(jsonText);
+            default:
+                return false;
+        }
+    }
+
     EXPORT void setCvParam(void* mc, int idx, float val) 
     {
         ((MainComponent*)mc)->setCvParam(idx, val);
@@ -62,6 +82,11 @@ extern "C"
     EXPORT float getCvParam(void* mc, int idx)
     {
         return ((MainComponent*)mc)->getCvParam(idx);
+    }
+
+    EXPORT void createCvBufferWithKey(void* mc, int key)
+    {
+        ((MainComponent*)mc)->createCvBufferWithKey(key);
     }
 
     EXPORT void setMasterVolume(void* mc, float value) 

@@ -46,6 +46,7 @@ public:
 
     void setCvParam(int index, float value);
     float getCvParam(int index);
+    void createCvBufferWithKey(int key);
     
     void setMasterVolume(float);
 
@@ -54,21 +55,34 @@ public:
         return "Hello World from MainComponent";
     }
 
+    using CVMap = std::unordered_map<int, std::vector<float>>;
+    using AudioMap = std::unordered_map<int, juce::AudioBuffer<float>>;
+    using FunctionMap = std::unordered_map<MathsModuleType, std::function<float(float, float)>>;
+
+    bool createAudioMathsModule(const char* json);
+    bool createMathsModule(const char* json);
+    bool createAudioOutputModule(const char* json);
+    bool createOscillatorModule(const char* json);
+    bool createAdsrModule(const char* json);
+
+
 private:
 
-    void createAudioMathsModule(const json& values);
-    void createMathsModule(const json& values);
-    void createAudioOutputModule(const json& values);
-    void createOscillatorModule(const json& values);
-    void createAdsrModule(const json& values);
+    Module* lastCreatedProcessorModule = nullptr;
+    AudioOutputModule* lastCreatedOutputModule = nullptr;
+
+    void createAudioMathsModuleFromJson(const json& values);
+    void createMathsModuleFromJson(const json& values);
+    void createAudioOutputModuleFromJson(const json& values);
+    void createOscillatorModuleFromJson(const json& values);
+    void createAdsrModuleFromJson(const json& values);
 
     std::vector<std::unique_ptr<AudioOutputModule>> audioOutputModules;
     std::vector<std::unique_ptr<Module>> processorModules;
 
-    std::unordered_map<int, std::vector<float>> cvParamLookup;
-    std::unordered_map<int, juce::AudioBuffer<float>> audioLookup;
-
-    std::unordered_map<MathsModuleType, std::function<float(float, float)>> mathsFunctionLookup;
+    CVMap cvParamLookup;
+    AudioMap audioLookup;
+    FunctionMap mathsFunctionLookup;
 
     float masterVolume;
     
@@ -76,6 +90,7 @@ private:
     std::atomic<bool> shouldStop;
     std::atomic<bool> moduleCreationCanProceed;
     std::atomic<bool> firstRun;
+    std::atomic<bool> newProcessorModuleCreated, newOutputModuleCreated;
     std::condition_variable cv;
     std::mutex mtx;
     

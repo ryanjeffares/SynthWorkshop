@@ -10,6 +10,15 @@ using Newtonsoft.Json.Linq;
 
 public class DesignerUIController : MonoBehaviour
 {
+    private enum ModuleCategory
+    {
+        AudioMaths,
+        Maths,
+        Output,
+        Oscillator,
+        ADSR
+    }
+    
     [SerializeField] private List<Button> mainButtons, oscillatorButtons, ioButtons, controlsButtons, utilButtons, mathsButtons;
     [SerializeField] private Button numberBoxButton;
     [SerializeField] private Button playButton, exportJsonButton, stopButton, clearButton, importButton;
@@ -31,6 +40,20 @@ public class DesignerUIController : MonoBehaviour
     private List<GameObject> _errors;
 
     private GameObject _paramPanel;
+
+    private readonly Dictionary<string, Dictionary<string, Dictionary<string, object>>> _currentArrangement =
+        new Dictionary<string, Dictionary<string, Dictionary<string, object>>>();
+
+    private int _totalModuleCount = 0;
+    private int _controlModuleCount = 0;
+    private int _oscillatorModuleCount = 0;
+    private int _ioModuleCount = 0;
+    private int _mathsModuleCount = 0;
+    private int _numberBoxCount = 0;
+    private int _adsrModuleCount = 0;
+    
+    private int _soundOutputIndex = 0;
+    private int _cvOutputIndex = 0;
 
     private readonly struct CvParam
     {
@@ -103,6 +126,13 @@ public class DesignerUIController : MonoBehaviour
         });
         
         masterVolume.onValueChanged.AddListener(SynthWorkshopLibrary.SetMasterVolume);
+
+        _currentArrangement["control_modules"] = new Dictionary<string, Dictionary<string, object>>();
+        _currentArrangement["oscillator_modules"] = new Dictionary<string, Dictionary<string, object>>();
+        _currentArrangement["io_modules"] = new Dictionary<string, Dictionary<string, object>>();
+        _currentArrangement["maths_modules"] = new Dictionary<string, Dictionary<string, object>>();
+        _currentArrangement["number_boxes"] = new Dictionary<string, Dictionary<string, object>>();
+        _currentArrangement["adsr_modules"] = new Dictionary<string, Dictionary<string, object>>();
     }
 
     private void Start()
@@ -145,17 +175,46 @@ public class DesignerUIController : MonoBehaviour
 
     private void OscillatorButtonCallback(Button b)
     {
+        var type = (OscillatorType) oscillatorButtons.IndexOf(b);
         var module = Instantiate(oscillatorModulePrefab, mainContent.transform);
-        module.GetComponent<OscillatorModuleController>().SetType((OscillatorType)oscillatorButtons.IndexOf(b));
+        module.GetComponent<OscillatorModuleController>().SetType(type);
         _instantiatedModules.Add(module);
+
+        var dict = new Dictionary<string, object>
+        {
+            {"type_string", type.ToString() },
+            {"type_int", (int) type },
+            {"global_index", _totalModuleCount++ },
+            {"sound_output_to", _soundOutputIndex++ },
+            {"cv_out_to", _cvOutputIndex++ },
+        };
+
+        var id = $"oscillator_module_{_oscillatorModuleCount}";
+        _currentArrangement["oscillator_modules"].Add(id, dict);        
+        _instantiatedModules.Last().GetComponent<ModuleParent>().SetIdentifier(id, _oscillatorModuleCount);
+        _oscillatorModuleCount++;
+        SynthWorkshopLibrary.CreateNewModule((int) ModuleCategory.Oscillator, JObject.FromObject(dict).ToString());
     }
 
     private void IOButtonCallback(Button b)
     {
         var module = Instantiate(ioModulePrefab, mainContent.transform);
         var idx = ioButtons.IndexOf(b);
-        module.GetComponent<IOModuleController>().SetType(idx < 2 ? AudioCV.Audio : AudioCV.CV, idx % 2 == 0 ? InputOutput.Output : InputOutput.Input);
+        var controller =module.GetComponent<IOModuleController>(); 
+        controller.SetType(idx < 2 ? AudioCV.Audio : AudioCV.CV, idx % 2 == 0 ? InputOutput.Output : InputOutput.Input);
         _instantiatedModules.Add(module);
+
+        var dict = new Dictionary<string, object>
+        {
+            {"type", $"{controller.AudioCv}{controller.InputOutput}" },
+            {"global_index", _totalModuleCount++ }
+        };
+
+        var id = $"io_module_{_ioModuleCount}";
+        _currentArrangement["io_modules"].Add(id, dict);
+        _instantiatedModules.Last().GetComponent<ModuleParent>().SetIdentifier(id, _ioModuleCount);
+        _ioModuleCount++;
+        SynthWorkshopLibrary.CreateNewModule((int) ModuleCategory.Output, JObject.FromObject(dict).ToString());
     }
     
     private void ControlsButtonCallback(Button b)
@@ -163,14 +222,69 @@ public class DesignerUIController : MonoBehaviour
         switch (controlsButtons.IndexOf(b))
         {
             case 0:
-                _instantiatedModules.Add(Instantiate(knobModulePrefab, mainContent.transform));
+            {
+                var knob = Instantiate(knobModulePrefab, mainContent.transform);
+                _instantiatedModules.Add(knob);
+                
+                var dict = new Dictionary<string, object>
+                {
+                    {"global_index", _totalModuleCount++ },
+                    {"output_id", _cvOutputIndex },
+                    {"type", "Knob"}
+                };
+
+                var knobName = $"control_module_{_controlModuleCount}";
+                _currentArrangement["control_modules"].Add(knobName, dict);
+                
+                _instantiatedModules.Last().GetComponent<ModuleParent>().SetIdentifier(knobName, _controlModuleCount);
+                knob.GetComponent<KnobModuleController>().onLabelChanged.AddListener(s => _currentArrangement["control_modules"][knobName]["name"] = s);
+                knob.GetComponent<KnobModuleController>().onMinChanged.AddListener(m => _currentArrangement["control_modules"][knobName]["min"] = m);
+                knob.GetComponent<KnobModuleController>().onMaxChanged.AddListener(m => _currentArrangement["control_modules"][knobName]["max"] = m);
+                
+                SynthWorkshopLibrary.CreateCvBufferWithKey(_cvOutputIndex);
+                
+                _controlModuleCount++;
+                _cvOutputIndex++;
                 break;
+            }
             case 1:
-                _instantiatedModules.Add(Instantiate(buttonModulePrefab, mainContent.transform));
+            {
+                var button = Instantiate(buttonModulePrefab, mainContent.transform);
+                _instantiatedModules.Add(button);
+                
+                var dict = new Dictionary<string, object>
+                {
+                    {"global_index", _totalModuleCount++ },
+                    {"output_id", _cvOutputIndex++ },
+                    {"type", "Button"}
+                };
+
+                var buttonName = $"control_module_{_controlModuleCount}";
+                _currentArrangement["control_modules"].Add(buttonName, dict);
+                _instantiatedModules.Last().GetComponent<ModuleParent>().SetIdentifier(buttonName, _controlModuleCount);
+                _controlModuleCount++;
+                button.GetComponent<ButtonModuleController>().onLabelChanged.AddListener(s => _currentArrangement["control_modules"][buttonName]["name"] = s);
                 break;
+            }
             case 2:
-                _instantiatedModules.Add(Instantiate(toggleModulePrefab, mainContent.transform));
+            {
+                var toggle = Instantiate(toggleModulePrefab, mainContent.transform);
+                _instantiatedModules.Add(toggle);
+                
+                var dict = new Dictionary<string, object>
+                {
+                    {"global_index", _totalModuleCount++ },
+                    {"output_id", _cvOutputIndex++ },
+                    {"type", "Toggle"}
+                };
+
+                var toggleName = $"control_module_{_controlModuleCount}";
+                _currentArrangement["control_modules"].Add(toggleName, dict);
+                _instantiatedModules.Last().GetComponent<ModuleParent>().SetIdentifier(toggleName, _controlModuleCount);
+                _controlModuleCount++;
+                toggle.GetComponent<ToggleModuleController>().onLabelChanged.AddListener(s => _currentArrangement["control_modules"][toggleName]["name"] = s);
                 break;
+            }
         }
     }
 
@@ -180,13 +294,42 @@ public class DesignerUIController : MonoBehaviour
         var audioCv  = idx > 16 ? AudioCV.Audio : AudioCV.CV;
         var sign = (MathsSign)(idx % 17);
         var module = Instantiate(audioCv == AudioCV.Audio ? audioMathsModulePrefab : idx == 14 ? mapModulePrefab : mathsModulePrefab, mainContent.transform);
-        module.GetComponent<MathsModuleController>().SetType(sign, audioCv);
+        var controller =module.GetComponent<MathsModuleController>(); 
+        controller.SetType(sign, audioCv);
+        
         _instantiatedModules.Add(module);
+
+        var dict = new Dictionary<string, object>
+        {
+            {"global_index", _totalModuleCount++ },
+            {"type_string", controller.audioCv.ToString() },
+            {"type_int", (int) sign },
+            {"operator", sign.ToString()},
+            {"output_id", _cvOutputIndex++ }
+        };
+
+        var id = $"maths_module_{_mathsModuleCount}";
+        _currentArrangement["maths_modules"].Add(id, dict);
+        _instantiatedModules.Last().GetComponent<ModuleParent>().SetIdentifier(id, _mathsModuleCount);
+        _mathsModuleCount++;
+        SynthWorkshopLibrary.CreateNewModule((int) ModuleCategory.Maths, JObject.FromObject(dict).ToString());
     }
 
     private void UtilButtonCallback(Button b)
     {
         _instantiatedModules.Add(Instantiate(adsrModulePrefab, mainContent.transform));
+
+        var dict = new Dictionary<string, object>
+        {
+            {"output_to", _soundOutputIndex++ },
+            {"global_index", _totalModuleCount++ }
+        };
+
+        var id = $"adsr_module_{_adsrModuleCount}";
+        _currentArrangement["adsr_modules"].Add(id, dict);
+        _instantiatedModules.Last().GetComponent<ModuleParent>().SetIdentifier(id, _adsrModuleCount);
+        _adsrModuleCount++;
+        SynthWorkshopLibrary.CreateNewModule((int) ModuleCategory.ADSR, JObject.FromObject(dict).ToString());
     }
 
     private void NumberBoxButtonCallback()
@@ -369,16 +512,7 @@ public class DesignerUIController : MonoBehaviour
         int adsrCount = 1;
 
         int outputId = 0;
-
-        var json = new Dictionary<string, Dictionary<string, Dictionary<string, object>>>
-        {
-            {"control_modules", new Dictionary<string, Dictionary<string, object>>()},
-            {"oscillator_modules", new Dictionary<string, Dictionary<string, object>>()},
-            {"io_modules", new Dictionary<string, Dictionary<string, object>>()},
-            {"maths_modules", new Dictionary<string, Dictionary<string, object>>()},
-            {"number_boxes", new Dictionary<string, Dictionary<string, object>>()},
-            {"adsr_modules", new Dictionary<string, Dictionary<string, object>>()}
-        };
+        
         var usedModules = _instantiatedModules.Where(m => m.GetComponent<ModuleParent>().CheckIfUsed())
             .Select(m => m.GetComponent<ModuleParent>()).ToList();
         var namedParams = new List<CvParam>();
@@ -438,46 +572,39 @@ public class DesignerUIController : MonoBehaviour
             }
         }
 
-        // go over the list again, now each input can get the id of where its getting its value/audio from
-        // and create the json entries
+        // we already have a lot of this information, so just add in the things we dont
         foreach (var module in usedModules)
         {
             var type = module.moduleType;
             switch (type)
             {
-                case ModuleType.KnobModule:
-                    CreateKnobJToken(ref controlModuleCount, json["control_modules"], module as KnobModuleController, 
-                        usedOutputs);
-                    break;
                 case ModuleType.ButtonModule:
-                    CreateButtonJToken(ref controlModuleCount, json["control_modules"], module as ButtonModuleController, 
-                        usedOutputs);
-                    break;
+                case ModuleType.KnobModule:
                 case ModuleType.ToggleModule:
-                    CreateToggleJToken(ref controlModuleCount, json["control_modules"], module as ToggleModuleController,
-                        usedOutputs);
+                    _currentArrangement["control_modules"][module.IdentifierName]["position"] =
+                        JToken.FromObject(module.transform.localPosition);
                     break;
-                case ModuleType.OscillatorModule:
-                    CreateOscillatorJToken(ref oscillatorModuleCount, json["oscillator_modules"],
+                /*case ModuleType.OscillatorModule:
+                    CreateOscillatorJToken(ref oscillatorModuleCount, _currentArrangement["oscillator_modules"],
                         module as OscillatorModuleController, usedOutputs);
                     break;
                 case ModuleType.IOModule:
-                    CreateIOJToken(ref ioModuleCount, json["io_modules"], module as IOModuleController, usedOutputs);
+                    CreateIOJToken(ref ioModuleCount, _currentArrangement["io_modules"], module as IOModuleController, usedOutputs);
                     break;
                 case ModuleType.MathsModule:
-                    CreateMathsJToken(ref mathsModuleCount, json["maths_modules"], module as MathsModuleController, 
+                    CreateMathsJToken(ref mathsModuleCount, _currentArrangement["maths_modules"], module as MathsModuleController, 
                         usedOutputs);
                     break;
                 case ModuleType.NumberBox:
-                    CreateNumberBox(ref numberBoxCount, json["number_boxes"], module as NumberModule, usedOutputs);
+                    CreateNumberBox(ref numberBoxCount, _currentArrangement["number_boxes"], module as NumberModule, usedOutputs);
                     break;
                 case ModuleType.ADSR:
-                    CreateADSRJToken(ref adsrCount, json["adsr_modules"], module as ADSRModuleController, usedOutputs);
-                    break;
+                    CreateADSRJToken(ref adsrCount, _currentArrangement["adsr_modules"], module as ADSRModuleController, usedOutputs);
+                    break;*/
             }
         }
 
-        var jsonText = JToken.FromObject(json).ToString();
+        var jsonText = JToken.FromObject(_currentArrangement).ToString();
         File.WriteAllText(Application.dataPath + "/ArrangementJsons/test.json", jsonText);
 
         if (play)

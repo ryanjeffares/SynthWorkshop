@@ -83,7 +83,7 @@ public class WireController : MonoBehaviour, IPointerClickHandler
         var targetController = _targetConnector.GetComponent<ModuleConnectorController>();
 
         // do we want to stop you from connecting a module to itself?
-        //if (_targetConnector.GetComponentInParent<ModuleParent>() == parent.gameObject.GetComponentInParent<ModuleParent>()) return false;
+        //if (_targetConnector.GetComponentInParent<ModuleParent>() == parentModule.gameObject.GetComponentInParent<ModuleParent>()) return false;
         // return false if the audio/cv types or input/output do not match
         // return false if there is already a wire going between the same two connectors
         

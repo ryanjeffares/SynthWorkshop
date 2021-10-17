@@ -19,9 +19,12 @@ class OscillatorModule : public Module
 {
 public:    
 
-    OscillatorModule(OscillatorType t, std::unordered_map<int, std::vector<float>>& cvLookup, std::unordered_map<int, juce::AudioBuffer<float>>& audioLu, int freqIdx, int pwIdx, int soundIdx, int cvOutIdx)
+    OscillatorModule(OscillatorType t, std::unordered_map<int, std::vector<float>>& cvLookup, std::unordered_map<int, juce::AudioBuffer<float>>& audioLu, int freqIdx, int pwIdx, int soundIdx, int cvOutIdx, int id)
         : type(t), phase(0.f), frequency(20), pulseWidth(0.5f), cvParamLookup(cvLookup), frequencyInIndex(freqIdx), pulseWidthInIndex(pwIdx),
-          soundOutIndex(soundIdx), cvOutIndex(cvOutIdx), audioLookup(audioLu), readyToPlay(false) {}
+          soundOutIndex(soundIdx), cvOutIndex(cvOutIdx), audioLookup(audioLu), readyToPlay(false) 
+    {
+        moduleId = id;
+    }
 
     ~OscillatorModule() = default;
 

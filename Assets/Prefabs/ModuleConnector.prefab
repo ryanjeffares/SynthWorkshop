@@ -37,7 +37,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: -25}
+  m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 30, y: 30}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &6095037036016793929
@@ -90,13 +90,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2198c8340312e644b89eaa447288f320, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  wirePrefab: {fileID: 5647133731599453351, guid: 13af26645bc03ac49834587fdf5fa287, type: 3}
+  wirePrefab: {fileID: 5632915179156705054, guid: 6194c20c3c0224e41ac762d21aae09f7, type: 3}
+  jackObject: {fileID: 0}
   altCursor: {fileID: 2800000, guid: b7972fa129a900f49b867bec36c03d4c, type: 3}
   audioCv: 0
   inputOutput: 0
-  sourceConnector: {fileID: 0}
-  isConnected: 0
-  connectedModuleConnectors: []
 --- !u!58 &5544835816198696407
 CircleCollider2D:
   m_ObjectHideFlags: 0

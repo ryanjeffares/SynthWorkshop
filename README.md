@@ -19,3 +19,9 @@ Note: any recent work I've done on this for MacOS has been done on an M1 chip, s
 * Basic effects
 * Delay lines
 * Buffers
+
+# Overhaul to make live editing possible TO DO:
+* unity line connector
+* export to json with new fields
+* when we make a new knob etc, c++ needs to make a new buffer in cvParamLookup with the right int key
+* Tell c++ when a new wire has been connected - need to know io arrangement for every module....

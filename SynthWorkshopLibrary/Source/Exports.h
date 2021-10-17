@@ -49,7 +49,7 @@ extern "C"
         ((MainComponent*)mc)->stopAudio();
     }
 
-    EXPORT const char* createModulesFromJson(void* mc, const char* jsonText) 
+    EXPORT bool createModulesFromJson(void* mc, const char* jsonText) 
     {
         return ((MainComponent*)mc)->createModulesFromJson(jsonText);
     }

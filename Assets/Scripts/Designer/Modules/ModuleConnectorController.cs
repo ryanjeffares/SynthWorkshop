@@ -9,11 +9,16 @@ using UnityEngine.EventSystems;
 public class ModuleConnectorController : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IDragHandler, IBeginDragHandler, IEndDragHandler
 {
     [SerializeField] private GameObject wirePrefab;
+    [SerializeField] private Texture2D altCursor;
 
     public AudioCV audioCv;
     public InputOutput inputOutput;
-    public ModuleConnectorController sourceConnector;
+    
+    [NonSerialized]
     public bool isConnected;
+    [NonSerialized]
+    public ModuleConnectorController sourceConnector;
+    [NonSerialized]
     public List<ModuleConnectorController> connectedModuleConnectors;
 
     private ModuleParent _parent;
@@ -31,6 +36,7 @@ public class ModuleConnectorController : MonoBehaviour, IPointerEnterHandler, IP
 
     private void OnDestroy()
     {
+        Cursor.SetCursor(null, Vector2.zero, CursorMode.ForceSoftware);
         ModuleParent.ModuleDestroyed -= ModuleDestroyedCallback;
         foreach (var w in _wires)
         {
@@ -79,12 +85,14 @@ public class ModuleConnectorController : MonoBehaviour, IPointerEnterHandler, IP
 
     public void OnPointerEnter(PointerEventData eventData)
     {
+        Cursor.SetCursor(altCursor, Vector2.zero, CursorMode.ForceSoftware);
         _parent.draggable = false;
         StartCoroutine(gameObject.InterpolateSize(new Vector3(33, 33), 0.05f));
     }
 
     public void OnPointerExit(PointerEventData eventData)
     {
+        Cursor.SetCursor(null, Vector2.zero, CursorMode.ForceSoftware);
         if (!_dragging)
         {
             _parent.draggable = true;

@@ -19,39 +19,46 @@ class MathsModule : public Module
 public:    
 
     // used for all other modules
-    MathsModule(std::unordered_map<int, float>& lookup, std::vector<int> leftIn, std::vector<int> rightIn, int output, MathsModuleType t, const std::function<float(float, float)>& func)
+    MathsModule(std::unordered_map<int, std::vector<float>>& lookup, std::vector<int> leftIn, std::vector<int> rightIn, int output, MathsModuleType t, const std::function<float(float, float)>& func)
         : cvParamLookup(lookup), leftInputs(leftIn), rightInputs(rightIn), outputIndex(output), type(t), currentFunction(func) {}
 
     // used only for Map module
-    MathsModule(std::unordered_map<int, float>& lookup, std::vector<int> leftIn, std::vector<int> rightIn, int output, int inMin, int inMax, int outMin, int outMax, MathsModuleType t)
+    MathsModule(std::unordered_map<int, std::vector<float>>& lookup, std::vector<int> leftIn, std::vector<int> rightIn, int output, int inMin, int inMax, int outMin, int outMax, MathsModuleType t)
         : cvParamLookup(lookup), leftInputs(leftIn), rightInputs(rightIn), outputIndex(output), minIn(inMin), minOut(outMin), maxIn(inMax), maxOut(outMax), type(t) {}
 
     ~MathsModule() = default;
 
-    void calculateValues() 
+
+    void getNextAudioBlock(int numSamples, int numChannels) override
     {
         if (outputIndex == -1 || !readyToPlay) return;
-        
-        float left = 0.f;
-        float right = 0.f;
-        
-        for (auto i : leftInputs) 
+
+        for (auto sample = 0; sample < numSamples; sample++)
         {
-            left += cvParamLookup[i];
-        }
-        for (auto i : rightInputs) 
-        {
-            right += cvParamLookup[i];
-        }
-        
-        if (type == MathsModuleType::Map)
-        {
-            cvParamLookup[outputIndex] = juce::jmap<float>(left, cvParamLookup[minIn], cvParamLookup[maxIn], cvParamLookup[minOut], cvParamLookup[maxOut]);
-        }
-        else 
-        {
-            cvParamLookup[outputIndex] = currentFunction(left, right);
-        }
+            float left = 0.f;
+            float right = 0.f;
+
+            for (auto i : leftInputs)
+            {
+                left += cvParamLookup[i][sample];
+            }
+
+            for (auto i : rightInputs)
+            {
+                right += cvParamLookup[i][sample];
+            }
+
+            if (type == MathsModuleType::Map)
+            {
+                cvParamLookup[outputIndex][sample] = juce::jmap<float>(
+                    left, cvParamLookup[minIn][sample], cvParamLookup[maxIn][sample], cvParamLookup[minOut][sample], cvParamLookup[maxOut][sample]
+                );
+            }
+            else
+            {
+                cvParamLookup[outputIndex][sample] = currentFunction(left, right);
+            }
+        }        
     }
 
     void setReady(bool state) override 
@@ -63,7 +70,7 @@ private:
     
     std::function<float(float, float)> currentFunction;
 
-    std::unordered_map<int, float>& cvParamLookup;
+    std::unordered_map<int, std::vector<float>>& cvParamLookup;
     std::vector<int> leftInputs, rightInputs;
     const int outputIndex;
     const MathsModuleType type;

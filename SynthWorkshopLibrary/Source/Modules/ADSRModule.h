@@ -18,7 +18,7 @@ class ADSRModule : public Module
 {
 public:
 
-    ADSRModule(std::unordered_map<int, juce::AudioBuffer<float>>& audioLu, std::unordered_map<int, float>& cvLookup, std::vector<int> inputIndexes, int outputIndex, int numCh,
+    ADSRModule(std::unordered_map<int, juce::AudioBuffer<float>>& audioLu, std::unordered_map<int, std::vector<float>>& cvLookup, std::vector<int> inputIndexes, int outputIndex, int numCh,
         int a, int d, int s, int r, int t) 
         : audioLookup(audioLu), cvParamLookup(cvLookup), audioOutputIndex(outputIndex), numChannels(numCh), attackIndex(a), decayIndex(d), sustainIndex(s), releaseIndex(r), triggerInput(t) 
     {
@@ -62,16 +62,16 @@ private:
     
     void updateEnvelope()
     {
-        currentParameters.attack = cvParamLookup[attackIndex];
-        currentParameters.decay = cvParamLookup[decayIndex];
-        currentParameters.sustain = cvParamLookup[sustainIndex];
-        currentParameters.release = cvParamLookup[releaseIndex];
+        currentParameters.attack = cvParamLookup[attackIndex][0];
+        currentParameters.decay = cvParamLookup[decayIndex][0];
+        currentParameters.sustain = cvParamLookup[sustainIndex][0];
+        currentParameters.release = cvParamLookup[releaseIndex][0];
 
         adsr.setParameters(currentParameters);
 
-        if (triggerInput != -1 && noteOnState != cvParamLookup[triggerInput]) 
+        if (triggerInput != -1 && noteOnState != cvParamLookup[triggerInput][0]) 
         {
-            noteOnState = cvParamLookup[triggerInput];
+            noteOnState = cvParamLookup[triggerInput][0];
             if (noteOnState) 
             { 
                 adsr.noteOn();                
@@ -84,7 +84,7 @@ private:
     }
 
     std::unordered_map<int, juce::AudioBuffer<float>>& audioLookup;
-    std::unordered_map<int, float>& cvParamLookup;
+    std::unordered_map<int, std::vector<float>>& cvParamLookup;
     std::vector<int> audioInputIndexes;
 
     const int audioOutputIndex;

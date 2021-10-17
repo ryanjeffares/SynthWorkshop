@@ -15,7 +15,7 @@ using namespace nlohmann;
 
 //==============================================================================
 MainComponent::MainComponent()
-    : modulesCreated(false), shouldStop(false), moduleCreationCanProceed(false), masterVolume(0.1f)
+    : modulesCreated(false), shouldStop(false), moduleCreationCanProceed(false), firstRun(true), masterVolume(0.1f)
 {        
     setAudioChannels(0, 2);
     
@@ -67,7 +67,7 @@ void MainComponent::getNextAudioBlock(const juce::AudioSourceChannelInfo& buffer
 {    
     if (!modulesCreated.load())
     {
-        if (!firstRun && !threadNotified) 
+        if (!firstRun.load() && !threadNotified) 
         {
             std::unique_lock<std::mutex> lock(mtx);
             moduleCreationCanProceed.store(true);
@@ -84,14 +84,7 @@ void MainComponent::getNextAudioBlock(const juce::AudioSourceChannelInfo& buffer
     
     for (auto& mod : processorModules) 
     {
-        if (auto maths = dynamic_cast<MathsModule*>(mod.get()))
-        {
-            maths->calculateValues();
-        }
-        else
-        {
-            mod->getNextAudioBlock(numSamples, numChannels);
-        }
+        mod->getNextAudioBlock(numSamples, numChannels);
     }
     
     for (auto& audioOut : audioOutputModules) 
@@ -106,7 +99,10 @@ void MainComponent::setCvParam(int index, float value)
 {
     if (cvParamLookup.find(index) != cvParamLookup.end()) 
     {
-        cvParamLookup[index] = value;
+        for (int i = 0; i < cvParamLookup[index].size(); i++)
+        {
+            cvParamLookup[index][i] = value;
+        }
     }
 }
 
@@ -114,7 +110,7 @@ float MainComponent::getCvParam(int index)
 {
     if (cvParamLookup.find(index) != cvParamLookup.end()) 
     {
-        return cvParamLookup[index];
+        return cvParamLookup[index][0];
     }
     else 
     {
@@ -141,13 +137,14 @@ void MainComponent::stopAudio()
     }
 }
 
-const char* MainComponent::createModulesFromJson(const char* jsonText) 
+bool MainComponent::createModulesFromJson(const char* jsonText) 
 {        
+    stopAudio();
     modulesCreated.store(false);
     
     try 
     {           
-        if (!firstRun && shouldStop.load())
+        if (!firstRun.load())
         {
             std::unique_lock<std::mutex> lock(mtx);
             while (!moduleCreationCanProceed.load())
@@ -206,11 +203,12 @@ const char* MainComponent::createModulesFromJson(const char* jsonText)
                             auto idx = values["output_to"].get<int>();
                             if (cvParamLookup.find(idx) == cvParamLookup.end()) 
                             {
-                                cvParamLookup.emplace(idx, initial);
+                                std::vector<float> temp(samplesPerBlockExpected, initial);
+                                cvParamLookup.emplace(idx, std::move(temp));
                             }
                             else 
                             {
-                                cvParamLookup[idx] = initial;
+                                std::fill(cvParamLookup[idx].begin(), cvParamLookup[idx].end(), initial);
                             }
                         }
                     }                    
@@ -233,15 +231,14 @@ const char* MainComponent::createModulesFromJson(const char* jsonText)
         modulesCreated.store(true);
         shouldStop.store(false);
         moduleCreationCanProceed.store(false);
-        firstRun = false;
+        firstRun.store(false);
         threadNotified = false;
         
-        auto success = "Success";
-        return std::move(success);
+        return true;
     }
     catch (const std::exception& e) 
     {        
-        return std::move(e.what());
+        return false;
     }    
 }
 
@@ -257,10 +254,10 @@ void MainComponent::createAudioMathsModule(const json& values)
         leftInputs = values["left_input_from"].get<std::vector<int>>();
     }
 
-    int rightIn = -1;
+    std::vector<int> rightInputs;
     if (values.contains("right_input_from")) 
     {
-        rightIn = values["right_input_from"].get<int>();
+        rightInputs = values["right_input_from"].get<std::vector<int>>();
     }
 
     int outputId = -1;
@@ -271,7 +268,7 @@ void MainComponent::createAudioMathsModule(const json& values)
         audioLookup.emplace(outputId, buff);
     }
     
-    auto mathsModule = std::make_unique<AudioMathsModule>(cvParamLookup, audioLookup, leftInputs, rightIn, outputId, audioCv, mathsFunctionLookup[mathsType]);
+    auto mathsModule = std::make_unique<AudioMathsModule>(cvParamLookup, audioLookup, leftInputs, rightInputs, outputId, audioCv, mathsFunctionLookup[mathsType]);
     processorModules.push_back(std::move(mathsModule));
 }
 
@@ -287,7 +284,8 @@ void MainComponent::createMathsModule(const json& values)
         {
             if (cvParamLookup.find(i) == cvParamLookup.end()) 
             {
-                cvParamLookup.emplace(i, 1);
+                std::vector<float> temp(samplesPerBlockExpected, 1);
+                cvParamLookup.emplace(i, std::move(temp));
             }
         }
     }
@@ -300,7 +298,8 @@ void MainComponent::createMathsModule(const json& values)
         {
             if (cvParamLookup.find(i) == cvParamLookup.end()) 
             {
-                cvParamLookup.emplace(i, 1);
+                std::vector<float> temp(samplesPerBlockExpected, 1);
+                cvParamLookup.emplace(i, std::move(temp));
             }
         }
     }
@@ -311,7 +310,8 @@ void MainComponent::createMathsModule(const json& values)
         outputId = values["output_id"].get<int>();
         if (cvParamLookup.find(outputId) == cvParamLookup.end()) 
         {
-            cvParamLookup.emplace(outputId, 1);
+            std::vector<float> temp(samplesPerBlockExpected, 1);
+            cvParamLookup.emplace(outputId, std::move(temp));
         }
     }
 
@@ -360,7 +360,8 @@ void MainComponent::createOscillatorModule(const json& values)
         freqIdx = values["freq_input_from"].get<int>();
         if (cvParamLookup.find(freqIdx) == cvParamLookup.end()) 
         {
-            cvParamLookup.emplace(freqIdx, 100);
+            std::vector<float> temp(samplesPerBlockExpected, 100);
+            cvParamLookup.emplace(freqIdx, std::move(temp));
         }
     }
 
@@ -378,7 +379,8 @@ void MainComponent::createOscillatorModule(const json& values)
         pwIdx = values["pw_input_from"].get<int>();
         if (cvParamLookup.find(pwIdx) == cvParamLookup.end()) 
         {
-            cvParamLookup.emplace(pwIdx, 0.5f);
+            std::vector<float> temp(samplesPerBlockExpected, 0.5f);
+            cvParamLookup.emplace(pwIdx, std::move(temp));
         }
     }
 
@@ -388,7 +390,8 @@ void MainComponent::createOscillatorModule(const json& values)
         cvIdx = values["cv_out_to"].get<int>();
         if (cvParamLookup.find(cvIdx) == cvParamLookup.end()) 
         {
-            cvParamLookup.emplace(cvIdx, 1);
+            std::vector<float> temp(samplesPerBlockExpected, 1);
+            cvParamLookup.emplace(cvIdx, std::move(temp));
         }
     }
 

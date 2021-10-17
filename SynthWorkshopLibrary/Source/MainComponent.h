@@ -40,7 +40,7 @@ public:
     void getNextAudioBlock(const juce::AudioSourceChannelInfo& bufferToFill) override;
     void releaseResources() override;
 
-    const char* createModulesFromJson(const char* jsonText);
+    bool createModulesFromJson(const char* jsonText);
 
     void stopAudio();
 
@@ -65,7 +65,7 @@ private:
     std::vector<std::unique_ptr<AudioOutputModule>> audioOutputModules;
     std::vector<std::unique_ptr<Module>> processorModules;
 
-    std::unordered_map<int, float> cvParamLookup;   // might have to make this a buffer/array so we can do maths per sample 
+    std::unordered_map<int, std::vector<float>> cvParamLookup;
     std::unordered_map<int, juce::AudioBuffer<float>> audioLookup;
 
     std::unordered_map<MathsModuleType, std::function<float(float, float)>> mathsFunctionLookup;
@@ -75,10 +75,10 @@ private:
     std::atomic<bool> modulesCreated;
     std::atomic<bool> shouldStop;
     std::atomic<bool> moduleCreationCanProceed;
+    std::atomic<bool> firstRun;
     std::condition_variable cv;
     std::mutex mtx;
     
-    bool firstRun = true;
     bool threadNotified = false;
     
     double sampleRate;

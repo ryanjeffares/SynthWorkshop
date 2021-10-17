@@ -43,12 +43,6 @@ public class IOModuleController : ModuleParent
         set
         {
             _audioCv = value;
-            GetComponent<Image>().color = AudioCv switch
-            {
-                AudioCV.Audio => "#F7FFAE".ColourFromHex(),
-                AudioCV.CV => "#AEFFF8".ColourFromHex(),
-                _ => Color.white,
-            };
             nameText.text = AudioCv.ToString();            
         }
     }

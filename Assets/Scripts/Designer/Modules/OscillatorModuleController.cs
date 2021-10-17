@@ -22,14 +22,6 @@ public class OscillatorModuleController : ModuleParent
         {
             _type = value;
             icon.sprite = waveformSprites[(int)Type];
-            GetComponent<Image>().color = Type switch
-            {
-                OscillatorType.Sine => "#AEBDFF".ColourFromHex(),
-                OscillatorType.Saw => "#FFAEB3".ColourFromHex(),
-                OscillatorType.Pulse => "#F9AEFF".ColourFromHex(),
-                OscillatorType.Tri => "#AEFFB2".ColourFromHex(),
-                _ => Color.white,
-            };
             nameText.text = Type.ToString();
             if (Type == OscillatorType.Pulse)
             {

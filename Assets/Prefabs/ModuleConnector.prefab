@@ -91,8 +91,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   wirePrefab: {fileID: 5647133731599453351, guid: 13af26645bc03ac49834587fdf5fa287, type: 3}
+  altCursor: {fileID: 2800000, guid: b7972fa129a900f49b867bec36c03d4c, type: 3}
   audioCv: 0
   inputOutput: 0
+  sourceConnector: {fileID: 0}
+  isConnected: 0
+  connectedModuleConnectors: []
 --- !u!58 &5544835816198696407
 CircleCollider2D:
   m_ObjectHideFlags: 0

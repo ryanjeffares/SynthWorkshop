@@ -19,7 +19,7 @@ class OscillatorModule : public Module
 {
 public:    
 
-    OscillatorModule(OscillatorType t, std::unordered_map<int, float>& cvLookup, std::unordered_map<int, juce::AudioBuffer<float>>& audioLu, int freqIdx, int pwIdx, int soundIdx, int cvOutIdx)
+    OscillatorModule(OscillatorType t, std::unordered_map<int, std::vector<float>>& cvLookup, std::unordered_map<int, juce::AudioBuffer<float>>& audioLu, int freqIdx, int pwIdx, int soundIdx, int cvOutIdx)
         : type(t), phase(0.f), frequency(20), pulseWidth(0.5f), cvParamLookup(cvLookup), frequencyInIndex(freqIdx), pulseWidthInIndex(pwIdx),
           soundOutIndex(soundIdx), cvOutIndex(cvOutIdx), audioLookup(audioLu), readyToPlay(false) {}
 
@@ -34,19 +34,19 @@ public:
     void getNextAudioBlock(int numSamples, int numChannels) override 
     {
         if (!readyToPlay || frequencyInIndex == -1) return;
-
-        frequency = cvParamLookup[frequencyInIndex];
-        if (pulseWidthInIndex != -1) 
-        {
-            pulseWidth = cvParamLookup[pulseWidthInIndex];
-            if (pulseWidth < 0.f) pulseWidth = 0.f;
-            if (pulseWidth > 1.f) pulseWidth = 1.f;
-        }
-
-        float value = 0.f;        
+        
         for (auto sample = 0; sample < numSamples; sample++) 
         {
-            value = getNextSample();
+            frequency = cvParamLookup[frequencyInIndex][sample];
+            if (pulseWidthInIndex != -1) 
+            {
+                pulseWidth = cvParamLookup[pulseWidthInIndex][sample];
+                if (pulseWidth < 0.f) pulseWidth = 0.f;
+                if (pulseWidth > 1.f) pulseWidth = 1.f;
+            }
+
+            float value = getNextSample();
+
             if (soundOutIndex != -1) 
             {
                 for (auto channel = 0; channel < numChannels; channel++) 
@@ -54,8 +54,12 @@ public:
                     audioLookup[soundOutIndex].setSample(channel, sample, value);
                 }
             }
+
+            if (cvOutIndex != -1)
+            {
+                cvParamLookup[cvOutIndex][sample] = value;
+            }
         }
-        cvParamLookup[cvOutIndex] = value;  // not good - this lookup should be a buffer/array so we can do per sample
     }
 
     void setReady(bool state) override 
@@ -130,7 +134,7 @@ private:
     }
 
     std::unordered_map<int, juce::AudioBuffer<float>>& audioLookup;
-    std::unordered_map<int, float>& cvParamLookup;
+    std::unordered_map<int, std::vector<float>>& cvParamLookup;
 
     OscillatorType type;    
 

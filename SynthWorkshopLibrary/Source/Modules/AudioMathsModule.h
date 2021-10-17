@@ -19,8 +19,8 @@ class AudioMathsModule : public Module
 {
 public:
 
-    AudioMathsModule(std::unordered_map<int, float>& cvLookup, std::unordered_map<int, juce::AudioBuffer<float>>& audioLu, std::vector<int> leftIn, int rightIn, int output, AudioCV acv, const std::function<float(float, float)>& func)
-        : cvParamLookup(cvLookup), audioLookup(audioLu), leftInputs(leftIn), rightInput(rightIn), outputIndex(output), audioCvIncoming(acv), currentFunction(func) {}
+    AudioMathsModule(std::unordered_map<int, std::vector<float>>& cvLookup, std::unordered_map<int, juce::AudioBuffer<float>>& audioLu, std::vector<int> leftIn, std::vector<int> rightIns, int output, AudioCV acv, const std::function<float(float, float)>& func)
+        : cvParamLookup(cvLookup), audioLookup(audioLu), leftInputs(leftIn), rightInputs(rightIns), outputIndex(output), audioCvIncoming(acv), currentFunction(func) {}
 
     ~AudioMathsModule() = default;
 
@@ -38,9 +38,12 @@ public:
         {
             for (int channel = 0; channel < numChannels; channel++) 
             {
-                // checks are performed in C# so that the module will always have the necessary connections, this is just to avoid indexing the lookup at -1
-                
-                float affectingVal = rightInput == -1 ? 1 : (audioCvIncoming == AudioCV::Audio ? audioLookup[rightInput].getSample(channel, sample) : cvParamLookup[rightInput]);
+                // checks are performed in C# so that the module will always have the necessary connections                
+                float affectingVal = 0.f;
+                for (auto r : rightInputs)
+                {
+                    affectingVal += audioCvIncoming == AudioCV::Audio ? audioLookup[r].getSample(channel, sample) : cvParamLookup[r][sample];
+                }
                 
                 float inputSampleVal = 0.f;
                 for (auto l : leftInputs) 
@@ -60,14 +63,14 @@ public:
 
 private:
 
-    std::unordered_map<int, float>& cvParamLookup;
+    std::unordered_map<int, std::vector<float>>& cvParamLookup;
     std::unordered_map<int, juce::AudioBuffer<float>>& audioLookup;
 
     std::function<float(float, float)> currentFunction;
 
     std::vector<int> leftInputs;
+    std::vector<int> rightInputs;
     
-    const int rightInput;
     const int outputIndex;
     const AudioCV audioCvIncoming;
 

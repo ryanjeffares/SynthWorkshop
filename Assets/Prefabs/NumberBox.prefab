@@ -219,7 +219,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 0.9098039, b: 0.68235296, a: 1}
+  m_Color: {r: 0.5568628, g: 0.5568628, b: 0.5568628, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -347,7 +347,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_FontData:
-    m_Font: {fileID: 10102, guid: 0000000000000000e000000000000000, type: 0}
+    m_Font: {fileID: 12800000, guid: c22915738d3d39c4ea602434ff96743e, type: 3}
     m_FontSize: 14
     m_FontStyle: 2
     m_BestFit: 1
@@ -451,11 +451,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   wirePrefab: {fileID: 5647133731599453351, guid: 13af26645bc03ac49834587fdf5fa287, type: 3}
+  altCursor: {fileID: 2800000, guid: b7972fa129a900f49b867bec36c03d4c, type: 3}
   audioCv: 1
   inputOutput: 1
-  sourceConnector: {fileID: 0}
-  isConnected: 0
-  connectedModuleConnectors: []
 --- !u!58 &1775008729392355921
 CircleCollider2D:
   m_ObjectHideFlags: 0
@@ -584,11 +582,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   wirePrefab: {fileID: 5647133731599453351, guid: 13af26645bc03ac49834587fdf5fa287, type: 3}
+  altCursor: {fileID: 2800000, guid: b7972fa129a900f49b867bec36c03d4c, type: 3}
   audioCv: 1
   inputOutput: 0
-  sourceConnector: {fileID: 0}
-  isConnected: 0
-  connectedModuleConnectors: []
 --- !u!58 &350311493782582147
 CircleCollider2D:
   m_ObjectHideFlags: 0
@@ -692,7 +688,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_FontData:
-    m_Font: {fileID: 10102, guid: 0000000000000000e000000000000000, type: 0}
+    m_Font: {fileID: 12800000, guid: c22915738d3d39c4ea602434ff96743e, type: 3}
     m_FontSize: 14
     m_FontStyle: 0
     m_BestFit: 1

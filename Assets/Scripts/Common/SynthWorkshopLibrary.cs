@@ -6,7 +6,7 @@ static class SynthWorkshopLibrary
 {
 #if UNITY_EDITOR_OSX || UNITY_STANDALONE_OSX
     private const string LibName = "SynthWorkshopBundle_M1";
-#elif UNITY_EDITOR_WIN || UNITY_STANDALONE_WIND
+#elif UNITY_EDITOR_WIN || UNITY_STANDALONE_WIN
     private const string LibName = "SynthWorkshopLibrary_x86";
 #endif
 
@@ -26,7 +26,7 @@ static class SynthWorkshopLibrary
     private static extern void stopAudio(IntPtr mc);
 
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
-    private static extern IntPtr createModulesFromJson(IntPtr mc, string jsonText);
+    private static extern bool createModulesFromJson(IntPtr mc, string jsonText);
 
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
     private static extern void setCvParam(IntPtr mc, int index, float value);
@@ -75,10 +75,9 @@ static class SynthWorkshopLibrary
         stopAudio(MainComponent);
     }
 
-    public static string CreateModulesFromJson(string jsonText)
+    public static bool CreateModulesFromJson(string jsonText)
     {
-        var result =createModulesFromJson(MainComponent, jsonText);
-        return Marshal.PtrToStringAnsi(result);
+        return createModulesFromJson(MainComponent, jsonText);
     }
 
     public static void SetCvParam(int index, float value)

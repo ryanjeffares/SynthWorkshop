@@ -489,9 +489,8 @@ public class DesignerUIController : MonoBehaviour
     private void PlayArrangement(string jsonText, List<CvParam> namedParams)
     {
         var result = SynthWorkshopLibrary.CreateModulesFromJson(jsonText);
-
         Debug.Log(result);
-        if (result != "Success") return;
+        if (!result) return;
 
         foreach (var s in _instantiatedParamControls)
         {

@@ -27,6 +27,8 @@ public class ModuleConnectorController : MonoBehaviour, IPointerEnterHandler, IP
     private readonly List<GameObject> _instantiatedWires = new List<GameObject>();
     private bool _dragging;
 
+    private int _cvOutputIndex, _audioOutputIndex;
+
     private void Awake()
     {
         ModuleParent.ModuleDestroyed += ModuleDestroyedCallback;
@@ -38,6 +40,18 @@ public class ModuleConnectorController : MonoBehaviour, IPointerEnterHandler, IP
     {
         Cursor.SetCursor(null, Vector2.zero, CursorMode.ForceSoftware);
         ModuleParent.ModuleDestroyed -= ModuleDestroyedCallback;
+    }
+
+    public void SetOutputIndex(int idx)
+    {
+        if (audioCv == AudioCV.Audio)
+        {
+            _audioOutputIndex = idx;
+        }
+        else if (audioCv == AudioCV.CV)
+        {
+            _cvOutputIndex = idx;
+        }
     }
 
     public void OnBeginDrag(PointerEventData eventData)
@@ -60,6 +74,12 @@ public class ModuleConnectorController : MonoBehaviour, IPointerEnterHandler, IP
 
     public void OnEndDrag(PointerEventData eventData)
     {
+        void DestroyWire(GameObject o)
+        {
+            _instantiatedWires.Remove(o);
+            Destroy(o);
+        }
+
         parentModule.draggable = true;
         _dragging = false;
         
@@ -67,12 +87,43 @@ public class ModuleConnectorController : MonoBehaviour, IPointerEnterHandler, IP
         var wireController = wire.GetComponent<WireDragController>();
         if (CheckTarget(wireController.targetController))
         {
-            _instantiatedWires.Remove(wire);
-            Destroy(wire);
+            DestroyWire(wire);
             return;
         }
-
+        
         var target = wireController.targetController;
+        
+        // need to know which of the target inputs we're connecting to
+        // and the output_id of this connector
+        switch (target.parentModule.moduleType)
+        {
+            case ModuleType.OscillatorModule:
+            {
+                var idx = target.parentModule.GetIndexOfConnector(target);
+                var res = SynthWorkshopLibrary.SetModuleInputIndex(false, true, target.parentModule.GlobalIndex,
+                    _cvOutputIndex, idx);
+                if (!res)
+                {
+                    DestroyWire(wire);
+                    return;
+                }
+                
+                break;
+            }
+            case ModuleType.IOModule:
+            {
+                var idx = target.parentModule.GetIndexOfConnector(target);
+                var res = SynthWorkshopLibrary.SetModuleInputIndex(true, true, target.parentModule.GlobalIndex,
+                    _audioOutputIndex, idx);
+                if (!res)
+                {
+                    DestroyWire(wire);
+                    return;
+                }
+
+                break;
+            }
+        }
 
         target.GetComponent<Image>().color = Color.green;
         GetComponent<Image>().color = Color.green;
@@ -86,17 +137,9 @@ public class ModuleConnectorController : MonoBehaviour, IPointerEnterHandler, IP
             mathsController.SetAudioOrCvIncoming(audioCv, target);
         }
 
-        // need to know which of the target inputs we're connecting to
-        // and the output_id of this connector
-        switch (target.parentModule.moduleType)
+        if (parentModule is KnobModuleController knob)
         {
-            case ModuleType.OscillatorModule:
-            {
-                var osc = target.parentModule as OscillatorModuleController;
-                var idx = osc.GetIndexOfConnector(target);
-                
-                break;
-            }
+            knob.InvokeSliderCallback();
         }
 
         wireController.isConnected = true;
@@ -120,11 +163,15 @@ public class ModuleConnectorController : MonoBehaviour, IPointerEnterHandler, IP
         var anyConnected = false;
         foreach (var dc in destroyedConnectors)
         {
-            if (connectedModuleConnectors.Contains(dc))
-            {
-                anyConnected = true;
-                connectedModuleConnectors.Remove(dc);
-            }
+            if (!connectedModuleConnectors.Contains(dc)) continue;
+            
+            anyConnected = true;
+
+            var isAudio = audioCv == AudioCV.Audio;
+            SynthWorkshopLibrary.SetModuleInputIndex(isAudio, false, parentModule.GlobalIndex,
+                isAudio ? dc._audioOutputIndex : dc._cvOutputIndex, parentModule.GetIndexOfConnector(this));
+                
+            connectedModuleConnectors.Remove(dc);
         }
 
         if (!anyConnected) return;
@@ -163,19 +210,6 @@ public class ModuleConnectorController : MonoBehaviour, IPointerEnterHandler, IP
         if (!_dragging)
         {
             parentModule.draggable = true;
-        }
-    }
-
-    public void RemoveWire(GameObject wire)
-    {
-        var wireController = wire.GetComponent<WireController>();
-        if(connectedModuleConnectors.Contains(wireController.GetParent()))
-        {
-            connectedModuleConnectors.Remove(wireController.GetParent());
-        }
-        if (connectedModuleConnectors.Contains(wireController.GetTarget()))
-        {
-            connectedModuleConnectors.Remove(wireController.GetTarget());
         }
     }
 }

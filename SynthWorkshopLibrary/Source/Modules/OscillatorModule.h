@@ -19,132 +19,180 @@ class OscillatorModule : public Module
 {
 public:    
 
-    OscillatorModule(OscillatorType t, std::unordered_map<int, std::vector<float>>& cvLookup, std::unordered_map<int, juce::AudioBuffer<float>>& audioLu, int freqIdx, int pwIdx, int soundIdx, int cvOutIdx, int id)
-        : type(t), phase(0.f), frequency(20), pulseWidth(0.5f), cvParamLookup(cvLookup), frequencyInIndex(freqIdx), pulseWidthInIndex(pwIdx),
-          soundOutIndex(soundIdx), cvOutIndex(cvOutIdx), audioLookup(audioLu), readyToPlay(false) 
+    OscillatorModule(OscillatorType t, std::unordered_map<int, std::vector<float>>& cvLookup, std::unordered_map<int, juce::AudioBuffer<float>>& audioLu, std::vector<int> freqIdx, std::vector<int> pwIdx, int soundIdx, int cvOutIdx, int id)
+        : m_OscillatorType(t), m_Phase(0.f), m_CvParamLookup(cvLookup), m_FrequencyInputIndexes(freqIdx), m_PulsewidthInputIndexes(pwIdx),
+          m_SoundOutIndex(soundIdx), m_CvOutIndex(cvOutIdx), m_AudioLookup(audioLu)
     {
-        moduleId = id;
+        m_ModuleId = id;
     }
 
     ~OscillatorModule() = default;
 
     void prepareToPlay(int samplesPerBlock, double sr) override 
     {
-        sampleRate = sr;
-        samplesPerBlockExpected = samplesPerBlock;
+        m_SampleRate = sr;
     }
 
     void getNextAudioBlock(int numSamples, int numChannels) override 
     {
-        if (!readyToPlay || frequencyInIndex == -1) return;
+        if (!m_ReadyToPlay) return;
         
         for (auto sample = 0; sample < numSamples; sample++) 
         {
-            frequency = cvParamLookup[frequencyInIndex][sample];
-            if (pulseWidthInIndex != -1) 
+            float frequency = 0;
+            for (auto i : m_FrequencyInputIndexes)
             {
-                pulseWidth = cvParamLookup[pulseWidthInIndex][sample];
-                if (pulseWidth < 0.f) pulseWidth = 0.f;
-                if (pulseWidth > 1.f) pulseWidth = 1.f;
+                frequency += m_CvParamLookup[i][sample];
             }
 
-            float value = getNextSample();
-
-            if (soundOutIndex != -1) 
+            float pulseWidth = 0.5f;
+            if (m_PulsewidthInputIndexes.size() > 0)
             {
-                for (auto channel = 0; channel < numChannels; channel++) 
+                pulseWidth = 0;
+                for (auto i : m_PulsewidthInputIndexes)
                 {
-                    audioLookup[soundOutIndex].setSample(channel, sample, value);
+                    pulseWidth += m_CvParamLookup[i][sample];
                 }
             }
 
-            if (cvOutIndex != -1)
+            float value = getNextSample(frequency, pulseWidth);
+
+            if (m_SoundOutIndex != -1) 
             {
-                cvParamLookup[cvOutIndex][sample] = value;
+                for (auto channel = 0; channel < numChannels; channel++) 
+                {
+                    m_AudioLookup[m_SoundOutIndex].setSample(channel, sample, value);
+                }
+            }
+
+            if (m_CvOutIndex != -1)
+            {
+                m_CvParamLookup[m_CvOutIndex][sample] = value;
             }
         }
     }
 
     void setReady(bool state) override 
     {
-        readyToPlay = state;
+        m_ReadyToPlay = state;
     }
 
     OscillatorType getType() const 
     {
-        return type;
+        return m_OscillatorType;
     }
 
     void setType(OscillatorType newType) 
     {
-        type = newType;
+        m_OscillatorType = newType;
+    }
+
+    void setInputIndex(int outputIndex, int targetIndex) override
+    {        
+        switch (targetIndex)
+        {
+            case 2:
+                m_FrequencyInputIndexes.push_back(outputIndex);
+                break;
+            case 3:
+                m_PulsewidthInputIndexes.push_back(outputIndex);
+                break;
+        }
+    }
+
+    void removeInputIndex(int outputIndex, int targetIndex) override
+    {
+        std::vector<int>* vec = nullptr;
+        switch (targetIndex)
+        {
+            case 2:
+                vec = &m_FrequencyInputIndexes;
+                break;
+            case 3:
+                vec = &m_PulsewidthInputIndexes;
+                break;            
+        }
+
+        if (vec == nullptr) return;
+
+        for (auto it = vec->begin(); it != vec->end();)
+        {
+            if (*it == outputIndex)
+            {
+                it = vec->erase(it);
+            }
+            else
+            {
+                ++it;
+            }
+        }
     }
 
 private:
 
-    float getNextSample() 
+    float getNextSample(float frequency, float pulseWidth)
     {
-        switch (type) 
+        switch (m_OscillatorType) 
         {
             case OscillatorType::Saw:
-                output = phase;
-                if (phase >= 1.f) 
+                m_Output = m_Phase;
+                if (m_Phase >= 1.f) 
                 {
-                    phase -= 2.f;
+                    m_Phase -= 2.f;
                 }
-                phase += (1.f / (sampleRate / frequency)) * 2.f;
-                return output;
+                m_Phase += (1.f / (m_SampleRate / frequency)) * 2.f;
+                return m_Output;
             case OscillatorType::Pulse:
-                if (phase >= 1.f) 
+                if (m_Phase >= 1.f) 
                 {
-                    phase -= 1.f;
+                    m_Phase -= 1.f;
                 }
-                phase += (1.f / (sampleRate / frequency));
-                if (phase < pulseWidth) 
+                m_Phase += (1.f / (m_SampleRate / frequency));
+                if (m_Phase < pulseWidth)
                 {
-                    output = -1;
+                    m_Output = -1;
                 }
-                if (phase > pulseWidth) 
+                if (m_Phase > pulseWidth)
                 {
-                    output = 1;
+                    m_Output = 1;
                 }
-                return output;
+                return m_Output;
             case OscillatorType::Sine:
-                output = std::sin(phase * juce::MathConstants<float>::twoPi);
-                if (phase >= 1.f) 
+                m_Output = std::sin(m_Phase * juce::MathConstants<float>::twoPi);
+                if (m_Phase >= 1.f) 
                 {
-                    phase -= 1.f;
+                    m_Phase -= 1.f;
                 }
-                phase += (1.f / (sampleRate / frequency));
-                return output;
+                m_Phase += (1.f / (m_SampleRate / frequency));
+                return m_Output;
             case OscillatorType::Tri:
-                if (phase >= 1.f) 
+                if (m_Phase >= 1.f) 
                 {
-                    phase -= 1.f;
+                    m_Phase -= 1.f;
                 }
-                phase += (1.f / (sampleRate / frequency));
-                if (phase <= 0.5f) 
+                m_Phase += (1.f / (m_SampleRate / frequency));
+                if (m_Phase <= 0.5f) 
                 {
-                    output = (phase - 0.25f) * 4;
+                    m_Output = (m_Phase - 0.25f) * 4;
                 }
                 else 
                 {
-                    output = ((1.f - phase) - 0.25f) * 4;
+                    m_Output = ((1.f - m_Phase) - 0.25f) * 4;
                 }
-                return output;
+                return m_Output;
             default: return 0;
         }
     }
 
-    std::unordered_map<int, juce::AudioBuffer<float>>& audioLookup;
-    std::unordered_map<int, std::vector<float>>& cvParamLookup;
+    std::unordered_map<int, juce::AudioBuffer<float>>& m_AudioLookup;
+    std::unordered_map<int, std::vector<float>>& m_CvParamLookup;
 
-    OscillatorType type;    
+    OscillatorType m_OscillatorType;    
 
-    double sampleRate;
-    float phase, frequency, pulseWidth, output;
-    const int frequencyInIndex, pulseWidthInIndex, soundOutIndex, cvOutIndex;
-    int samplesPerBlockExpected;
-    bool readyToPlay;
+    double m_SampleRate;
+
+    float m_Phase, m_Output;
+    int m_SoundOutIndex, m_CvOutIndex;
+    std::vector<int> m_FrequencyInputIndexes, m_PulsewidthInputIndexes;
 
 };

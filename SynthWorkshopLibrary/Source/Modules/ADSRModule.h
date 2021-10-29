@@ -18,57 +18,56 @@ class ADSRModule : public Module
 {
 public:
 
-    ADSRModule(std::unordered_map<int, juce::AudioBuffer<float>>& audioLu, std::unordered_map<int, std::vector<float>>& cvLookup, std::vector<int> inputIndexes, int outputIndex, int numCh,
+    ADSRModule(std::unordered_map<int, juce::AudioBuffer<float>>& audioLu, std::unordered_map<int, std::vector<float>>& cvLookup, std::vector<int> inputIndexes, int outputIndex,
         int a, int d, int s, int r, int t, int id) 
-        : audioLookup(audioLu), cvParamLookup(cvLookup), audioOutputIndex(outputIndex), numChannels(numCh), attackIndex(a), decayIndex(d), sustainIndex(s), releaseIndex(r), triggerInput(t)
+        : m_AudioLookup(audioLu), m_CvParamLookup(cvLookup), m_AudioOutputIndex(outputIndex), m_AttackIndex(a), m_DecayIndex(d), m_SustainIndex(s), m_ReleaseIndex(r), m_TriggerInput(t)
     {
-        moduleId = id;
-        audioInputIndexes = inputIndexes;
+        m_ModuleId = id;
+        m_AudioInputIndexes = inputIndexes;
     }
 
     void prepareToPlay(int spbe, double sr) override 
     {
-        samplesPerBlockExpected = spbe;
-        sampleRate = sr;
-        adsr.setSampleRate(sampleRate);
+        m_SampleRate = sr;
+        m_Envelope.setSampleRate(m_SampleRate);
     }
 
     void getNextAudioBlock(int numSamples, int numChannels) override 
     {
-        if (!readyToPlay || audioOutputIndex == -1) return;
+        if (!m_ReadyToPlay || m_AudioOutputIndex == -1) return;
         
-        audioLookup[audioOutputIndex].clear();
-        auto write = audioLookup[audioOutputIndex].getArrayOfWritePointers();
+        m_AudioLookup[m_AudioOutputIndex].clear();
+        auto write = m_AudioLookup[m_AudioOutputIndex].getArrayOfWritePointers();
         
         for (int sample = 0; sample < numSamples; sample++) 
         {            
-            currentParameters.attack = cvParamLookup[attackIndex][sample];
-            currentParameters.decay = cvParamLookup[decayIndex][sample];
-            currentParameters.sustain = cvParamLookup[sustainIndex][sample];
-            currentParameters.release = cvParamLookup[releaseIndex][sample];
+            m_CurrentParameters.attack = m_CvParamLookup[m_AttackIndex][sample];
+            m_CurrentParameters.decay = m_CvParamLookup[m_DecayIndex][sample];
+            m_CurrentParameters.sustain = m_CvParamLookup[m_SustainIndex][sample];
+            m_CurrentParameters.release = m_CvParamLookup[m_ReleaseIndex][sample];
 
-            adsr.setParameters(currentParameters);
+            m_Envelope.setParameters(m_CurrentParameters);
 
-            if (triggerInput != -1 && noteOnState != cvParamLookup[triggerInput][0])
+            if (m_TriggerInput != -1 && m_NoteOnState != m_CvParamLookup[m_TriggerInput][0])
             {
-                noteOnState = cvParamLookup[triggerInput][0];
-                if (noteOnState)
+                m_NoteOnState = m_CvParamLookup[m_TriggerInput][0];
+                if (m_NoteOnState)
                 {
-                    adsr.noteOn();
+                    m_Envelope.noteOn();
                 }
                 else
                 {
-                    adsr.noteOff();
+                    m_Envelope.noteOff();
                 }
             }
 
-            float value = adsr.getNextSample();
+            float value = m_Envelope.getNextSample();
             
             for (int channel = 0; channel < numChannels; channel++) 
             {
-                for (int i : audioInputIndexes) 
+                for (int i : m_AudioInputIndexes) 
                 {
-                    write[channel][sample] += (audioLookup[i].getSample(channel, sample) * value);
+                    write[channel][sample] += (m_AudioLookup[i].getSample(channel, sample) * value);
                 }
             }
         }
@@ -76,27 +75,24 @@ public:
 
     void setReady(bool state) override 
     {
-        readyToPlay = state;
+        m_ReadyToPlay = state;
     }
 
 private:   
 
-    std::unordered_map<int, juce::AudioBuffer<float>>& audioLookup;
-    std::unordered_map<int, std::vector<float>>& cvParamLookup;
-    std::vector<int> audioInputIndexes;
+    std::unordered_map<int, juce::AudioBuffer<float>>& m_AudioLookup;
+    std::unordered_map<int, std::vector<float>>& m_CvParamLookup;
+    std::vector<int> m_AudioInputIndexes;
 
-    const int audioOutputIndex;
-    const int attackIndex, decayIndex, sustainIndex, releaseIndex;
-    const int triggerInput;
+    int m_AudioOutputIndex;
+    int m_AttackIndex, m_DecayIndex, m_SustainIndex, m_ReleaseIndex;
+    int m_TriggerInput;
 
-    float noteOnState = 0;
+    float m_NoteOnState = 0;
 
-    int numChannels, samplesPerBlockExpected;
-    double sampleRate;
+    double m_SampleRate;
 
-    bool readyToPlay = false;
-
-    juce::ADSR adsr;
-    juce::ADSR::Parameters currentParameters;
+    juce::ADSR m_Envelope;
+    juce::ADSR::Parameters m_CurrentParameters;
 
 };

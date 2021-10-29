@@ -14,18 +14,26 @@ public class KnobModuleController : ModuleParent
     public UnityEvent<string> onLabelChanged = new UnityEvent<string>();
     public UnityEvent<double> onMinChanged = new UnityEvent<double>();
     public UnityEvent<double> onMaxChanged = new UnityEvent<double>();
+    public UnityEvent<float> onSliderMoved = new UnityEvent<float>();
+
+    private CircleSlider _circleSlider;
 
     protected override void ChildAwake()
     {
+        _circleSlider = GetComponentInChildren<CircleSlider>();
+        _circleSlider.onValueChanged.AddListener(onSliderMoved.Invoke);
+        
         moduleType = ModuleType.KnobModule;
         minInput.onValueChanged.AddListener(val =>
         {
             min = double.Parse(val);
+            _circleSlider.SetRange((float) min, _circleSlider.Max, true);
             onMinChanged.Invoke(min);
         });
         maxInput.onValueChanged.AddListener(val =>
         {
             max = double.Parse(val);
+            _circleSlider.SetRange(_circleSlider.Min, (float) max, true);
             onMaxChanged.Invoke(max);
         });
         labelInput.onValueChanged.AddListener(val =>
@@ -33,6 +41,11 @@ public class KnobModuleController : ModuleParent
             Label = val;
             onLabelChanged.Invoke(Label);
         });
+    }
+
+    public void InvokeSliderCallback()
+    {
+        _circleSlider.onValueChanged.Invoke(_circleSlider.Value);
     }
 
     public void SetValues(string label, double mn, double mx)
@@ -43,6 +56,11 @@ public class KnobModuleController : ModuleParent
         minInput.text = min.ToString();
         max = mx;
         maxInput.text = max.ToString();
+    }
+
+    public void SetOutputIndex(int idx)
+    {
+        connectors[0].SetOutputIndex(idx);
     }
 
     public override List<ModuleConnectorController> GetUsedOutputs(out bool found)

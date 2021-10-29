@@ -47,6 +47,7 @@ public:
     void setCvParam(int index, float value);
     float getCvParam(int index);
     void createCvBufferWithKey(int key);
+    bool setModuleInputIndex(bool audioModule, bool add, int moduleId, int outputIndex, int targetIndex);    
     
     void setMasterVolume(float);
 
@@ -65,11 +66,14 @@ public:
     bool createOscillatorModule(const char* json);
     bool createAdsrModule(const char* json);
 
+    void destroyModule(bool audio, int moduleId);
+
 
 private:
 
-    Module* lastCreatedProcessorModule = nullptr;
-    AudioOutputModule* lastCreatedOutputModule = nullptr;
+    Module* m_LastCreatedProcessorModule = nullptr;
+    Module* m_LastCreatedOutputModule = nullptr;
+    std::vector<std::unique_ptr<Module>>::iterator m_ModuleItToDestroy;
 
     void createAudioMathsModuleFromJson(const json& values);
     void createMathsModuleFromJson(const json& values);
@@ -77,26 +81,28 @@ private:
     void createOscillatorModuleFromJson(const json& values);
     void createAdsrModuleFromJson(const json& values);
 
-    std::vector<std::unique_ptr<AudioOutputModule>> audioOutputModules;
-    std::vector<std::unique_ptr<Module>> processorModules;
+    std::vector<std::unique_ptr<Module>> m_AudioOutputModules;
+    std::vector<std::unique_ptr<Module>> m_ProcessorModules;
 
-    CVMap cvParamLookup;
-    AudioMap audioLookup;
-    FunctionMap mathsFunctionLookup;
+    CVMap m_CvParamLookup;
+    AudioMap m_AudioLookup;
+    FunctionMap m_MathsFunctionLookup;
 
-    float masterVolume;
+    float m_MasterVolume;
     
-    std::atomic<bool> modulesCreated;
-    std::atomic<bool> shouldStop;
-    std::atomic<bool> moduleCreationCanProceed;
-    std::atomic<bool> firstRun;
-    std::atomic<bool> newProcessorModuleCreated, newOutputModuleCreated;
-    std::condition_variable cv;
-    std::mutex mtx;
+    std::atomic<bool> m_ModulesCreated;
+    std::atomic<bool> m_ShouldStopAudio;
+    std::atomic<bool> m_ModuleCreationCanProceed;
+    std::atomic<bool> m_FirstRun;
+    std::atomic<bool> m_NewProcessorModuleCreated, m_NewOutputModuleCreated;
+    std::atomic<bool> m_ShouldDestroyProcessorModule, m_ShouldDestroyOutputModule;
+    std::condition_variable m_WaitCondition;
+    std::mutex m_Mutex;
     
-    bool threadNotified = false;
+    bool m_UnityThreadNotified = false;
     
-    double sampleRate;
-    int samplesPerBlockExpected;
+    double m_SampleRate;
+    int m_SamplesPerBlockExpected;
+
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MainComponent)
 };

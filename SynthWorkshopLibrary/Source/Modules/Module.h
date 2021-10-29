@@ -9,6 +9,7 @@
 */
 
 #pragma once
+#include <JuceHeader.h>
 
 class Module
 {
@@ -19,13 +20,17 @@ public:
     
     virtual void prepareToPlay(int samplesPerBlockExpected, double sampleRate) {}
     virtual void getNextAudioBlock(int numSamples, int numChannels) {}
+    virtual void getNextAudioBlock(const juce::AudioSourceChannelInfo& bufferToFill) {}
     virtual void releaseResources() {}
     
     virtual void setReady(bool) = 0;
+    virtual void setInputIndex(int outputIndex, int targetIndex) {}
+    virtual void removeInputIndex(int outputIndex, int targetIndex) {}
     
-    int getModuleId() const { moduleId; }
+    int getModuleId() const { return m_ModuleId; }
 
 protected:
-    bool readyToPlay = false;
-    int moduleId;
+
+    bool m_ReadyToPlay = false;
+    int m_ModuleId;
 };

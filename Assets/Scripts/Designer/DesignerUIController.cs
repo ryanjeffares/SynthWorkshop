@@ -177,22 +177,26 @@ public class DesignerUIController : MonoBehaviour
     {
         var type = (OscillatorType) oscillatorButtons.IndexOf(b);
         var module = Instantiate(oscillatorModulePrefab, mainContent.transform);
-        module.GetComponent<OscillatorModuleController>().SetType(type);
+
+        var osc = module.GetComponent<OscillatorModuleController>();
+        osc.SetType(type);
+        osc.SetOutputIndexes(_soundOutputIndex, _cvOutputIndex);
         _instantiatedModules.Add(module);
 
         var dict = new Dictionary<string, object>
         {
             {"type_string", type.ToString() },
             {"type_int", (int) type },
-            {"global_index", _totalModuleCount++ },
+            {"global_index", _totalModuleCount },
             {"sound_output_to", _soundOutputIndex++ },
             {"cv_out_to", _cvOutputIndex++ },
         };
 
         var id = $"oscillator_module_{_oscillatorModuleCount}";
         _currentArrangement["oscillator_modules"].Add(id, dict);        
-        _instantiatedModules.Last().GetComponent<ModuleParent>().SetIdentifier(id, _oscillatorModuleCount);
+        _instantiatedModules.Last().GetComponent<ModuleParent>().SetIdentifier(id, _totalModuleCount);
         _oscillatorModuleCount++;
+        _totalModuleCount++;
         SynthWorkshopLibrary.CreateNewModule((int) ModuleCategory.Oscillator, JObject.FromObject(dict).ToString());
     }
 
@@ -207,13 +211,14 @@ public class DesignerUIController : MonoBehaviour
         var dict = new Dictionary<string, object>
         {
             {"type", $"{controller.AudioCv}{controller.InputOutput}" },
-            {"global_index", _totalModuleCount++ }
+            {"global_index", _totalModuleCount }
         };
 
         var id = $"io_module_{_ioModuleCount}";
         _currentArrangement["io_modules"].Add(id, dict);
-        _instantiatedModules.Last().GetComponent<ModuleParent>().SetIdentifier(id, _ioModuleCount);
+        _instantiatedModules.Last().GetComponent<ModuleParent>().SetIdentifier(id, _totalModuleCount);
         _ioModuleCount++;
+        _totalModuleCount++;
         SynthWorkshopLibrary.CreateNewModule((int) ModuleCategory.Output, JObject.FromObject(dict).ToString());
     }
     
@@ -225,26 +230,36 @@ public class DesignerUIController : MonoBehaviour
             {
                 var knob = Instantiate(knobModulePrefab, mainContent.transform);
                 _instantiatedModules.Add(knob);
-                
+
+                var outIdx = _cvOutputIndex;
                 var dict = new Dictionary<string, object>
                 {
-                    {"global_index", _totalModuleCount++ },
-                    {"output_id", _cvOutputIndex },
+                    {"global_index", _totalModuleCount },
+                    {"output_id", outIdx },
                     {"type", "Knob"}
                 };
 
                 var knobName = $"control_module_{_controlModuleCount}";
                 _currentArrangement["control_modules"].Add(knobName, dict);
                 
-                _instantiatedModules.Last().GetComponent<ModuleParent>().SetIdentifier(knobName, _controlModuleCount);
-                knob.GetComponent<KnobModuleController>().onLabelChanged.AddListener(s => _currentArrangement["control_modules"][knobName]["name"] = s);
-                knob.GetComponent<KnobModuleController>().onMinChanged.AddListener(m => _currentArrangement["control_modules"][knobName]["min"] = m);
-                knob.GetComponent<KnobModuleController>().onMaxChanged.AddListener(m => _currentArrangement["control_modules"][knobName]["max"] = m);
+                _instantiatedModules.Last().GetComponent<ModuleParent>().SetIdentifier(knobName, _totalModuleCount);
+
+                var knobController = knob.GetComponent<KnobModuleController>();
+                knobController.onLabelChanged.AddListener(s => _currentArrangement["control_modules"][knobName]["name"] = s);
+                knobController.onMinChanged.AddListener(m => _currentArrangement["control_modules"][knobName]["min"] = m);
+                knobController.onMaxChanged.AddListener(m => _currentArrangement["control_modules"][knobName]["max"] = m);
+                knobController.onSliderMoved.AddListener(v =>
+                {
+                    _currentArrangement["control_modules"][knobName]["initial"] = v;
+                    SynthWorkshopLibrary.SetCvParam(outIdx, v);
+                });
+                knobController.SetOutputIndex(outIdx);
                 
-                SynthWorkshopLibrary.CreateCvBufferWithKey(_cvOutputIndex);
+                SynthWorkshopLibrary.CreateCvBufferWithKey(outIdx);
                 
                 _controlModuleCount++;
                 _cvOutputIndex++;
+                _totalModuleCount++;
                 break;
             }
             case 1:
@@ -254,15 +269,16 @@ public class DesignerUIController : MonoBehaviour
                 
                 var dict = new Dictionary<string, object>
                 {
-                    {"global_index", _totalModuleCount++ },
+                    {"global_index", _totalModuleCount },
                     {"output_id", _cvOutputIndex++ },
                     {"type", "Button"}
                 };
 
                 var buttonName = $"control_module_{_controlModuleCount}";
                 _currentArrangement["control_modules"].Add(buttonName, dict);
-                _instantiatedModules.Last().GetComponent<ModuleParent>().SetIdentifier(buttonName, _controlModuleCount);
+                _instantiatedModules.Last().GetComponent<ModuleParent>().SetIdentifier(buttonName, _totalModuleCount);
                 _controlModuleCount++;
+                _totalModuleCount++;
                 button.GetComponent<ButtonModuleController>().onLabelChanged.AddListener(s => _currentArrangement["control_modules"][buttonName]["name"] = s);
                 break;
             }
@@ -273,15 +289,16 @@ public class DesignerUIController : MonoBehaviour
                 
                 var dict = new Dictionary<string, object>
                 {
-                    {"global_index", _totalModuleCount++ },
+                    {"global_index", _totalModuleCount },
                     {"output_id", _cvOutputIndex++ },
                     {"type", "Toggle"}
                 };
 
                 var toggleName = $"control_module_{_controlModuleCount}";
                 _currentArrangement["control_modules"].Add(toggleName, dict);
-                _instantiatedModules.Last().GetComponent<ModuleParent>().SetIdentifier(toggleName, _controlModuleCount);
+                _instantiatedModules.Last().GetComponent<ModuleParent>().SetIdentifier(toggleName, _totalModuleCount);
                 _controlModuleCount++;
+                _totalModuleCount++;
                 toggle.GetComponent<ToggleModuleController>().onLabelChanged.AddListener(s => _currentArrangement["control_modules"][toggleName]["name"] = s);
                 break;
             }
@@ -301,7 +318,7 @@ public class DesignerUIController : MonoBehaviour
 
         var dict = new Dictionary<string, object>
         {
-            {"global_index", _totalModuleCount++ },
+            {"global_index", _totalModuleCount },
             {"type_string", controller.audioCv.ToString() },
             {"type_int", (int) sign },
             {"operator", sign.ToString()},
@@ -310,8 +327,9 @@ public class DesignerUIController : MonoBehaviour
 
         var id = $"maths_module_{_mathsModuleCount}";
         _currentArrangement["maths_modules"].Add(id, dict);
-        _instantiatedModules.Last().GetComponent<ModuleParent>().SetIdentifier(id, _mathsModuleCount);
+        _instantiatedModules.Last().GetComponent<ModuleParent>().SetIdentifier(id, _totalModuleCount);
         _mathsModuleCount++;
+        _totalModuleCount++;
         SynthWorkshopLibrary.CreateNewModule((int) ModuleCategory.Maths, JObject.FromObject(dict).ToString());
     }
 
@@ -322,13 +340,14 @@ public class DesignerUIController : MonoBehaviour
         var dict = new Dictionary<string, object>
         {
             {"output_to", _soundOutputIndex++ },
-            {"global_index", _totalModuleCount++ }
+            {"global_index", _totalModuleCount }
         };
 
         var id = $"adsr_module_{_adsrModuleCount}";
         _currentArrangement["adsr_modules"].Add(id, dict);
-        _instantiatedModules.Last().GetComponent<ModuleParent>().SetIdentifier(id, _adsrModuleCount);
+        _instantiatedModules.Last().GetComponent<ModuleParent>().SetIdentifier(id, _totalModuleCount);
         _adsrModuleCount++;
+        _totalModuleCount++;
         SynthWorkshopLibrary.CreateNewModule((int) ModuleCategory.ADSR, JObject.FromObject(dict).ToString());
     }
 

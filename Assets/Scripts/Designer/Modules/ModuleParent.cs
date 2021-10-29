@@ -55,6 +55,8 @@ public abstract class ModuleParent : MonoBehaviour, IDragHandler, IBeginDragHand
 
     private void OnDestroy()
     {
+        ModuleDestroyed?.Invoke(gameObject);
+        SynthWorkshopLibrary.ModuleDestroyed(moduleType == ModuleType.IOModule, GlobalIndex);
         ChildDestroyed();
     }
 
@@ -85,7 +87,6 @@ public abstract class ModuleParent : MonoBehaviour, IDragHandler, IBeginDragHand
     {
         if (eventData.clickCount == 2)
         {
-            ModuleDestroyed?.Invoke(gameObject);
             Destroy(gameObject);
         }
     }

@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using UnityEngine;
+using UnityEngine.UI;
 
 public static class Extensions
 {
@@ -54,5 +55,26 @@ public static class Extensions
         }
         Debug.LogWarning("Unable to parse HTML string.");
         return Color.magenta;
+    }
+    
+    public static void SetTruncatedValueText(this Text text, float value, string unit = "")
+    {
+        var asStr = value.ToString();
+        text.text = (asStr.Length > 5
+            ? asStr.Substring(0, 5) + (asStr.Contains("E") ? "e-05" : string.Empty)
+            : asStr) + unit;
+    }
+    
+    public static float Map(this float x, float inMin, float inMax, float outMin, float outMax)
+    {
+        var inFraction = (x - inMin) / (inMax - inMin);
+        return ((outMax - outMin) * inFraction) + outMin;
+    }
+    
+    public static float Limit(this float x, float min, float max)
+    {
+        if (x < min) return min;
+        if (x > max) return max;
+        return x;
     }
 }

@@ -14,48 +14,47 @@
 #include <vector>
 #include <unordered_map>
 
-class AudioOutputModule : juce::AudioSource
+#include "Module.h"
+
+class AudioOutputModule : public Module
 {
 public:
 
-    AudioOutputModule(std::unordered_map<int, juce::AudioBuffer<float>>& lookup, std::vector<int> left, std::vector<int> right, int nc, int id) 
-        : audioLookup(lookup), numChannels(nc), readyToPlay(false) 
+    AudioOutputModule(std::unordered_map<int, juce::AudioBuffer<float>>& lookup, std::vector<int> left, std::vector<int> right, int id) 
+        : m_AudioLookup(lookup), m_ReadyToPlay(false) 
     {
-        moduleId = id;
-        leftInputIndexes = left;
-        rightInputIndexes = right;
+        m_ModuleId = id;
+        m_LeftInputIndexes = left;
+        m_RightInputIndexes = right;
     }
-
-    ~AudioOutputModule() override {}
 
     void prepareToPlay(int spbe, double sr) override 
     {
-        sampleRate = sr;
-        samplesPerBlockExpected = spbe;
+        m_SampleRate = sr;
     }
-
-    void releaseResources() override {}
 
     void getNextAudioBlock(const juce::AudioSourceChannelInfo& bufferToFill) override 
     {        
-        if (!readyToPlay) return;
+        if (!m_ReadyToPlay) return;
+
         auto write = bufferToFill.buffer->getArrayOfWritePointers();        
-        for (auto channel = 0; channel < numChannels; channel++) 
+
+        for (auto channel = 0; channel < bufferToFill.buffer->getNumChannels(); channel++) 
         {
             for (int sample = 0; sample < bufferToFill.numSamples; sample++) 
             {
                 switch (channel) 
                 {
                     case 0:
-                        for (auto i : leftInputIndexes) 
+                        for (auto i : m_LeftInputIndexes) 
                         {
-                            write[channel][sample] += audioLookup[i].getSample(channel, sample);                        
+                            write[channel][sample] += m_AudioLookup[i].getSample(channel, sample);                        
                         }
                         break;
                     case 1:
-                        for (auto i : rightInputIndexes) 
+                        for (auto i : m_RightInputIndexes) 
                         {
-                            write[channel][sample] += audioLookup[i].getSample(channel, sample);
+                            write[channel][sample] += m_AudioLookup[i].getSample(channel, sample);
                         }
                         break;
                 }
@@ -63,25 +62,39 @@ public:
         }        
     }
 
-    void setReady(bool state) 
+    void setReady(bool state)
     {
-        readyToPlay = state;
+        m_ReadyToPlay = state;
     }
 
-    int getModuleId() const 
-    { 
-        return moduleId; 
+    void setInputIndex(int outputIndex, int inputIndex) override
+    {
+        auto& vec = inputIndex ? m_RightInputIndexes : m_LeftInputIndexes;
+        vec.push_back(outputIndex);
+    }
+
+    void removeInputIndex(int outputIndex, int inputIndex) override
+    {
+        auto& vec = inputIndex ? m_RightInputIndexes : m_LeftInputIndexes;
+        for (auto it = vec.begin(); it != vec.end();)
+        {
+            if (*it == outputIndex)
+            {
+                it = vec.erase(it);
+            }
+            else
+            {
+                ++it;
+            }
+        }
     }
 
 private:
     
-    std::unordered_map<int, juce::AudioBuffer<float>>& audioLookup;
-    std::vector<int> leftInputIndexes, rightInputIndexes;
+    std::unordered_map<int, juce::AudioBuffer<float>>& m_AudioLookup;
+    std::vector<int> m_LeftInputIndexes, m_RightInputIndexes;
 
-    int samplesPerBlockExpected, numChannels;
-    int moduleId;
-
-    double sampleRate;
-    bool readyToPlay;
+    double m_SampleRate;
+    bool m_ReadyToPlay;
 
 };

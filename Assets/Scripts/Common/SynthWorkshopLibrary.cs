@@ -7,7 +7,7 @@ static class SynthWorkshopLibrary
 #if UNITY_EDITOR_OSX || UNITY_STANDALONE_OSX
     private const string LibName = "SynthWorkshopBundle_M1";
 #elif UNITY_EDITOR_WIN || UNITY_STANDALONE_WIN
-    private const string LibName = "SynthWorkshopLibrary_x86";
+    private const string LibName = "SynthWorkshopLibrary_x64";
 #endif
 
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
@@ -30,6 +30,12 @@ static class SynthWorkshopLibrary
 
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
     private static extern bool createSingleModule(IntPtr mc, int type, string jsonText);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    private static extern void destroyModule(IntPtr mc, bool audio, int globalIndex);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    private static extern bool setModuleInputIndex(IntPtr mc, bool audioOutput, bool add, int moduleId, int outputIndex, int targetIndex);
 
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
     private static extern void setCvParam(IntPtr mc, int index, float value);
@@ -88,8 +94,17 @@ static class SynthWorkshopLibrary
 
     public static bool CreateNewModule(int type, string jsonText)
     {
-        return true;
         return createSingleModule(MainComponent, type, jsonText);
+    }
+
+    public static void ModuleDestroyed(bool audio, int globalIndex)
+    {
+        destroyModule(MainComponent, audio, globalIndex);
+    }
+
+    public static bool SetModuleInputIndex(bool audioOutput, bool add, int moduleId, int outputIndex, int targetIndex)
+    {
+        return setModuleInputIndex(MainComponent, audioOutput, add, moduleId, outputIndex, targetIndex);
     }
     
     public static void SetCvParam(int index, float value)

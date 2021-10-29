@@ -74,6 +74,23 @@ extern "C"
         }
     }
 
+    EXPORT void destroyModule(void* mc, bool audio, int moduleId)
+    {
+        auto ptr = (MainComponent*)mc;
+
+        // this function is being called on scene exit because OnDestroy() is called for each game object
+        // it causes crashes i SUSPECT because MainComponent is destroyed before its called
+        if (ptr != nullptr)
+        {
+            ptr->destroyModule(audio, moduleId);
+        }
+    }
+
+    EXPORT bool setModuleInputIndex(void* mc, bool audioModule, bool add, int moduleId, int outputIndex, int targetIndex)
+    {
+        return ((MainComponent*)mc)->setModuleInputIndex(audioModule, add, moduleId, outputIndex, targetIndex);
+    }
+
     EXPORT void setCvParam(void* mc, int idx, float val) 
     {
         ((MainComponent*)mc)->setCvParam(idx, val);

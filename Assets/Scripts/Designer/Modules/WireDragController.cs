@@ -1,9 +1,10 @@
 using System;
 using System.Collections;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI.Extensions;
 
-public class WireDragController : MonoBehaviour
+public class WireDragController : MonoBehaviour, IPointerClickHandler
 {
     [NonSerialized] public ModuleConnectorController parentController;
     [NonSerialized] public ModuleConnectorController targetController;
@@ -34,6 +35,11 @@ public class WireDragController : MonoBehaviour
         }
     }
 
+    public void OnPointerClick(PointerEventData eventData)
+    {
+        Debug.Log("Clicked");
+    }
+
     private void Update()
     {
         if (!isConnected) return;
@@ -48,6 +54,5 @@ public class WireDragController : MonoBehaviour
         var diff = transform.position - targetController.transform.position;
         _lineRenderer.Points[1] = diff;
         _lineRenderer.SetAllDirty();
-        
     }
 }

@@ -41,6 +41,12 @@ public class OscillatorModuleController : ModuleParent
         moduleType = ModuleType.OscillatorModule;        
     }
 
+    public void SetOutputIndexes(int soundOut, int cvOut)
+    {
+        connectors[0].SetOutputIndex(soundOut);
+        connectors[1].SetOutputIndex(cvOut);
+    }
+
     public override List<ModuleException> CheckErrors()
     {
         var exceptions = new List<ModuleException>();

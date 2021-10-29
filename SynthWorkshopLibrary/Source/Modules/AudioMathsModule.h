@@ -20,65 +20,60 @@ class AudioMathsModule : public Module
 public:
 
     AudioMathsModule(std::unordered_map<int, std::vector<float>>& cvLookup, std::unordered_map<int, juce::AudioBuffer<float>>& audioLu, std::vector<int> leftIn, std::vector<int> rightIns, int output, AudioCV acv, const std::function<float(float, float)>& func, int id)
-        : cvParamLookup(cvLookup), audioLookup(audioLu), leftInputs(leftIn), rightInputs(rightIns), outputIndex(output), audioCvIncoming(acv), currentFunction(func) 
+        : m_CvParamLookup(cvLookup), m_AudioLookup(audioLu), m_LeftInputs(leftIn), m_RightInputs(rightIns), m_OutputIndex(output), m_AudioCvIncoming(acv), m_CurrentFunction(func) 
     {
-        moduleId = id;
+        m_ModuleId = id;
     }
-
-    ~AudioMathsModule() = default;
 
     void prepareToPlay(int spbe, double sr) override 
     {
-        sampleRate = sr;
-        samplesPerBlockExpected = spbe;
+        m_SampleRate = sr;
     }
 
     void getNextAudioBlock(int numSamples, int numChannels) override 
     {
-        if (!readyToPlay || outputIndex == -1) return;
-        auto write = audioLookup[outputIndex].getArrayOfWritePointers();
+        if (!m_ReadyToPlay || m_OutputIndex == -1) return;
+        auto write = m_AudioLookup[m_OutputIndex].getArrayOfWritePointers();
         for (int sample = 0; sample < numSamples; sample++) 
         {
             for (int channel = 0; channel < numChannels; channel++) 
             {
                 // checks are performed in C# so that the module will always have the necessary connections                
                 float affectingVal = 0.f;
-                for (auto r : rightInputs)
+                for (auto r : m_RightInputs)
                 {
-                    affectingVal += audioCvIncoming == AudioCV::Audio ? audioLookup[r].getSample(channel, sample) : cvParamLookup[r][sample];
+                    affectingVal += m_AudioCvIncoming == AudioCV::Audio ? m_AudioLookup[r].getSample(channel, sample) : m_CvParamLookup[r][sample];
                 }
                 
                 float inputSampleVal = 0.f;
-                for (auto l : leftInputs) 
+                for (auto l : m_LeftInputs) 
                 {
-                    inputSampleVal += audioLookup[l].getSample(channel, sample);
+                    inputSampleVal += m_AudioLookup[l].getSample(channel, sample);
                 }
                 
-                write[channel][sample] = currentFunction(inputSampleVal, affectingVal);
+                write[channel][sample] = m_CurrentFunction(inputSampleVal, affectingVal);
             }
         }
     }
 
     void setReady(bool state) override 
     {
-        readyToPlay = state;
+        m_ReadyToPlay = state;
     }
 
 private:
 
-    std::unordered_map<int, std::vector<float>>& cvParamLookup;
-    std::unordered_map<int, juce::AudioBuffer<float>>& audioLookup;
+    std::unordered_map<int, std::vector<float>>& m_CvParamLookup;
+    std::unordered_map<int, juce::AudioBuffer<float>>& m_AudioLookup;
 
-    std::function<float(float, float)> currentFunction;
+    std::function<float(float, float)> m_CurrentFunction;
 
-    std::vector<int> leftInputs;
-    std::vector<int> rightInputs;
+    std::vector<int> m_LeftInputs;
+    std::vector<int> m_RightInputs;
     
-    const int outputIndex;
-    const AudioCV audioCvIncoming;
+    int m_OutputIndex;
+    AudioCV m_AudioCvIncoming;
 
-    double sampleRate;
-    int samplesPerBlockExpected;
+    double m_SampleRate;
 
-    bool readyToPlay = false;
 };

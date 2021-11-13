@@ -11,8 +11,7 @@ public enum OscillatorType
 
 public class OscillatorModuleController : ModuleParent
 {
-    [SerializeField] private List<Sprite> waveformSprites;
-    [SerializeField] private Image icon;
+    public float Frequency { get; private set; }
 
     private OscillatorType _type;
     public OscillatorType Type
@@ -21,12 +20,10 @@ public class OscillatorModuleController : ModuleParent
         set
         {
             _type = value;
-            icon.sprite = waveformSprites[(int)Type];
-            nameText.text = Type.ToString();
+            nameText.text = Type.ToString().ToLower();
             if (Type == OscillatorType.Pulse)
             {
                 connectors[3].transform.parent.gameObject.SetActive(true);
-                connectors[2].transform.parent.localPosition = new Vector3(-50, 75);
             }
             else
             {
@@ -45,6 +42,12 @@ public class OscillatorModuleController : ModuleParent
     {
         connectors[0].SetOutputIndex(soundOut);
         connectors[1].SetOutputIndex(cvOut);
+    }
+
+    public void SetFrequency(float frequency)
+    {
+        Frequency = frequency;
+        nameText.text = $"{Type.ToString().ToLower()}~ {(int)Frequency}";
     }
 
     public override List<ModuleException> CheckErrors()
@@ -70,7 +73,7 @@ public class OscillatorModuleController : ModuleParent
 
     public void SetType(OscillatorType t)
     {
-        Type = t;
+        Type = t;        
     }
 
     public void CreateJsonEntry(Dictionary<string, object> jsonDict, Dictionary<ModuleConnectorController, int> outputLookup)

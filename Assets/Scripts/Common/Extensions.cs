@@ -1,4 +1,5 @@
 ﻿using System.Collections;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -45,6 +46,32 @@ public static class Extensions
             yield return new WaitForEndOfFrame();
         }
         g.transform.localPosition = targetPos;
+    }
+
+    public static IEnumerator LerpColour(this Image img, Color colour, float time, AnimationCurve curve = null)
+    {
+        var startColour = img.color;
+        float timeCounter = 0f;
+        while (timeCounter <= time)
+        {
+            img.color = Color.Lerp(startColour, colour, curve?.Evaluate(timeCounter / time) ?? (timeCounter / time));
+            timeCounter += Time.deltaTime;
+            yield return null;
+        }
+        img.color = colour;
+    }
+
+    public static IEnumerator LerpColour(this TextMeshProUGUI txt, Color colour, float time, AnimationCurve curve = null)
+    {
+        var startColour = txt.color;
+        float timeCounter = 0f;
+        while (timeCounter <= time)
+        {
+            txt.color = Color.Lerp(startColour, colour, curve?.Evaluate(timeCounter / time) ?? (timeCounter / time));
+            timeCounter += Time.deltaTime;
+            yield return null;
+        }
+        txt.color = colour;
     }
 
     public static Color ColourFromHex(this string hex)

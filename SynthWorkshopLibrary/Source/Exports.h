@@ -35,6 +35,7 @@ extern "C"
 
     EXPORT void shutdown(void* mc) 
     {
+        ((MainComponent*)mc)->clearModules();
         delete (MainComponent*)mc;
         juce::shutdownJuce_GUI();
     }
@@ -88,6 +89,11 @@ extern "C"
 
     EXPORT bool setModuleInputIndex(void* mc, bool audioModule, bool add, int moduleId, int outputIndex, int targetIndex)
     {
+        if (mc == nullptr)
+        {
+            return false;
+        }
+
         return ((MainComponent*)mc)->setModuleInputIndex(audioModule, add, moduleId, outputIndex, targetIndex);
     }
 
@@ -104,6 +110,11 @@ extern "C"
     EXPORT void createCvBufferWithKey(void* mc, int key)
     {
         ((MainComponent*)mc)->createCvBufferWithKey(key);
+    }
+
+    EXPORT void setAudioMathsIncomingSignal(void* mc, int id, int type)
+    {
+        ((MainComponent*)mc)->setAudioMathsIncomingSignal(id, type);
     }
 
     EXPORT void setMasterVolume(void* mc, float value) 

@@ -95,34 +95,15 @@ public class ModuleConnectorController : MonoBehaviour, IPointerEnterHandler, IP
         
         // need to know which of the target inputs we're connecting to
         // and the output_id of this connector
-        switch (target.parentModule.moduleType)
-        {
-            case ModuleType.OscillatorModule:
-            {
-                var idx = target.parentModule.GetIndexOfConnector(target);
-                var res = SynthWorkshopLibrary.SetModuleInputIndex(false, true, target.parentModule.GlobalIndex,
-                    _cvOutputIndex, idx);
-                if (!res)
-                {
-                    DestroyWire(wire);
-                    return;
-                }
-                
-                break;
-            }
-            case ModuleType.IOModule:
-            {
-                var idx = target.parentModule.GetIndexOfConnector(target);
-                var res = SynthWorkshopLibrary.SetModuleInputIndex(true, true, target.parentModule.GlobalIndex,
-                    _audioOutputIndex, idx);
-                if (!res)
-                {
-                    DestroyWire(wire);
-                    return;
-                }
+        var idx = target.parentModule.GetIndexOfConnector(target);
+        var audioOutput = target.parentModule.moduleType == ModuleType.IOModule && target.audioCv == AudioCV.Audio;
+        var outputIndex = audioCv == AudioCV.Audio ? _audioOutputIndex : _cvOutputIndex;
 
-                break;
-            }
+        var res = SynthWorkshopLibrary.SetModuleInputIndex(audioOutput, true, target.parentModule.GlobalIndex, outputIndex, idx);
+        if (!res)
+        {
+            DestroyWire(wire);
+            return;
         }
 
         target.GetComponent<Image>().color = Color.green;

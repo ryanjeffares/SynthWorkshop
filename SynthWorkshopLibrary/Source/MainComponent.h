@@ -49,6 +49,8 @@ public:
     void createCvBufferWithKey(int key);
     bool setModuleInputIndex(bool audioModule, bool add, int moduleId, int outputIndex, int targetIndex);    
     
+    void setAudioMathsIncomingSignal(int moduleId, int type);
+
     void setMasterVolume(float);
 
     const char* helloWorld() 
@@ -68,12 +70,15 @@ public:
 
     void destroyModule(bool audio, int moduleId);
 
+    void clearModules();
 
 private:
 
     Module* m_LastCreatedProcessorModule = nullptr;
     Module* m_LastCreatedOutputModule = nullptr;
-    std::vector<std::unique_ptr<Module>>::iterator m_ModuleItToDestroy;
+    int m_ModuleIdToDestroy;
+
+    void checkForUpdates();
 
     void createAudioMathsModuleFromJson(const json& values);
     void createMathsModuleFromJson(const json& values);
@@ -96,6 +101,7 @@ private:
     std::atomic<bool> m_FirstRun;
     std::atomic<bool> m_NewProcessorModuleCreated, m_NewOutputModuleCreated;
     std::atomic<bool> m_ShouldDestroyProcessorModule, m_ShouldDestroyOutputModule;
+    std::atomic<bool> m_ShouldClearModules;
     std::condition_variable m_WaitCondition;
     std::mutex m_Mutex;
     

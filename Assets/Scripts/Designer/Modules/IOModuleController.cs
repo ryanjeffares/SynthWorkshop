@@ -43,7 +43,6 @@ public class IOModuleController : ModuleParent
         set
         {
             _audioCv = value;
-            nameText.text = AudioCv.ToString();            
         }
     }
 
@@ -85,7 +84,6 @@ public class IOModuleController : ModuleParent
                 {
                     connectors[idx].transform.parent.gameObject.SetActive(idx == 3);
                 }
-                connectors[3].transform.parent.localPosition = new Vector3(0, -75);
                 connectors[3].transform.parent.GetComponentInChildren<Text>().gameObject.SetActive(false);
             }
             else
@@ -94,10 +92,13 @@ public class IOModuleController : ModuleParent
                 {
                     connectors[idx].transform.parent.gameObject.SetActive(idx == 0);
                 }
-                connectors[0].transform.parent.localPosition = new Vector3(0, 75);
                 connectors[0].transform.parent.GetComponentInChildren<Text>().gameObject.SetActive(false);
             }
         }
+
+        nameText.text = AudioCv == AudioCV.Audio
+            ? (InputOutput == InputOutput.Input ? "in~" : "out~")
+            : (InputOutput == InputOutput.Input ? "in" : "out");
     }  
     
     public void CreateJsonEntry(Dictionary<string, object> jsonDict, Dictionary<ModuleConnectorController, int> outputLookup)

@@ -19,8 +19,8 @@ class OscillatorModule : public Module
 {
 public:    
 
-    OscillatorModule(OscillatorType t, std::unordered_map<int, std::vector<float>>& cvLookup, std::unordered_map<int, juce::AudioBuffer<float>>& audioLu, std::vector<int> freqIdx, std::vector<int> pwIdx, int soundIdx, int cvOutIdx, int id)
-        : m_OscillatorType(t), m_Phase(0.f), m_CvParamLookup(cvLookup), m_FrequencyInputIndexes(freqIdx), m_PulsewidthInputIndexes(pwIdx),
+    OscillatorModule(OscillatorType t, std::unordered_map<int, std::vector<float>>& cvLookup, std::unordered_map<int, juce::AudioBuffer<float>>& audioLu, std::vector<int> freqIdx, std::vector<int> pwIdx, int soundIdx, int cvOutIdx, int id, float freq = 100)
+        : m_OscillatorType(t), m_StartingFreq(freq), m_Phase(0.f), m_CvParamLookup(cvLookup), m_FrequencyInputIndexes(freqIdx), m_PulsewidthInputIndexes(pwIdx),
           m_SoundOutIndex(soundIdx), m_CvOutIndex(cvOutIdx), m_AudioLookup(audioLu)
     {
         m_ModuleId = id;
@@ -40,9 +40,18 @@ public:
         for (auto sample = 0; sample < numSamples; sample++) 
         {
             float frequency = 0;
-            for (auto i : m_FrequencyInputIndexes)
+            if (m_FrequencyInputIndexes.size() > 0)
             {
-                frequency += m_CvParamLookup[i][sample];
+                for (auto i : m_FrequencyInputIndexes)
+                {
+                    frequency += m_CvParamLookup[i][sample];
+                }
+
+                m_StartingFreq = frequency;
+            }
+            else
+            {
+                frequency = m_StartingFreq;
             }
 
             float pulseWidth = 0.5f;
@@ -89,6 +98,8 @@ public:
 
     void setInputIndex(int outputIndex, int targetIndex) override
     {        
+        juce::ScopedLock sl(m_Cs);
+
         switch (targetIndex)
         {
             case 2:
@@ -102,6 +113,8 @@ public:
 
     void removeInputIndex(int outputIndex, int targetIndex) override
     {
+        juce::ScopedLock sl(m_Cs);
+
         std::vector<int>* vec = nullptr;
         switch (targetIndex)
         {
@@ -191,6 +204,7 @@ private:
 
     double m_SampleRate;
 
+    float m_StartingFreq;
     float m_Phase, m_Output;
     int m_SoundOutIndex, m_CvOutIndex;
     std::vector<int> m_FrequencyInputIndexes, m_PulsewidthInputIndexes;

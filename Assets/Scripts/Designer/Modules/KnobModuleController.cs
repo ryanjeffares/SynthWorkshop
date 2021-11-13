@@ -6,10 +6,9 @@ using UnityEngine.Events;
 
 public class KnobModuleController : ModuleParent
 {
-    [SerializeField] private InputField minInput, maxInput, labelInput;
+    [SerializeField] private TextInputField minInput, maxInput;
 
     public double min, max;
-    public string Label { get; private set; }
 
     public UnityEvent<string> onLabelChanged = new UnityEvent<string>();
     public UnityEvent<double> onMinChanged = new UnityEvent<double>();
@@ -36,11 +35,6 @@ public class KnobModuleController : ModuleParent
             _circleSlider.SetRange(_circleSlider.Min, (float) max, true);
             onMaxChanged.Invoke(max);
         });
-        labelInput.onValueChanged.AddListener(val =>
-        {
-            Label = val;
-            onLabelChanged.Invoke(Label);
-        });
     }
 
     public void InvokeSliderCallback()
@@ -50,12 +44,21 @@ public class KnobModuleController : ModuleParent
 
     public void SetValues(string label, double mn, double mx)
     {
-        Label = label;
-        labelInput.text = Label;
         min = mn;
-        minInput.text = min.ToString();
+        minInput.SetText(min.ToString(), false);
         max = mx;
-        maxInput.text = max.ToString();
+        maxInput.SetText(max.ToString(), false);
+    }
+
+    public void SetValues(double mn, double mx, double val)
+    {
+        min = mn;
+        minInput.SetText(min.ToString(), false);
+        max = mx;
+        maxInput.SetText(max.ToString(), false);
+
+        _circleSlider.SetRange((float)min, (float)max, false);
+        _circleSlider.Set((float)val, false);
     }
 
     public void SetOutputIndex(int idx)
@@ -77,17 +80,12 @@ public class KnobModuleController : ModuleParent
     public override List<ModuleException> CheckErrors()
     {
         var exceptions = new List<ModuleException>();
-        if (string.IsNullOrEmpty(Label))
-        {
-            var exception = new ModuleException("Knob has no label, and will be hard to identify.", ModuleException.SeverityLevel.Warning);
-            exceptions.Add(exception);
-        }
-        if (string.IsNullOrEmpty(minInput.text))
+        if (string.IsNullOrEmpty(minInput.GetText()))
         {
             var exception = new ModuleException("Knob has no minimum set, exporting may not proceed. You must set a minimum.", ModuleException.SeverityLevel.Error);
             exceptions.Add(exception);
         }
-        if (string.IsNullOrEmpty(maxInput.text))
+        if (string.IsNullOrEmpty(maxInput.GetText()))
         {
             var exception = new ModuleException("Knob has no maximum set, exporting may not proceed. You must set a maximum.", ModuleException.SeverityLevel.Error);
             exceptions.Add(exception);

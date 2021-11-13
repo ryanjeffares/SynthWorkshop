@@ -13,6 +13,7 @@ public class CircleSlider : MonoBehaviour, IPointerDownHandler,
     [SerializeField] private bool wholeNumbers, useReadout, enlargeOnPointerEnter;
     [SerializeField] private GameObject indicatorPivot;
     [SerializeField] private string units;
+    [SerializeField] private Image fillImage;
 
     public UnityEvent<float> onValueChanged = new UnityEvent<float>();
     public float Min => min;
@@ -20,7 +21,6 @@ public class CircleSlider : MonoBehaviour, IPointerDownHandler,
     public float Value => value;
 
     private Text _readout;
-    private Image _fillImage;
     private RectTransform _hitRectTransform;
     private bool _pointerDown;
 
@@ -33,7 +33,7 @@ public class CircleSlider : MonoBehaviour, IPointerDownHandler,
         set
         {
             _sliderAngle = Mathf.Clamp(value, 0.0f, 360.0f);
-            _fillImage.fillAmount = SliderAngle / 360.0f;
+            fillImage.fillAmount = SliderAngle / 360.0f;
             indicatorPivot.transform.localEulerAngles = new Vector3(180, 0, SliderAngle);
         }
     }
@@ -41,7 +41,6 @@ public class CircleSlider : MonoBehaviour, IPointerDownHandler,
     private void Awake()
     {
         _readout = GetComponentInChildren<Text>();
-        _fillImage = transform.GetChild(0).GetComponent<Image>();
     }
 
 #if UNITY_EDITOR
@@ -50,14 +49,14 @@ public class CircleSlider : MonoBehaviour, IPointerDownHandler,
         if (min > max)
         {
             Debug.LogWarning("Min should not be greater than max!");
-            min = max;
+            min = max - 1;
             return;
         }
 
         value = value.Limit(min, max);
         if (wholeNumbers)
         {
-            value = (int) value;
+            value = (int)value;
         }
 
         SliderAngle = value.Map(min, max, 0, 360);

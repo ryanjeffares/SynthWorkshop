@@ -33,4 +33,6 @@ protected:
 
     bool m_ReadyToPlay = false;
     int m_ModuleId;
+
+    juce::CriticalSection m_Cs;
 };

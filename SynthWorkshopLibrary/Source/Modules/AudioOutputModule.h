@@ -69,12 +69,16 @@ public:
 
     void setInputIndex(int outputIndex, int inputIndex) override
     {
+        juce::ScopedLock sl(m_Cs);
+
         auto& vec = inputIndex ? m_RightInputIndexes : m_LeftInputIndexes;
         vec.push_back(outputIndex);
     }
 
     void removeInputIndex(int outputIndex, int inputIndex) override
     {
+        juce::ScopedLock sl(m_Cs);
+
         auto& vec = inputIndex ? m_RightInputIndexes : m_LeftInputIndexes;
         for (auto it = vec.begin(); it != vec.end();)
         {

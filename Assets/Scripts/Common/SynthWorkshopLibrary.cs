@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Runtime.InteropServices;
+using System.Threading;
 using UnityEngine;
 
 static class SynthWorkshopLibrary
@@ -47,6 +48,9 @@ static class SynthWorkshopLibrary
     private static extern void createCvBufferWithKey(IntPtr mc, int key);
 
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    private static extern void setAudioMathsIncomingSignal(IntPtr mc, int globalId, int type);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
     private static extern void setMasterVolume(IntPtr mc, float value);
 
     private static readonly IntPtr MainComponent;
@@ -55,12 +59,13 @@ static class SynthWorkshopLibrary
 
     static SynthWorkshopLibrary()
     {
-        MainComponent = initialise();
         Application.quitting += Shutdown;
+
+        MainComponent = initialise();
         IsLoaded = true;        
     }
 
-    private static void Shutdown()
+    public static void Shutdown()
     {
         if (!IsLoaded) return;
         shutdown(MainComponent);
@@ -120,6 +125,11 @@ static class SynthWorkshopLibrary
     public static void CreateCvBufferWithKey(int key)
     {
         createCvBufferWithKey(MainComponent, key);
+    }
+
+    public static void SetAudioMathsIncomingSignal(int globalId, int type)
+    {
+        setAudioMathsIncomingSignal(MainComponent, globalId, type);
     }
     
     public static void SetMasterVolume(float value)

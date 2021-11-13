@@ -19,8 +19,8 @@ class AudioMathsModule : public Module
 {
 public:
 
-    AudioMathsModule(std::unordered_map<int, std::vector<float>>& cvLookup, std::unordered_map<int, juce::AudioBuffer<float>>& audioLu, std::vector<int> leftIn, std::vector<int> rightIns, int output, AudioCV acv, const std::function<float(float, float)>& func, int id)
-        : m_CvParamLookup(cvLookup), m_AudioLookup(audioLu), m_LeftInputs(leftIn), m_RightInputs(rightIns), m_OutputIndex(output), m_AudioCvIncoming(acv), m_CurrentFunction(func) 
+    AudioMathsModule(std::unordered_map<int, std::vector<float>>& cvLookup, std::unordered_map<int, juce::AudioBuffer<float>>& audioLu, std::vector<int> leftIn, std::vector<int> rightIns, int output, AudioCV acv, const std::function<float(float, float)>& func, int id, float init)
+        : m_CvParamLookup(cvLookup), m_AudioLookup(audioLu), m_LeftInputs(leftIn), m_RightInputs(rightIns), m_OutputIndex(output), m_AudioCvIncoming(acv), m_CurrentFunction(func), m_InitialValue(init)
     {
         m_ModuleId = id;
     }
@@ -38,11 +38,33 @@ public:
         {
             for (int channel = 0; channel < numChannels; channel++) 
             {
-                // checks are performed in C# so that the module will always have the necessary connections                
                 float affectingVal = 0.f;
-                for (auto r : m_RightInputs)
+
+                if (m_RightInputs.size() > 0)
                 {
-                    affectingVal += m_AudioCvIncoming == AudioCV::Audio ? m_AudioLookup[r].getSample(channel, sample) : m_CvParamLookup[r][sample];
+                    for (auto r : m_RightInputs)
+                    {
+                        if (m_AudioCvIncoming == AudioCV::Audio)
+                        {
+                            if (m_AudioLookup.find(r) != m_AudioLookup.end())
+                            {
+                                affectingVal += m_AudioLookup[r].getSample(channel, sample);
+                            }
+                        }
+                        else
+                        {
+                            if (m_CvParamLookup.find(r) != m_CvParamLookup.end())
+                            {
+                                affectingVal += m_CvParamLookup[r][sample];
+                            }
+                        }
+                    }
+
+                    m_InitialValue = affectingVal;
+                }
+                else
+                {
+                    affectingVal = m_InitialValue;
                 }
                 
                 float inputSampleVal = 0.f;
@@ -61,6 +83,57 @@ public:
         m_ReadyToPlay = state;
     }
 
+    void setInputIndex(int outputIndex, int targetIndex) override
+    {
+        juce::ScopedLock sl(m_Cs);
+
+        switch (targetIndex)
+        {
+            case 0:
+                m_LeftInputs.push_back(outputIndex);
+                break;
+            case 1:
+                m_RightInputs.push_back(outputIndex);
+                break;
+        }
+    }
+
+    void removeInputIndex(int outputIndex, int targetIndex) override
+    {
+        juce::ScopedLock sl(m_Cs);
+
+        std::vector<int>* vec = nullptr;
+        switch (targetIndex)
+        {
+            case 0:
+                vec = &m_LeftInputs;
+                break;
+            case 1:
+                vec = &m_RightInputs;
+                break;
+        }
+
+        if (vec == nullptr) return;
+
+        for (auto it = vec->begin(); it != vec->end();)
+        {
+            if (*it == outputIndex)
+            {
+                it = vec->erase(it);
+            }
+            else
+            {
+                ++it;
+            }
+        }
+    }
+
+    void setIncomingSignalType(AudioCV type)
+    {
+        juce::ScopedLock sl(m_Cs);
+        m_AudioCvIncoming = type;
+    }
+
 private:
 
     std::unordered_map<int, std::vector<float>>& m_CvParamLookup;
@@ -76,4 +149,5 @@ private:
 
     double m_SampleRate;
 
+    float m_InitialValue;
 };

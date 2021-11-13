@@ -5,10 +5,11 @@ using System.ComponentModel;
 using System.IO;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
 using UnityEditor;
 using Newtonsoft.Json.Linq;
 
-public class DesignerUIController : MonoBehaviour
+public class DesignerUIController : MonoBehaviour, IPointerClickHandler
 {
     private enum ModuleCategory
     {
@@ -26,12 +27,16 @@ public class DesignerUIController : MonoBehaviour
     [SerializeField] private List<GameObject> categoryScrollViews;
     [SerializeField] private AnimationCurve convex;
     [SerializeField] private GameObject mainContent;
-    [SerializeField] private GameObject panelSliderPrefab, panelButtonPrefab, paramSliderPanelPrefab, panelTogglePrefab;
     [SerializeField] private GameObject errorScrollView, errorContent, errorPrefab;
     [SerializeField] private Slider masterVolume;
 
+    [Header("Prefabs")]
+    [SerializeField] private GameObject inputFieldPrefab;
+    [SerializeField] private GameObject panelSliderPrefab, panelButtonPrefab, paramSliderPanelPrefab, panelTogglePrefab;
     [SerializeField] private GameObject oscillatorModulePrefab, ioModulePrefab, knobModulePrefab, mathsModulePrefab, 
         audioMathsModulePrefab, mapModulePrefab, adsrModulePrefab, numberBoxPrefab, buttonModulePrefab, toggleModulePrefab;
+
+    private ModuleFactory _moduleFactory;
 
     private Dictionary<GameObject, GameObject> _buttonCategoryLookup;
     private Dictionary<GameObject, bool> _categoryVisibleStates;
@@ -80,6 +85,9 @@ public class DesignerUIController : MonoBehaviour
     private void Awake()
     {
         ModuleParent.ModuleDestroyed += ModuleDestroyedCallback;
+
+        _moduleFactory = GetComponent<ModuleFactory>();
+
         _instantiatedParamControls = new List<GameObject>();
         _instantiatedModules = new List<GameObject>();
         _buttonCategoryLookup = new Dictionary<GameObject, GameObject>();
@@ -146,6 +154,166 @@ public class DesignerUIController : MonoBehaviour
         ModuleParent.ModuleDestroyed -= ModuleDestroyedCallback;
     }
 
+    public void OnPointerClick(PointerEventData eventData)
+    {
+        if (eventData.clickCount == 2)
+        {
+            var inputField = Instantiate(inputFieldPrefab, eventData.position, Quaternion.identity, mainContent.transform).GetComponent<TextInputField>();            
+            inputField.Select();
+            inputField.onSubmit.AddListener(input => OnInputSubmit(inputField.gameObject, inputField.GetText(), eventData.position));            
+        }
+    }
+
+    private void OnInputSubmit(GameObject inputField, string input, Vector3 position)
+    {
+        var mod = _moduleFactory.CreateModule(mainContent.transform, position, input.Split(' '));
+        if (mod != null)
+        {
+            _instantiatedModules.Add(mod);
+
+            if (mod.TryGetComponent<OscillatorModuleController>(out var o))
+            {
+                OscillatorCreated(o.Type);
+            }
+            else if (mod.TryGetComponent<KnobModuleController>(out _))
+            {
+                KnobCreated();
+            }
+            else if (mod.TryGetComponent<IOModuleController>(out var i))
+            {
+                IOCreated(i.AudioCv, i.InputOutput);
+            }
+            else if (mod.TryGetComponent<MathsModuleController>(out var m))
+            {
+                MathsCreated(m);
+            }
+
+            Destroy(inputField);
+            return;
+        }        
+
+        inputField.GetComponent<TextInputField>().SetTextColour(Color.red);
+    }
+
+    private void OscillatorCreated(OscillatorType type)
+    {
+        var osc = _instantiatedModules.Last().GetComponent<OscillatorModuleController>();
+        osc.SetOutputIndexes(_soundOutputIndex, _cvOutputIndex);
+
+        var dict = new Dictionary<string, object>
+        {
+            {"type_string", type.ToString() },
+            {"type_int", (int) type },
+            {"global_index", _totalModuleCount },
+            {"sound_output_to", _soundOutputIndex++ },
+            {"cv_out_to", _cvOutputIndex++ },
+            {"initial_frequency", osc.Frequency }
+        };
+
+        var id = $"oscillator_module_{_oscillatorModuleCount}";
+        _currentArrangement["oscillator_modules"].Add(id, dict);
+        osc.SetIdentifier(id, _totalModuleCount);
+
+        _oscillatorModuleCount++;
+        _totalModuleCount++;
+
+        SynthWorkshopLibrary.CreateNewModule((int)ModuleCategory.Oscillator, JObject.FromObject(dict).ToString());
+    }
+
+    private void KnobCreated()
+    {
+        var outIdx = _cvOutputIndex;
+        var dict = new Dictionary<string, object>
+        {
+            {"global_index", _totalModuleCount },
+            {"output_id", outIdx },
+            {"type", "Knob"}
+        };
+
+        var knobName = $"control_module_{_controlModuleCount}";
+        _currentArrangement["control_modules"].Add(knobName, dict);
+
+        _instantiatedModules.Last().GetComponent<ModuleParent>().SetIdentifier(knobName, _totalModuleCount);
+
+        var knobController = _instantiatedModules.Last().GetComponent<KnobModuleController>();
+        knobController.onLabelChanged.AddListener(s => _currentArrangement["control_modules"][knobName]["name"] = s);
+        knobController.onMinChanged.AddListener(m => _currentArrangement["control_modules"][knobName]["min"] = m);
+        knobController.onMaxChanged.AddListener(m => _currentArrangement["control_modules"][knobName]["max"] = m);
+        knobController.onSliderMoved.AddListener(v =>
+        {
+            _currentArrangement["control_modules"][knobName]["initial"] = v;
+            SynthWorkshopLibrary.SetCvParam(outIdx, v);
+        });
+        knobController.SetOutputIndex(outIdx);
+
+        SynthWorkshopLibrary.CreateCvBufferWithKey(outIdx);
+
+        _controlModuleCount++;
+        _cvOutputIndex++;
+        _totalModuleCount++;
+    }
+
+    private void IOCreated(AudioCV audioCV, InputOutput io)
+    {
+        var dict = new Dictionary<string, object>
+        {
+            {"type", $"{audioCV}{io}" },
+            {"global_index", _totalModuleCount }
+        };
+
+        var id = $"io_module_{_ioModuleCount}";
+        _currentArrangement["io_modules"].Add(id, dict);
+        _instantiatedModules.Last().GetComponent<ModuleParent>().SetIdentifier(id, _totalModuleCount);
+
+        _ioModuleCount++;
+        _totalModuleCount++;
+
+        SynthWorkshopLibrary.CreateNewModule((int)ModuleCategory.Output, JObject.FromObject(dict).ToString());
+    }
+
+    private void MathsCreated(MathsModuleController moduleController)
+    {
+        var outIdx = _cvOutputIndex;
+        moduleController.SetOutputIndex(outIdx);
+
+        var dict = new Dictionary<string, object>
+        {
+            {"global_index", _totalModuleCount },
+            {"type_string", moduleController.audioCv.ToString() },
+            {"type_int", (int) moduleController.mathsSign },
+            {"operator", moduleController.mathsSign.ToString()},
+            {"output_id", outIdx }
+        };
+
+        if (moduleController.mathsSign == MathsSign.Map)
+        {
+            dict["max_in"] = moduleController.maxIn;
+            dict["max_out"] = moduleController.maxOut;
+            dict["min_in"] = moduleController.minIn;
+            dict["min_out"] = moduleController.minOut;
+        }
+        else
+        {
+            dict["initial_value"] = moduleController.InitialValue;
+
+            if (moduleController.audioCv == AudioCV.Audio)
+            {
+                dict["incoming_signal_type"] = moduleController.IncomingSignalType.ToString();
+            }
+        }
+
+        var id = $"maths_module_{_mathsModuleCount}";
+        _currentArrangement["maths_modules"].Add(id, dict);
+        moduleController.SetIdentifier(id, _totalModuleCount);
+
+        _mathsModuleCount++;
+        _totalModuleCount++;
+        _cvOutputIndex++;
+
+        var cat = (int)(moduleController.audioCv == AudioCV.Audio ? ModuleCategory.AudioMaths : ModuleCategory.Maths);
+        SynthWorkshopLibrary.CreateNewModule(cat, JObject.FromObject(dict).ToString());
+    }
+
     /// <summary>
     /// Invoked when a Module is destroyed, so we can remove it from our list of instantiated modules.
     /// </summary>
@@ -198,7 +366,7 @@ public class DesignerUIController : MonoBehaviour
         _oscillatorModuleCount++;
         _totalModuleCount++;
         SynthWorkshopLibrary.CreateNewModule((int) ModuleCategory.Oscillator, JObject.FromObject(dict).ToString());
-    }
+    }    
 
     private void IOButtonCallback(Button b)
     {
@@ -312,7 +480,7 @@ public class DesignerUIController : MonoBehaviour
         var sign = (MathsSign)(idx % 17);
         var module = Instantiate(audioCv == AudioCV.Audio ? audioMathsModulePrefab : idx == 14 ? mapModulePrefab : mathsModulePrefab, mainContent.transform);
         var controller =module.GetComponent<MathsModuleController>(); 
-        controller.SetType(sign, audioCv);
+        // controller.SetType(sign, audioCv);
         
         _instantiatedModules.Add(module);
 
@@ -549,7 +717,7 @@ public class DesignerUIController : MonoBehaviour
                     case ModuleType.KnobModule:
                     {
                         var knob = (KnobModuleController) module;
-                        namedParams.Add(new CvParam(knob.Label, outputId, knob.min, knob.max, CvParam.ParamType.Slider));
+                        // namedParams.Add(new CvParam(knob.Label, outputId, knob.min, knob.max, CvParam.ParamType.Slider));
                         break;
                     }
                     case ModuleType.ButtonModule:
@@ -717,7 +885,7 @@ public class DesignerUIController : MonoBehaviour
         var modName = $"control_module_{controlModuleCount}";
         var mod = new Dictionary<string, object>
         {
-            {"name", module.Label },
+            // {"name", module.Label },
             {"type", "Knob"},
             {"min", min},
             {"max", max},

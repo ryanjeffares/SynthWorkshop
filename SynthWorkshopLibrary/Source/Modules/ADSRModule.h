@@ -78,6 +78,16 @@ public:
         m_ReadyToPlay = state;
     }
 
+    void setInputIndex(int outputIndex, int targetIndex)
+    {
+
+    }
+
+    void removeInputIndex(int outputIndex, int targetIndex)
+    {
+
+    }
+
 private:   
 
     std::unordered_map<int, juce::AudioBuffer<float>>& m_AudioLookup;

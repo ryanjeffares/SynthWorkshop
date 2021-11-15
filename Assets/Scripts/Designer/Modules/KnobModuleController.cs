@@ -6,13 +6,19 @@ using UnityEngine.Events;
 
 public class KnobModuleController : ModuleParent
 {
-    [SerializeField] private TextInputField minInput, maxInput;
+    [SerializeField] private TextInputField minInput, maxInput, skewInput;
+    [SerializeField] private ToggleSwitch intToggle;
+    [SerializeField] private Text valueReadout;
 
-    public double min, max;
+    public double min, max, skew;
+    public bool wholeNumbers;
+
+    private float value;
 
     public UnityEvent<string> onLabelChanged = new UnityEvent<string>();
     public UnityEvent<double> onMinChanged = new UnityEvent<double>();
     public UnityEvent<double> onMaxChanged = new UnityEvent<double>();
+    public UnityEvent<double> onSkewChanged = new UnityEvent<double>();
     public UnityEvent<float> onSliderMoved = new UnityEvent<float>();
 
     private CircleSlider _circleSlider;
@@ -20,26 +26,80 @@ public class KnobModuleController : ModuleParent
     protected override void ChildAwake()
     {
         _circleSlider = GetComponentInChildren<CircleSlider>();
-        _circleSlider.onValueChanged.AddListener(onSliderMoved.Invoke);
+        _circleSlider.onValueChanged.AddListener(val =>
+        {
+            var skewedVal = Mathf.Pow(val, (float)skew);
+            value = (float)(min + ((max - min) * skewedVal));
+            if (wholeNumbers)
+            {
+                value = (int)value;
+            }
+            valueReadout.text = Math.Round(value, 3).ToString();
+            onSliderMoved.Invoke(value);
+        });
         
         moduleType = ModuleType.KnobModule;
-        minInput.onValueChanged.AddListener(val =>
+
+        minInput.onValueChanged.AddListener(input =>
         {
-            min = double.Parse(val);
-            _circleSlider.SetRange((float) min, _circleSlider.Max, true);
+            if (!double.TryParse(input, out var val))
+            {
+                return;
+            }
+            min = val;
+            RecalculateSliderPosition();
             onMinChanged.Invoke(min);
         });
-        maxInput.onValueChanged.AddListener(val =>
+
+        maxInput.onValueChanged.AddListener(input =>
         {
-            max = double.Parse(val);
-            _circleSlider.SetRange(_circleSlider.Min, (float) max, true);
-            onMaxChanged.Invoke(max);
+            if (!double.TryParse(input, out var val))
+            {
+                return;
+            }
+            max = val;
+            RecalculateSliderPosition();
+            onMaxChanged.Invoke(max);            
+        });
+
+        skewInput.onValueChanged.AddListener(input =>
+        {
+            if (!double.TryParse(input, out var val))
+            {
+                return;
+            }
+            skew = val;
+            RecalculateSliderPosition();
+            onSkewChanged.Invoke(skew);
+        });
+
+        intToggle.onValueChange.AddListener(state =>
+        {
+            wholeNumbers = state;
+            RecalculateSliderPosition();
         });
     }
 
     public void InvokeSliderCallback()
     {
         _circleSlider.onValueChanged.Invoke(_circleSlider.Value);
+    }
+
+    private void RecalculateSliderPosition()
+    {
+        if (value < min)
+        {
+            value = (float)min;
+        }
+
+        if (wholeNumbers)
+        {
+            value = (int)value;
+        }
+
+        float normalised = (float)((value - min) / (max - min));
+        var skewed = Mathf.Pow(normalised, 1.0f / (float)skew);
+        _circleSlider.Set(skewed, true);
     }
 
     public void SetValues(string label, double mn, double mx)
@@ -57,8 +117,24 @@ public class KnobModuleController : ModuleParent
         max = mx;
         maxInput.SetText(max.ToString(), false);
 
-        _circleSlider.SetRange((float)min, (float)max, false);
-        _circleSlider.Set((float)val, false);
+        value = (float)val;
+        RecalculateSliderPosition();
+    }
+
+    public void SetValues(double mn, double mx, double val, double sk, bool wholeNums)
+    {
+        min = mn;
+        minInput.SetText(min.ToString(), false);
+        max = mx;
+        maxInput.SetText(max.ToString(), false);
+        skew = sk;
+        skewInput.SetText(skew.ToString(), false);
+
+        wholeNumbers = wholeNums;
+        intToggle.Set(wholeNumbers, false);
+
+        value = wholeNumbers ? (int)val : (float)val;
+        RecalculateSliderPosition();
     }
 
     public void SetOutputIndex(int idx)

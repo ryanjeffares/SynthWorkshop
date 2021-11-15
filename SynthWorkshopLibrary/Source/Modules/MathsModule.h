@@ -26,7 +26,7 @@ public:
     }
 
     // used only for Map module
-    MathsModule(std::unordered_map<int, std::vector<float>>& lookup, std::vector<int> leftIn, int output, int inMin, int inMax, int outMin, int outMax, MathsModuleType t, int id)
+    MathsModule(std::unordered_map<int, std::vector<float>>& lookup, std::vector<int> leftIn, int output, float inMin, float inMax, float outMin, float outMax, MathsModuleType t, int id)
         : m_CvParamLookup(lookup), m_LeftInputs(leftIn), m_OutputIndex(output), m_MinIn(inMin), m_MinOut(outMin), m_MaxIn(inMax), m_MaxOut(outMax), m_MathsType(t) 
     {
         m_ModuleId = id;
@@ -205,7 +205,7 @@ private:
     MathsModuleType m_MathsType;
 
     // used only for Map maths function
-    int m_MinIn, m_MaxIn, m_MinOut, m_MaxOut;
+    float m_MinIn, m_MaxIn, m_MinOut, m_MaxOut;
     int m_MinInIndex = -1, m_MaxInIndex = -1, m_MinOutIndex = -1, m_MaxOutIndex = -1;
 
     // used for SOME things

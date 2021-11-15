@@ -13,8 +13,11 @@
               file="Source/Modules/AudioMathsModule.h"/>
         <FILE id="P6Jw5L" name="AudioOutputModule.h" compile="0" resource="0"
               file="Source/Modules/AudioOutputModule.h"/>
+        <FILE id="QIkhha" name="FilterModule.h" compile="0" resource="0" file="Source/Modules/FilterModule.h"/>
         <FILE id="dhPSpp" name="MathsModule.h" compile="0" resource="0" file="Source/Modules/MathsModule.h"/>
         <FILE id="f2bh7T" name="Module.h" compile="0" resource="0" file="Source/Modules/Module.h"/>
+        <FILE id="YhWDLq" name="NumberBoxModule.h" compile="0" resource="0"
+              file="Source/Modules/NumberBoxModule.h"/>
         <FILE id="CtkmQL" name="OscillatorModule.h" compile="0" resource="0"
               file="Source/Modules/OscillatorModule.h"/>
       </GROUP>

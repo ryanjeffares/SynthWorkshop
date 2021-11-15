@@ -25,6 +25,8 @@
 #include "Modules/MathsModule.h"
 #include "Modules/AudioMathsModule.h"
 #include "Modules/ADSRModule.h"
+#include "Modules/NumberBoxModule.h"
+#include "Modules/FilterModule.h"
 #include "Modules/Module.h"
 
 using namespace nlohmann;
@@ -43,10 +45,12 @@ public:
     bool createModulesFromJson(const char* jsonText);
 
     void stopAudio();
+    void resumeAudio();
 
     void setCvParam(int index, float value);
     float getCvParam(int index);
     void createCvBufferWithKey(int key);
+    void createCvBufferWithKey(int key, float value);
     bool setModuleInputIndex(bool audioModule, bool add, int moduleId, int outputIndex, int targetIndex);    
     
     void setAudioMathsIncomingSignal(int moduleId, int type);
@@ -67,6 +71,8 @@ public:
     bool createAudioOutputModule(const char* json);
     bool createOscillatorModule(const char* json);
     bool createAdsrModule(const char* json);
+    bool createNumberModule(const char* json);
+    bool createFilterModule(const char* json);
 
     void destroyModule(bool audio, int moduleId);
 

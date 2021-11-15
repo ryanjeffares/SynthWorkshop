@@ -8,7 +8,7 @@ public class NumberModule : ModuleParent
 {
     [SerializeField] private InputField numberInput;
 
-    private double _currentValue;
+    public double CurrentValue { get; private set; }
     private int _ioIndex = -1;
 
     protected override void ChildAwake()
@@ -18,19 +18,30 @@ public class NumberModule : ModuleParent
         {
             if (double.TryParse(text, out var val))
             {
-                _currentValue = val;
+                CurrentValue = val;
             }
             if(_ioIndex != -1)
             {
-                SynthWorkshopLibrary.SetCvParam(_ioIndex, (float)_currentValue);
+                SynthWorkshopLibrary.SetCvParam(_ioIndex, (float)CurrentValue);
             }
         });
     }
 
     public void SetNumber(double val)
     {
-        _currentValue = val;
-        numberInput.text = _currentValue.ToString();
+        CurrentValue = val;
+        numberInput.text = CurrentValue.ToString();
+    }
+
+    public void SetOutputIndex(int idx)
+    {
+        connectors[1].SetOutputIndex(idx);
+    }
+
+    public void SetInputIndex(int idx)
+    {
+        connectors[0].isConnected = true;
+        _ioIndex = idx;
     }
     
     public override List<ModuleException> CheckErrors()
@@ -65,7 +76,7 @@ public class NumberModule : ModuleParent
         {
             res.Add("output_to", _ioIndex);
         }
-        res.Add("initial_value", _currentValue);
+        res.Add("initial_value", CurrentValue);
         res.Add("position", transform.localPosition);
         return res;
     }
@@ -79,7 +90,7 @@ public class NumberModule : ModuleParent
     private void Update()
     {
         if (_ioIndex == -1 || !connectors[0].isConnected) return;
-        _currentValue = SynthWorkshopLibrary.GetCvParam(_ioIndex);
-        numberInput.text = _currentValue.ToString();
+        CurrentValue = SynthWorkshopLibrary.GetCvParam(_ioIndex);
+        numberInput.text = CurrentValue.ToString();
     }
 }

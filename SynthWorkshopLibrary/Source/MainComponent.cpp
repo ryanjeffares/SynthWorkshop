@@ -119,7 +119,7 @@ void MainComponent::checkForUpdates()
         return;
     }
 
-    // erase the vectors at any iterators already computed
+    // erase the any desired modules
     if (m_ShouldDestroyOutputModule.load())
     {
         auto& it = std::find_if(
@@ -207,6 +207,14 @@ void MainComponent::createCvBufferWithKey(int key)
     }
 }
 
+void MainComponent::createCvBufferWithKey(int key, float value)
+{
+    if (m_CvParamLookup.find(key) == m_CvParamLookup.end())
+    {
+        m_CvParamLookup.emplace(key, std::vector<float>(m_SamplesPerBlockExpected, value));
+    }
+}
+
 bool MainComponent::setModuleInputIndex(bool audioModule, bool add, int moduleId, int outputIndex, int targetIndex)
 {
     auto& vec = audioModule ? m_AudioOutputModules : m_ProcessorModules;
@@ -269,6 +277,20 @@ void MainComponent::stopAudio()
     }
 }
 
+void MainComponent::resumeAudio()
+{
+    for (auto& module : m_ProcessorModules)
+    {
+        module->setReady(true);
+    }
+    for (auto& io : m_AudioOutputModules)
+    {
+        io->setReady(true);
+    }
+
+    m_ShouldStopAudio.store(false);
+}
+
 bool MainComponent::createAudioMathsModule(const char* json)
 {
     try
@@ -311,6 +333,7 @@ bool MainComponent::createAudioMathsModule(const char* json)
             id,
             init
         );
+
         m_LastCreatedProcessorModule->prepareToPlay(m_SamplesPerBlockExpected, m_SampleRate);
         m_LastCreatedProcessorModule->setReady(true);
 
@@ -349,10 +372,10 @@ bool MainComponent::createMathsModule(const char* json)
 
         if (mathsType == MathsModuleType::Map)
         {
-            int minIn = values["min_in"].get<int>();
-            int maxIn = values["max_in"].get<int>();
-            int minOut = values["min_out"].get<int>();
-            int maxOut = values["max_out"].get<int>();
+            float minIn = values["min_in"].get<float>();
+            float maxIn = values["max_in"].get<float>();
+            float minOut = values["min_out"].get<float>();
+            float maxOut = values["max_out"].get<float>();
 
             m_LastCreatedProcessorModule = new MathsModule(
                 m_CvParamLookup, 
@@ -530,7 +553,7 @@ bool MainComponent::createAdsrModule(const char* json)
         {
             outputIndex = values["output_to"].get<int>();
             juce::AudioBuffer<float> buff(2, m_SamplesPerBlockExpected);
-            m_AudioLookup.emplace(outputIndex, buff);
+            m_AudioLookup.emplace(outputIndex, std::move(buff));
         }
 
         // for now, these are required to exist
@@ -553,6 +576,137 @@ bool MainComponent::createAdsrModule(const char* json)
             triggerInput,
             id
         );
+        m_LastCreatedProcessorModule->prepareToPlay(m_SamplesPerBlockExpected, m_SampleRate);
+        m_LastCreatedProcessorModule->setReady(true);
+        m_NewProcessorModuleCreated.store(true);
+
+        return true;
+    }
+    catch (const std::exception& e)
+    {
+        return false;
+    }
+}
+
+bool MainComponent::createNumberModule(const char* jsonText)
+{
+    try
+    {
+        auto values = json::parse(jsonText);
+
+        std::vector<int> inputIndexes;
+        if (values.contains("input_from"))
+        {
+            inputIndexes = values["input_from"].get<std::vector<int>>();
+        }
+
+        float initialValue = 0;
+        if (values.contains("initial_value"))
+        {
+            initialValue = values["initial_value"].get<float>();
+        }
+
+        int outputIndex = -1;
+        if (values.contains("output_to"))
+        {
+            outputIndex = values["output_to"].get<int>();
+            std::vector<float> temp(m_SamplesPerBlockExpected, initialValue);
+            m_CvParamLookup.emplace(outputIndex, std::move(temp));
+        }        
+
+        int id = values["global_index"].get<int>();
+
+        m_LastCreatedProcessorModule = new NumberBoxModule(
+            m_CvParamLookup,
+            m_AudioLookup,
+            inputIndexes,
+            outputIndex,
+            id,
+            initialValue
+        );
+
+        m_LastCreatedProcessorModule->prepareToPlay(m_SamplesPerBlockExpected, m_SampleRate);
+        m_LastCreatedProcessorModule->setReady(true);
+        m_NewProcessorModuleCreated.store(true);
+
+        return true;
+    }
+    catch (const std::exception& e)
+    {
+        return false;
+    }
+}
+
+bool MainComponent::createFilterModule(const char* json)
+{
+    try
+    {
+        auto j = json::parse(json);
+
+        std::vector<int> audioInputs;
+        if (j.contains("input_from"))
+        {
+            audioInputs = j["input_from"].get<std::vector<int>>();
+        }
+
+        std::vector<int> freqInputs;
+        if (j.contains("freq_from"))
+        {
+            freqInputs = j["freq_from"].get<std::vector<int>>();
+        }
+
+        std::vector<int> qInputs;
+        if (j.contains("q_from"))
+        {
+            qInputs = j["q_from"].get<std::vector<int>>();
+        }
+
+        std::vector<int> typeInputs;
+        if (j.contains("type_from"))
+        {
+            typeInputs = j["type_from"].get<std::vector<int>>();
+        }
+
+        int id = j["global_id"].get<int>();
+
+        int output = j["output_id"].get<int>();
+        juce::AudioBuffer<float> buff(2, m_SamplesPerBlockExpected);
+        m_AudioLookup.emplace(output, std::move(buff));
+
+        if (j.contains("cutoff") && j.contains("q") && j.contains("type"))
+        {
+            float cutoff = j["cutoff"].get<float>();
+            float q = j["q"].get<float>();
+            int type = j["type"].get<int>();
+
+            m_LastCreatedProcessorModule = new FilterModule(
+                m_AudioLookup,
+                m_CvParamLookup,
+                audioInputs,
+                freqInputs,
+                qInputs,
+                typeInputs,
+                output,
+                id,
+                cutoff,
+                q,
+                type
+            );
+        }
+        else
+        {
+            m_LastCreatedProcessorModule = new FilterModule(
+                m_AudioLookup,
+                m_CvParamLookup,
+                audioInputs,
+                freqInputs,
+                qInputs,
+                typeInputs,
+                output,
+                id
+            );
+        }
+
         m_LastCreatedProcessorModule->prepareToPlay(m_SamplesPerBlockExpected, m_SampleRate);
         m_LastCreatedProcessorModule->setReady(true);
         m_NewProcessorModuleCreated.store(true);

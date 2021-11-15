@@ -20,7 +20,7 @@ public class OscillatorModuleController : ModuleParent
         set
         {
             _type = value;
-            nameText.text = Type.ToString().ToLower();
+            nameText.text = Type.ToString().ToLower() + '~';
             if (Type == OscillatorType.Pulse)
             {
                 connectors[3].transform.parent.gameObject.SetActive(true);

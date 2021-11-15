@@ -12,7 +12,7 @@ public class MathsModuleController : ModuleParent
     public MathsSign mathsSign;
     public AudioCV audioCv;
 
-    public AudioCV IncomingSignalType { get; private set; }
+    public AudioCV IncomingSignalType { get; private set; } = AudioCV.Either;
 
     public float InitialValue { get; private set; }
 

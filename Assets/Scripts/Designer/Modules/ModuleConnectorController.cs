@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -6,9 +7,11 @@ using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using UnityEngine.UI.Extensions;
 
-public class ModuleConnectorController : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IDragHandler, IBeginDragHandler, IEndDragHandler
+public class ModuleConnectorController : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, 
+    IDragHandler, IBeginDragHandler, IEndDragHandler, IPointerClickHandler
 {
     [SerializeField] private GameObject wirePrefab;
+    [SerializeField] private GameObject connectionDisplayPrefab;
     [SerializeField] private Texture2D altCursor;
 
     public AudioCV audioCv;
@@ -28,6 +31,9 @@ public class ModuleConnectorController : MonoBehaviour, IPointerEnterHandler, IP
     private bool _dragging;
 
     private int _cvOutputIndex, _audioOutputIndex;
+
+    private bool _pointerDown, _pointerEntered;
+    private GameObject _connectionDisplay;
 
     private void Awake()
     {
@@ -113,14 +119,25 @@ public class ModuleConnectorController : MonoBehaviour, IPointerEnterHandler, IP
         target.connectedModuleConnectors.Add(this);
         connectedModuleConnectors.Add(target);
 
-        if (target.transform.parent.parent.TryGetComponent(out MathsModuleController mathsController))
+        var targetParent = target.transform.parent.parent;
+
+        if (targetParent.TryGetComponent(out MathsModuleController mathsController))
         {
             mathsController.SetAudioOrCvIncoming(audioCv, target);
+        }
+        else if (targetParent.TryGetComponent(out NumberModule numberModule))
+        {
+            numberModule.SetInputIndex(outputIndex);
         }
 
         if (parentModule is KnobModuleController knob)
         {
             knob.InvokeSliderCallback();
+        }
+
+        if (_connectionDisplay != null)
+        {
+            _connectionDisplay.GetComponent<ConnectionDisplayController>().AddConnection(target);
         }
 
         wireController.isConnected = true;
@@ -130,11 +147,26 @@ public class ModuleConnectorController : MonoBehaviour, IPointerEnterHandler, IP
     // returns true if a condition is present that should prevent the wire from connecting
     private bool CheckTarget(ModuleConnectorController target)
     {
-        return target == null
+        bool firstCheck = target == null
                || (target.audioCv != AudioCV.Either && audioCv != target.audioCv)
                || (inputOutput == target.inputOutput)
                || connectedModuleConnectors.Contains(target)
                || target.connectedModuleConnectors.Contains(this);
+
+        if (firstCheck)
+        { 
+            return true; 
+        }
+
+        if (target.parentModule is MathsModuleController m)
+        {
+            if (m.audioCv == AudioCV.Audio && m.IncomingSignalType != AudioCV.Either)
+            {
+                return m.IncomingSignalType != audioCv;
+            }
+        }
+
+        return false;
     }
 
     private void ModuleDestroyedCallback(GameObject g)
@@ -148,7 +180,8 @@ public class ModuleConnectorController : MonoBehaviour, IPointerEnterHandler, IP
             
             anyConnected = true;
 
-            var isAudio = audioCv == AudioCV.Audio;
+            var isAudio = parentModule.moduleType == ModuleType.IOModule;
+
             SynthWorkshopLibrary.SetModuleInputIndex(isAudio, false, parentModule.GlobalIndex,
                 isAudio ? dc._audioOutputIndex : dc._cvOutputIndex, parentModule.GetIndexOfConnector(this));
                 
@@ -171,26 +204,78 @@ public class ModuleConnectorController : MonoBehaviour, IPointerEnterHandler, IP
         inputOutput = i;
     }
 
-    public void AddWire(GameObject wire)
-    {
-        isConnected = true;
-    }
-
     public void OnPointerEnter(PointerEventData eventData)
     {
+        _pointerEntered = true;
+
         if (inputOutput == InputOutput.Input) return;
+
         Cursor.SetCursor(altCursor, Vector2.zero, CursorMode.ForceSoftware);
         parentModule.draggable = false;
     }
 
     public void OnPointerExit(PointerEventData eventData)
     {
+        _pointerEntered = false;
+
         if (inputOutput == InputOutput.Input) return;
         Cursor.SetCursor(null, Vector2.zero, CursorMode.ForceSoftware);
 
         if (!_dragging)
         {
             parentModule.draggable = true;
+        }
+    }
+    
+    public void OnPointerClick(PointerEventData eventData)
+    {
+        if (eventData.clickCount == 2)
+        {
+            if (_connectionDisplay == null)
+            {
+                _connectionDisplay = Instantiate(connectionDisplayPrefab, transform);
+                _connectionDisplay.GetComponent<ConnectionDisplayController>().Setup(this);
+            }
+            else
+            {
+                Destroy(_connectionDisplay);
+            }
+        }
+    }
+
+    public void RemoveConnection(ModuleConnectorController toRemove)
+    {
+        var wire = _instantiatedWires.Find(w => w.GetComponent<WireDragController>().targetController == toRemove);
+        if (wire == null) return;
+
+        var isAudio = parentModule.moduleType == ModuleType.IOModule;
+
+        SynthWorkshopLibrary.SetModuleInputIndex(
+            isAudio, 
+            false, 
+            toRemove.parentModule.GlobalIndex, 
+            audioCv == AudioCV.Audio ? _audioOutputIndex : _cvOutputIndex, 
+            toRemove.parentModule.GetIndexOfConnector(toRemove)
+        );
+
+        _instantiatedWires.Remove(wire);
+        Destroy(wire);
+
+        connectedModuleConnectors.Remove(toRemove);        
+        if (connectedModuleConnectors.Count == 0)
+        {
+            GetComponent<Image>().color = Color.white;
+        }
+
+        toRemove.SourceConnectionRemoved(this);
+    }
+
+    private void SourceConnectionRemoved(ModuleConnectorController removed)
+    {
+        connectedModuleConnectors.Remove(removed);
+        if (connectedModuleConnectors.Count == 0)
+        {
+            GetComponent<Image>().color = Color.white;
         }
     }
 }

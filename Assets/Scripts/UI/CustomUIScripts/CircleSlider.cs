@@ -32,6 +32,11 @@ public class CircleSlider : MonoBehaviour, IPointerDownHandler,
         get => _sliderAngle;
         set
         {
+            if (float.IsNaN(value))
+            {
+                return;
+            }
+
             _sliderAngle = Mathf.Clamp(value, 0.0f, 360.0f);
             fillImage.fillAmount = SliderAngle / 360.0f;
             indicatorPivot.transform.localEulerAngles = new Vector3(180, 0, SliderAngle);
@@ -76,6 +81,12 @@ public class CircleSlider : MonoBehaviour, IPointerDownHandler,
         }
 
         SliderAngle = value.Map(min, max, 0, 360);
+
+        if (float.IsNaN(SliderAngle))
+        {
+            return;
+        }
+
         if (useReadout)
         {
             _readout.SetTruncatedValueText(value, units);
@@ -126,6 +137,12 @@ public class CircleSlider : MonoBehaviour, IPointerDownHandler,
         {
             _readout.SetTruncatedValueText(value, units);
         }
+    }
+
+    public void SetWholeNumbers(bool state)
+    {
+        wholeNumbers = state;
+        onValueChanged.Invoke(value);
     }
 
     private bool HasValueChanged()

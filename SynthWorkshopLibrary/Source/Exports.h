@@ -50,6 +50,11 @@ extern "C"
         ((MainComponent*)mc)->stopAudio();
     }
 
+    EXPORT void resumeAudio(void* mc)
+    {
+        ((MainComponent*)mc)->resumeAudio();
+    }
+
     EXPORT bool createModulesFromJson(void* mc, const char* jsonText) 
     {
         return ((MainComponent*)mc)->createModulesFromJson(jsonText);
@@ -70,6 +75,10 @@ extern "C"
                 return mainComponent->createOscillatorModule(jsonText);
             case 4:
                 return mainComponent->createAdsrModule(jsonText);
+            case 5:
+                return mainComponent->createNumberModule(jsonText);
+            case 6:
+                return mainComponent->createFilterModule(jsonText);
             default:
                 return false;
         }
@@ -110,6 +119,11 @@ extern "C"
     EXPORT void createCvBufferWithKey(void* mc, int key)
     {
         ((MainComponent*)mc)->createCvBufferWithKey(key);
+    }
+
+    EXPORT void createCvBufferWithKeyAndValue(void* mc, int key, float value)
+    {
+        ((MainComponent*)mc)->createCvBufferWithKey(key, value);
     }
 
     EXPORT void setAudioMathsIncomingSignal(void* mc, int id, int type)

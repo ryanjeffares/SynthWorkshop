@@ -27,6 +27,9 @@ static class SynthWorkshopLibrary
     private static extern void stopAudio(IntPtr mc);
 
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    private static extern void resumeAudio(IntPtr mc);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
     private static extern bool createModulesFromJson(IntPtr mc, string jsonText);
 
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
@@ -46,6 +49,9 @@ static class SynthWorkshopLibrary
 
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
     private static extern void createCvBufferWithKey(IntPtr mc, int key);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    private static extern void createCvBufferWithKeyAndValue(IntPtr mc, int key, float value);
 
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
     private static extern void setAudioMathsIncomingSignal(IntPtr mc, int globalId, int type);
@@ -92,6 +98,11 @@ static class SynthWorkshopLibrary
         stopAudio(MainComponent);
     }
 
+    public static void ResumeAudio()
+    {
+        resumeAudio(MainComponent);
+    }
+
     public static bool CreateModulesFromJson(string jsonText)
     {
         return createModulesFromJson(MainComponent, jsonText);
@@ -125,6 +136,11 @@ static class SynthWorkshopLibrary
     public static void CreateCvBufferWithKey(int key)
     {
         createCvBufferWithKey(MainComponent, key);
+    }
+
+    public static void CreateCvBufferWithKey(int key, float value)
+    {
+        createCvBufferWithKeyAndValue(MainComponent, key, value);
     }
 
     public static void SetAudioMathsIncomingSignal(int globalId, int type)

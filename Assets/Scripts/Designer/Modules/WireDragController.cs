@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI.Extensions;
 
-public class WireDragController : MonoBehaviour, IPointerClickHandler
+public class WireDragController : MonoBehaviour
 {
     [NonSerialized] public ModuleConnectorController parentController;
     [NonSerialized] public ModuleConnectorController targetController;
@@ -33,12 +33,7 @@ public class WireDragController : MonoBehaviour, IPointerClickHandler
         {
             targetController = null;
         }
-    }
-
-    public void OnPointerClick(PointerEventData eventData)
-    {
-        Debug.Log("Clicked");
-    }
+    }    
 
     private void Update()
     {

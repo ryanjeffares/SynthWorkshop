@@ -7,7 +7,7 @@ using UnityEngine.EventSystems;
 
 public enum ModuleType
 {
-    OscillatorModule, KnobModule, IOModule, MathsModule, NumberBox, ADSR, ButtonModule, ToggleModule
+    OscillatorModule, KnobModule, IOModule, MathsModule, NumberBox, ADSR, ButtonModule, ToggleModule, FilterModule
 }
 
 public abstract class ModuleParent : MonoBehaviour, IDragHandler, IBeginDragHandler, IPointerClickHandler
@@ -42,6 +42,8 @@ public abstract class ModuleParent : MonoBehaviour, IDragHandler, IBeginDragHand
     
     public string IdentifierName { get; private set; }
     public int GlobalIndex { get; private set; }
+
+    public string DisplayName => nameText.text;
 
     private void Awake()
     {

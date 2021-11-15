@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<JUCERPROJECT id="i5Joga" name="SynthWorkshopStatic" projectType="library"
+              useAppConfig="0" addUsingNamespaceToJuceHeader="0" displaySplashScreen="1"
+              jucerFormatVersion="1">
+  <MAINGROUP id="wwQuFq" name="SynthWorkshopStatic">
+    <GROUP id="{1FB955C5-DBFC-B245-5BBB-89AA7D27AEC5}" name="Include">
+      <FILE id="IEHXl0" name="json.h" compile="0" resource="0" file="Include/json.h"/>
+    </GROUP>
+    <GROUP id="{19819F02-E101-BC10-41DE-1EC631B78EB1}" name="Source">
+      <GROUP id="{7C361C90-D1EC-9328-274A-A552DA687561}" name="Modules">
+        <FILE id="E3agle" name="ADSRModule.h" compile="0" resource="0" file="Source/Modules/ADSRModule.h"/>
+        <FILE id="RnJBPp" name="AudioMathsModule.h" compile="0" resource="0"
+              file="Source/Modules/AudioMathsModule.h"/>
+        <FILE id="P6Jw5L" name="AudioOutputModule.h" compile="0" resource="0"
+              file="Source/Modules/AudioOutputModule.h"/>
+        <FILE id="QIkhha" name="FilterModule.h" compile="0" resource="0" file="Source/Modules/FilterModule.h"/>
+        <FILE id="dhPSpp" name="MathsModule.h" compile="0" resource="0" file="Source/Modules/MathsModule.h"/>
+        <FILE id="f2bh7T" name="Module.h" compile="0" resource="0" file="Source/Modules/Module.h"/>
+        <FILE id="YhWDLq" name="NumberBoxModule.h" compile="0" resource="0"
+              file="Source/Modules/NumberBoxModule.h"/>
+        <FILE id="CtkmQL" name="OscillatorModule.h" compile="0" resource="0"
+              file="Source/Modules/OscillatorModule.h"/>
+      </GROUP>
+      <FILE id="ncJ33j" name="Exports.cpp" compile="1" resource="0" file="Source/Exports.cpp"/>
+      <FILE id="Lblrj1" name="Exports.h" compile="0" resource="0" file="Source/Exports.h"/>
+      <FILE id="D1sr3C" name="MainComponent.cpp" compile="1" resource="0"
+            file="Source/MainComponent.cpp"/>
+      <FILE id="P36BoV" name="MainComponent.h" compile="0" resource="0" file="Source/MainComponent.h"/>
+      <FILE id="zYzq6i" name="Typedefs.h" compile="0" resource="0" file="Source/Typedefs.h"/>
+    </GROUP>
+  </MAINGROUP>
+  <JUCEOPTIONS JUCE_STRICT_REFCOUNTEDPOINTER="1"/>
+  <EXPORTFORMATS>
+    <XCODE_IPHONE targetFolder="Builds/iOS" extraDefs="SW_APPLE">
+      <CONFIGURATIONS>
+        <CONFIGURATION isDebug="1" name="Debug" headerPath="/Include" customXcodeFlags="GCC_SYMBOLS_PRIVATE_EXTERN=YES,&#10;ONLY_ACTIVE_ARCH=NO"/>
+        <CONFIGURATION isDebug="0" name="Release" headerPath="/Include" customXcodeFlags="GCC_SYMBOLS_PRIVATE_EXTERN=YES,&#10;ONLY_ACTIVE_ARCH=NO"/>
+      </CONFIGURATIONS>
+      <MODULEPATHS>
+        <MODULEPATH id="juce_gui_extra" path="../../juce"/>
+        <MODULEPATH id="juce_gui_basics" path="../../juce"/>
+        <MODULEPATH id="juce_graphics" path="../../juce"/>
+        <MODULEPATH id="juce_events" path="../../juce"/>
+        <MODULEPATH id="juce_dsp" path="../../juce"/>
+        <MODULEPATH id="juce_data_structures" path="../../juce"/>
+        <MODULEPATH id="juce_core" path="../../juce"/>
+        <MODULEPATH id="juce_audio_utils" path="../../juce"/>
+        <MODULEPATH id="juce_audio_processors" path="../../juce"/>
+        <MODULEPATH id="juce_audio_formats" path="../../juce"/>
+        <MODULEPATH id="juce_audio_devices" path="../../juce"/>
+        <MODULEPATH id="juce_audio_basics" path="../../juce"/>
+      </MODULEPATHS>
+    </XCODE_IPHONE>
+  </EXPORTFORMATS>
+  <MODULES>
+    <MODULE id="juce_audio_basics" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_audio_devices" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_audio_formats" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_audio_processors" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_audio_utils" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_core" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_data_structures" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_dsp" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_events" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_graphics" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_gui_basics" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_gui_extra" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+  </MODULES>
+  <LIVE_SETTINGS>
+    <WINDOWS/>
+    <OSX/>
+  </LIVE_SETTINGS>
+</JUCERPROJECT>

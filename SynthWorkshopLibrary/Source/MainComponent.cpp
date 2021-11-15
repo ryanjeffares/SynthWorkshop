@@ -122,7 +122,7 @@ void MainComponent::checkForUpdates()
     // erase the any desired modules
     if (m_ShouldDestroyOutputModule.load())
     {
-        auto& it = std::find_if(
+        auto it = std::find_if(
             m_AudioOutputModules.begin(),
             m_AudioOutputModules.end(),
             [&](const std::unique_ptr<Module>& mod)

@@ -5,10 +5,12 @@ using UnityEngine;
 
 static class SynthWorkshopLibrary
 {
-#if UNITY_EDITOR_OSX || UNITY_STANDALONE_OSX
+#if UNITY_STANDALONE_OSX
     private const string LibName = "SynthWorkshopBundle_M1";
 #elif UNITY_EDITOR_WIN || UNITY_STANDALONE_WIN
     private const string LibName = "SynthWorkshopLibrary_x64";
+#elif UNITY_IOS
+    private const string LibName = "__Internal";
 #endif
 
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]

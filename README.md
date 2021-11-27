@@ -5,12 +5,14 @@ Note: any recent work I've done on this for MacOS has been done on an M1 chip, s
 
 # To Do
 * VERY IMPORTANT: Triggers - bangs and toggles
-* Bug with removing modules cutting off other modules output, some kind of indexing error: track this down....
+	* have toggles now, do bangs
+	* then we can do metronomes, counters, selectors
 * Load arrangement from json - finish this when line connectors are in
+* Hunt for bugs - seems pretty robust now but be ever vigilant
+* Crash on shutdown i suspect because audio thread is modifying vectors while unity thread tries to remove connections
 * UI!!!!
 	* font??
 	* General make it actually look good
-* Everything should be able to have multiple inputs - map param inputs dont have that currently
 * More maths - increment/decrement, constants like pi, two pi, e...
 * Counter
 * Table

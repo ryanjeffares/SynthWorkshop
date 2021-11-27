@@ -47,7 +47,7 @@ public class OscillatorModuleController : ModuleParent
     public void SetFrequency(float frequency)
     {
         Frequency = frequency;
-        nameText.text = $"{Type.ToString().ToLower()}~ {(int)Frequency}";
+        nameText.text = $"{Type.ToString().ToLower()}~ {Math.Round(Frequency, 2)}";
     }
 
     public override List<ModuleException> CheckErrors()

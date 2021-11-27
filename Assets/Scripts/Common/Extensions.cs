@@ -48,8 +48,13 @@ public static class Extensions
         g.transform.localPosition = targetPos;
     }
 
-    public static IEnumerator LerpColour(this Image img, Color colour, float time, AnimationCurve curve = null)
+    public static IEnumerator LerpColour(this Image img, Color colour, float time, AnimationCurve curve = null, float waitTime = 0)
     {
+        if (waitTime > 0)
+        {
+            yield return new WaitForSeconds(waitTime);
+        }
+
         var startColour = img.color;
         float timeCounter = 0f;
         while (timeCounter <= time)

@@ -4,14 +4,10 @@ public class AudioMathsCreator : IModuleCreator
 {
     public GameObject CreateModule(GameObject prefab, Transform parent, Vector3 position, string[] input)
     {
-        GameObject module;
-
         switch (input.Length)
         {
             case 1:
-                {
-                    module = Object.Instantiate(prefab, position, Quaternion.identity, parent);
-
+                {                    
                     MathsSign sign;
                     switch (input[0])
                     {
@@ -51,6 +47,7 @@ public class AudioMathsCreator : IModuleCreator
                         default: return null;
                     }
 
+                    var module = Object.Instantiate(prefab, position, Quaternion.identity, parent);
                     module.GetComponent<MathsModuleController>().SetType(sign, AudioCV.Audio);
                     return module;
                 }
@@ -60,8 +57,7 @@ public class AudioMathsCreator : IModuleCreator
                     {
                         return null;
                     }
-
-                    module = Object.Instantiate(prefab, position, Quaternion.identity, parent);
+                    
                     MathsSign sign;
                     switch (input[0])
                     {
@@ -83,6 +79,7 @@ public class AudioMathsCreator : IModuleCreator
                         default: return null;
                     }
 
+                    var module = Object.Instantiate(prefab, position, Quaternion.identity, parent);
                     module.GetComponent<MathsModuleController>().SetType(sign, AudioCV.Audio, value);
                     return module;
                 }

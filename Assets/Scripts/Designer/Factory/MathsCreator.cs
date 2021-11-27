@@ -7,9 +7,7 @@ public class MathsCreator : IModuleCreator
         switch (input.Length)
         {
             case 1:
-                {
-                    var module = Object.Instantiate(prefab, position, Quaternion.identity, parent);
-
+                {                    
                     MathsSign sign;
                     switch (input[0])
                     {
@@ -58,6 +56,7 @@ public class MathsCreator : IModuleCreator
                         default: return null;
                     }
 
+                    var module = Object.Instantiate(prefab, position, Quaternion.identity, parent);
                     module.GetComponent<MathsModuleController>().SetType(sign, AudioCV.CV);
                     return module;
                 }
@@ -66,9 +65,7 @@ public class MathsCreator : IModuleCreator
                     if (!float.TryParse(input[1], out var value))
                     {
                         return null;
-                    }
-
-                    var module = Object.Instantiate(prefab, position, Quaternion.identity, parent);                    
+                    }                    
 
                     MathsSign sign;
                     switch (input[0])
@@ -93,8 +90,9 @@ public class MathsCreator : IModuleCreator
                             break;
                         default: return null;
                     }
-                    module.GetComponent<MathsModuleController>().SetType(sign, AudioCV.CV, value);
 
+                    var module = Object.Instantiate(prefab, position, Quaternion.identity, parent);
+                    module.GetComponent<MathsModuleController>().SetType(sign, AudioCV.CV, value);
                     return module;
                 }
         }

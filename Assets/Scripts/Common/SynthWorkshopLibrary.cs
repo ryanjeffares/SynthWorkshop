@@ -32,22 +32,25 @@ static class SynthWorkshopLibrary
     private static extern void resumeAudio(IntPtr mc);
 
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
-    private static extern bool createModulesFromJson(IntPtr mc, string jsonText);
-
-    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
     private static extern bool createSingleModule(IntPtr mc, int type, string jsonText);
 
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
-    private static extern void destroyModule(IntPtr mc, bool audio, int globalIndex);
+    private static extern void destroyModule(IntPtr mc, int moduleType, int globalIndex);
 
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
     private static extern bool setModuleInputIndex(IntPtr mc, bool audioOutput, bool add, int moduleId, int outputIndex, int targetIndex);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    private static extern bool setTriggerTarget(IntPtr mc, bool add, int senderId, int targetId);
 
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
     private static extern void setCvParam(IntPtr mc, int index, float value);
     
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
     private static extern float getCvParam(IntPtr mc, int index);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    private static extern void triggerCallback(IntPtr mc, int moduleId, bool state);
 
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
     private static extern void createCvBufferWithKey(IntPtr mc, int key);
@@ -57,6 +60,9 @@ static class SynthWorkshopLibrary
 
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
     private static extern void setAudioMathsIncomingSignal(IntPtr mc, int globalId, int type);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    private static extern void setNumberBoxValue(IntPtr mc, int globalId, float value);
 
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
     private static extern void setMasterVolume(IntPtr mc, float value);
@@ -105,24 +111,24 @@ static class SynthWorkshopLibrary
         resumeAudio(MainComponent);
     }
 
-    public static bool CreateModulesFromJson(string jsonText)
-    {
-        return createModulesFromJson(MainComponent, jsonText);
-    }
-
     public static bool CreateNewModule(int type, string jsonText)
     {
         return createSingleModule(MainComponent, type, jsonText);
     }
 
-    public static void ModuleDestroyed(bool audio, int globalIndex)
+    public static void ModuleDestroyed(int moduleType, int globalIndex)
     {
-        destroyModule(MainComponent, audio, globalIndex);
+        destroyModule(MainComponent, moduleType, globalIndex);
     }
 
     public static bool SetModuleInputIndex(bool audioOutput, bool add, int moduleId, int outputIndex, int targetIndex)
     {
         return setModuleInputIndex(MainComponent, audioOutput, add, moduleId, outputIndex, targetIndex);
+    }
+
+    public static bool SetTriggerTarget(bool add, int senderId, int targetId)
+    {
+        return setTriggerTarget(MainComponent, add, senderId, targetId);
     }
     
     public static void SetCvParam(int index, float value)
@@ -133,6 +139,11 @@ static class SynthWorkshopLibrary
     public static float GetCvParam(int index)
     {
         return getCvParam(MainComponent, index);
+    }
+
+    public static void TriggerCallback(int moduleId, bool state)
+    {
+        triggerCallback(MainComponent, moduleId, state);
     }
 
     public static void CreateCvBufferWithKey(int key)
@@ -148,6 +159,11 @@ static class SynthWorkshopLibrary
     public static void SetAudioMathsIncomingSignal(int globalId, int type)
     {
         setAudioMathsIncomingSignal(MainComponent, globalId, type);
+    }
+
+    public static void SetNumberBoxValue(int globalId, float value)
+    {
+        setNumberBoxValue(MainComponent, globalId, value);
     }
     
     public static void SetMasterVolume(float value)

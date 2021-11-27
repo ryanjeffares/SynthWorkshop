@@ -12,10 +12,18 @@
 #include "MainComponent.h"
 
 using namespace nlohmann;
+using namespace SynthWorkshop::Modules;
+using namespace SynthWorkshop::Enums;
 
 //==============================================================================
 MainComponent::MainComponent()
-    : m_ModulesCreated(true), m_ShouldStopAudio(false), m_ModuleCreationCanProceed(false), m_FirstRun(true), m_NewProcessorModuleCreated(false), m_NewOutputModuleCreated(false), m_ShouldDestroyOutputModule(false), m_ShouldDestroyProcessorModule(false), m_MasterVolume(0.1f)
+    : m_ShouldStopAudio(false), 
+    m_NewProcessorModuleCreated(false), 
+    m_NewOutputModuleCreated(false), 
+    m_NewTriggerModuleCreated(false), 
+    m_ShouldDestroyOutputModule(false), 
+    m_ShouldDestroyProcessorModule(false), 
+    m_MasterVolume(0.1f)
 {        
     setAudioChannels(0, 2);
     
@@ -49,6 +57,7 @@ void MainComponent::prepareToPlay(int spbe, double sr)
 {
     m_SampleRate = sr;
     m_SamplesPerBlockExpected = spbe;
+    m_BangTimeSamples = 0.2 * m_SampleRate;
 }
 
 void MainComponent::releaseResources() 
@@ -61,6 +70,10 @@ void MainComponent::releaseResources()
     {
         io->releaseResources();
     }
+    for (auto& t : m_TriggerModules)
+    {
+        t->releaseResources();
+    }
 }
 
 void MainComponent::getNextAudioBlock(const juce::AudioSourceChannelInfo& bufferToFill) 
@@ -72,22 +85,20 @@ void MainComponent::getNextAudioBlock(const juce::AudioSourceChannelInfo& buffer
 
     checkForUpdates();
 
-    if (!m_ModulesCreated.load())
-    {
-        if (!m_FirstRun.load() && !m_UnityThreadNotified) 
-        {
-            std::unique_lock<std::mutex> lock(m_Mutex);
-            m_ModuleCreationCanProceed.store(true);
-            m_WaitCondition.notify_all();
-            m_UnityThreadNotified = true;
-        }
-        return;
-    }
-
     if (m_ShouldStopAudio.load()) return;
     
     int numSamples = bufferToFill.buffer->getNumSamples();
     int numChannels = bufferToFill.buffer->getNumChannels();
+
+    if (m_BangToRetrigger != nullptr)
+    {
+        m_BangRetriggerSampleCounter += bufferToFill.numSamples;
+        if (m_BangRetriggerSampleCounter >= m_BangTimeSamples)
+        {
+            m_BangToRetrigger->triggerCallback(false);
+            m_BangToRetrigger = nullptr;
+        }
+    }
     
     for (auto& mod : m_ProcessorModules) 
     {
@@ -108,13 +119,21 @@ void MainComponent::checkForUpdates()
     // this is a temp hacky fix to try get rid of crashes on shutdown
     if (m_ShouldClearModules.load())
     {
+        juce::ScopedLock sl(m_Cs);
+            
         m_AudioOutputModules.clear();
         m_ProcessorModules.clear();
+        m_TriggerModules.clear();
 
         m_ShouldDestroyOutputModule.store(false);
         m_ShouldDestroyProcessorModule.store(false);
+        m_ShouldDestroyTriggerModule.store(false);
+
         m_NewOutputModuleCreated.store(false);
         m_NewProcessorModuleCreated.store(false);
+        m_NewTriggerModuleCreated.store(false);
+
+        m_ShouldClearModules.store(false);
 
         return;
     }
@@ -122,10 +141,12 @@ void MainComponent::checkForUpdates()
     // erase the any desired modules
     if (m_ShouldDestroyOutputModule.load())
     {
+        juce::ScopedLock sl(m_Cs);
+
         auto it = std::find_if(
             m_AudioOutputModules.begin(),
             m_AudioOutputModules.end(),
-            [&](const std::unique_ptr<Module>& mod)
+            [&](const std::unique_ptr<OutputModule>& mod)
             {
                 return mod->getModuleId() == m_ModuleIdToDestroy;
             }
@@ -139,12 +160,35 @@ void MainComponent::checkForUpdates()
         m_ShouldDestroyOutputModule.store(false);
     }
 
+    if (m_ShouldDestroyTriggerModule.load())
+    {
+        juce::ScopedLock sl(m_Cs);
+
+        auto it = std::find_if(
+            m_TriggerModules.begin(),
+            m_TriggerModules.end(),
+            [&](const std::unique_ptr<Triggerable>& mod)
+            {
+                return mod->getModuleId() == m_ModuleIdToDestroy;
+            }
+        );
+
+        if (it != m_TriggerModules.end())
+        {
+            m_TriggerModules.erase(it);
+        }
+
+        m_ShouldDestroyTriggerModule.store(true);
+    }
+
     if (m_ShouldDestroyProcessorModule.load())
     {
+        juce::ScopedLock sl(m_Cs);
+
         auto it = std::find_if(
             m_ProcessorModules.begin(),
             m_ProcessorModules.end(),
-            [&](const std::unique_ptr<Module>& mod)
+            [&](const std::unique_ptr<ProcessorModule>& mod)
             {
                 return mod->getModuleId() == m_ModuleIdToDestroy;
             }
@@ -161,7 +205,9 @@ void MainComponent::checkForUpdates()
     // take control of any allocated modules in a unique ptr and push into vector
     if (m_NewProcessorModuleCreated.load())
     {
-        std::unique_ptr<Module> p(m_LastCreatedProcessorModule);
+        juce::ScopedLock sl(m_Cs);
+
+        std::unique_ptr<ProcessorModule> p(m_LastCreatedProcessorModule);
         m_ProcessorModules.push_back(std::move(p));
         m_LastCreatedProcessorModule = nullptr;
         m_NewProcessorModuleCreated.store(false);
@@ -169,10 +215,22 @@ void MainComponent::checkForUpdates()
 
     if (m_NewOutputModuleCreated.load())
     {
-        std::unique_ptr<Module> p(m_LastCreatedOutputModule);
+        juce::ScopedLock sl(m_Cs);
+
+        std::unique_ptr<OutputModule> p(m_LastCreatedOutputModule);
         m_AudioOutputModules.push_back(std::move(p));
         m_LastCreatedProcessorModule = nullptr;
         m_NewOutputModuleCreated.store(false);
+    }
+
+    if (m_NewTriggerModuleCreated.load())
+    {
+        juce::ScopedLock sl(m_Cs);
+
+        std::unique_ptr<Triggerable> t(m_LastCreatedTriggerModule);
+        m_TriggerModules.push_back(std::move(t));
+        m_LastCreatedTriggerModule = nullptr;
+        m_NewTriggerModuleCreated.store(false);
     }
 }
 
@@ -193,9 +251,33 @@ float MainComponent::getCvParam(int index)
     {
         return m_CvParamLookup[index][0];
     }
-    else 
+
+    return 0;
+}
+
+void MainComponent::triggerCallback(int moduleId, bool state)
+{
+    auto it = std::find_if(
+        m_TriggerModules.begin(),
+        m_TriggerModules.end(),
+        [moduleId](const std::unique_ptr<Triggerable>& mod)
+        {
+            return mod->getModuleId() == moduleId;
+        }
+    );
+
+    if (it != m_TriggerModules.end())
     {
-        return 0;
+        if (auto bang = dynamic_cast<BangModule*>((*it).get()))
+        {
+            m_BangRetriggerSampleCounter.store(0);
+            m_BangToRetrigger = bang;
+            m_BangToRetrigger->triggerCallback(true);
+        }
+        else
+        {
+            (*it)->triggerCallback(state);
+        }
     }
 }
 
@@ -217,24 +299,103 @@ void MainComponent::createCvBufferWithKey(int key, float value)
 
 bool MainComponent::setModuleInputIndex(bool audioModule, bool add, int moduleId, int outputIndex, int targetIndex)
 {
-    auto& vec = audioModule ? m_AudioOutputModules : m_ProcessorModules;
-    for (auto& mod : vec)
+    if (audioModule)
     {
-        if (mod->getModuleId() == moduleId)
+        auto it = std::find_if(
+            m_AudioOutputModules.begin(),
+            m_AudioOutputModules.end(),
+            [moduleId](const std::unique_ptr<OutputModule>& mod)
+            {
+                return mod->getModuleId() == moduleId;
+            }
+        );
+        
+        if (it != m_AudioOutputModules.end())
         {
             if (add)
-            {
-                mod->setInputIndex(outputIndex, targetIndex);
-            }
-            else 
-            {
-                mod->removeInputIndex(outputIndex, targetIndex);
-            }
+                (*it)->setInputIndex(outputIndex, targetIndex);
+            else
+                (*it)->removeInputIndex(outputIndex, targetIndex);
 
             return true;
         }
+
+        return false;
     }
-    return false;   
+    else
+    {
+        auto it = std::find_if(
+            m_ProcessorModules.begin(),
+            m_ProcessorModules.end(),
+            [moduleId](const std::unique_ptr<ProcessorModule>& mod)
+            {
+                return mod->getModuleId() == moduleId;
+            }
+        );
+
+        if (it != m_ProcessorModules.end())
+        {
+            if (add)
+                (*it)->setInputIndex(outputIndex, targetIndex);
+            else
+                (*it)->removeInputIndex(outputIndex, targetIndex);
+
+            return true;
+        }
+
+        return false;
+    }
+}
+
+bool MainComponent::setTriggerTarget(bool add, int senderId, int targetId)
+{
+    auto senderIt = std::find_if(
+        m_TriggerModules.begin(),
+        m_TriggerModules.end(),
+        [senderId](const std::unique_ptr<Triggerable>& mod)
+        {
+            return mod->getModuleId() == senderId;
+        }
+    );
+
+    if (senderIt != m_TriggerModules.end())
+    {
+        auto targetIt = std::find_if(
+            m_TriggerModules.begin(),
+            m_TriggerModules.end(),
+            [targetId](const std::unique_ptr<Triggerable>& mod)
+            {
+                return mod->getModuleId() == targetId;
+            }
+        );
+
+        if (targetIt != m_TriggerModules.end())
+        {            
+            (*senderIt)->setTriggerTarget(add, (*targetIt).get());
+            return true;
+        }
+
+        // could be a processor module
+        auto targetProcessorIt = std::find_if(
+            m_ProcessorModules.begin(),
+            m_ProcessorModules.end(),
+            [targetId](const std::unique_ptr<ProcessorModule>& mod)
+            {
+                return mod->getModuleId() == targetId;
+            }
+        );
+
+        if (targetProcessorIt != m_ProcessorModules.end())
+        {
+            if (auto t = dynamic_cast<Triggerable*>((*targetProcessorIt).get()))
+            {
+                (*senderIt)->setTriggerTarget(true, t);
+                return true;
+            }
+        }
+    }
+
+    return false;
 }
 
 void MainComponent::setAudioMathsIncomingSignal(int moduleId, int type)
@@ -242,7 +403,7 @@ void MainComponent::setAudioMathsIncomingSignal(int moduleId, int type)
     auto it = std::find_if(
         m_ProcessorModules.begin(),
         m_ProcessorModules.end(),
-        [moduleId](const std::unique_ptr<Module>& mod)
+        [moduleId](const std::unique_ptr<ProcessorModule>& mod)
         {
             return mod->getModuleId() == moduleId;
         }
@@ -250,10 +411,29 @@ void MainComponent::setAudioMathsIncomingSignal(int moduleId, int type)
 
     if (it != m_ProcessorModules.end())
     {
-        auto mathsModule = dynamic_cast<AudioMathsModule*>(it->get());
-        if (mathsModule != nullptr)
+        if (auto mathsModule = dynamic_cast<AudioMathsModule*>(it->get()))
         {
             mathsModule->setIncomingSignalType((AudioCV)type);
+        }
+    }
+}
+
+void MainComponent::setNumberBoxValue(int moduleId, float value)
+{
+    auto it = std::find_if(
+        m_ProcessorModules.begin(),
+        m_ProcessorModules.end(),
+        [moduleId](const std::unique_ptr<ProcessorModule>& mod)
+        {
+            return mod->getModuleId() == moduleId;
+        }
+    );
+
+    if (it != m_ProcessorModules.end())
+    {
+        if (auto mod = dynamic_cast<NumberBoxModule*>(it->get()))
+        {
+            mod->setValue(value);
         }
     }
 }
@@ -378,6 +558,7 @@ bool MainComponent::createMathsModule(const char* json)
             float maxOut = values["max_out"].get<float>();
 
             m_LastCreatedProcessorModule = new MathsModule(
+                m_AudioLookup,
                 m_CvParamLookup, 
                 leftIn, 
                 outputId, 
@@ -403,6 +584,7 @@ bool MainComponent::createMathsModule(const char* json)
             float initValue = values["initial_value"].get<float>();
 
             m_LastCreatedProcessorModule = new MathsModule(
+                m_AudioLookup,
                 m_CvParamLookup, 
                 leftIn, 
                 rightIn, 
@@ -542,12 +724,6 @@ bool MainComponent::createAdsrModule(const char* json)
             inputIndexes = values["input_from"].get<std::vector<int>>();
         }
 
-        int triggerInput = -1;
-        if (values.contains("trigger_input"))
-        {
-            triggerInput = values["trigger_input"].get<int>();
-        }
-
         int outputIndex = -1;
         if (values.contains("output_to"))
         {
@@ -556,24 +732,22 @@ bool MainComponent::createAdsrModule(const char* json)
             m_AudioLookup.emplace(outputIndex, std::move(buff));
         }
 
-        // for now, these are required to exist
-        int attack = values["attack_from"].get<int>();
-        int decay = values["decay_from"].get<int>();
-        int sustain = values["sustain_from"].get<int>();
-        int release = values["release_from"].get<int>();
+        float attack = values["attack"].get<float>();
+        float decay = values["decay"].get<float>();
+        float sustain = values["sustain"].get<float>();
+        float release = values["release"].get<float>();
 
         int id = values["global_index"].get<int>();
 
         m_LastCreatedProcessorModule = new ADSRModule(
             m_AudioLookup, 
             m_CvParamLookup, 
-            inputIndexes, 
-            outputIndex, 
-            attack, 
-            decay, 
-            sustain, 
-            release, 
-            triggerInput,
+            inputIndexes,
+            outputIndex,
+            attack,
+            decay,
+            sustain,
+            release,
             id
         );
         m_LastCreatedProcessorModule->prepareToPlay(m_SamplesPerBlockExpected, m_SampleRate);
@@ -719,16 +893,61 @@ bool MainComponent::createFilterModule(const char* json)
     }
 }
 
-void MainComponent::destroyModule(bool audio, int moduleId)
+bool MainComponent::createToggleModule(const char* json)
+{
+    try
+    {
+        auto j = json::parse(json);
+
+        int id = j["global_index"].get<int>();        
+
+        m_LastCreatedTriggerModule = new ToggleModule(id);
+        m_LastCreatedTriggerModule->setReady(true);
+        m_NewTriggerModuleCreated.store(true);
+
+        return true;
+    }
+    catch (const std::exception& e)
+    {
+        return false;
+    }
+}
+
+bool MainComponent::createBangModule(const char* json)
+{
+    try
+    {
+        auto j = json::parse(json);
+
+        int id = j["global_index"].get<int>();
+
+        m_LastCreatedTriggerModule = new BangModule(id);
+        m_LastCreatedTriggerModule->setReady(true);
+        m_NewTriggerModuleCreated.store(true);
+
+        return true;
+    }
+    catch (const std::exception& e)
+    {
+        return false;
+    }
+}
+
+void MainComponent::destroyModule(int moduleType, int moduleId)
 {    
     m_ModuleIdToDestroy = moduleId;
-    if (audio)
+    
+    switch (moduleType)
     {
-        m_ShouldDestroyOutputModule.store(true);
-    }
-    else
-    {
-        m_ShouldDestroyProcessorModule.store(true);
+        case 0:
+            m_ShouldDestroyOutputModule.store(true);
+            break;
+        case 1:
+            m_ShouldDestroyProcessorModule.store(true);
+            break;
+        case 2:
+            m_ShouldDestroyTriggerModule.store(true);
+            break;
     }
 }
 
@@ -736,289 +955,4 @@ void MainComponent::destroyModule(bool audio, int moduleId)
 void MainComponent::clearModules()
 {
     m_ShouldClearModules.store(true);
-}
-
-bool MainComponent::createModulesFromJson(const char* jsonText) 
-{        
-    stopAudio();
-    m_ModulesCreated.store(false);
-    
-    try 
-    {           
-        if (!m_FirstRun.load())
-        {
-            std::unique_lock<std::mutex> lock(m_Mutex);
-            while (!m_ModuleCreationCanProceed.load())
-            {
-                m_WaitCondition.wait(lock);
-            }
-        }
-        
-        m_ProcessorModules.clear();
-        m_AudioOutputModules.clear();
-        m_CvParamLookup.clear();
-        m_AudioLookup.clear();
-
-        auto j = json::parse(jsonText);
-        
-        for (const auto& moduleType : j.items()) 
-        {    
-            const auto& modType = moduleType.key();
-            for (const auto& mod : moduleType.value().items()) 
-            {
-                if (modType == "oscillator_modules") 
-                {
-                    createOscillatorModuleFromJson(mod.value());
-                }
-                else if (modType == "io_modules") 
-                {
-                    createAudioOutputModuleFromJson(mod.value());
-                }
-                else if (modType == "maths_modules") 
-                {
-                    const auto& values = mod.value();
-                    const auto& type = values["type_string"].get<std::string>();
-                    if (type == "CV") 
-                    {
-                        createMathsModuleFromJson(values);
-                    }
-                    else if (type == "Audio") 
-                    {
-                        createAudioMathsModuleFromJson(values);
-                    }
-                }
-                else if (modType == "adsr_modules") 
-                {
-                    createAdsrModuleFromJson(mod.value());
-                }
-                else if (modType == "number_boxes") 
-                {
-                    // all we need to do if we see a number box is set the initial
-                    const auto& values = mod.value();
-                    float initial = 0;
-                    if (values.contains("initial_value")) 
-                    {
-                        initial = values["initial_value"].get<float>();                        
-                        if (values.contains("output_to")) 
-                        {
-                            auto idx = values["output_to"].get<int>();
-                            if (m_CvParamLookup.find(idx) == m_CvParamLookup.end()) 
-                            {
-                                std::vector<float> temp(m_SamplesPerBlockExpected, initial);
-                                m_CvParamLookup.emplace(idx, std::move(temp));
-                            }
-                            else 
-                            {
-                                std::fill(m_CvParamLookup[idx].begin(), m_CvParamLookup[idx].end(), initial);
-                            }
-                        }
-                    }                    
-                }
-            }
-        }
-         
-        for (auto& io : m_AudioOutputModules) 
-        {
-            io->prepareToPlay(m_SamplesPerBlockExpected, m_SampleRate);
-            io->setReady(true);
-        }
-        
-        for (auto& module : m_ProcessorModules) 
-        {
-            module->prepareToPlay(m_SamplesPerBlockExpected, m_SampleRate);
-            module->setReady(true);
-        }
-
-        m_ModulesCreated.store(true);
-        m_ShouldStopAudio.store(false);
-        m_ModuleCreationCanProceed.store(false);
-        m_FirstRun.store(false);
-        m_UnityThreadNotified = false;
-        
-        return true;
-    }
-    catch (const std::exception& e) 
-    {        
-        return false;
-    }    
-}
-
-void MainComponent::createAudioMathsModuleFromJson(const json& values) 
-{    
-    MathsModuleType mathsType = (MathsModuleType)values["type_int"].get<int>();
-    AudioCV audioCv = values["incoming_signal_type"].get<std::string>() == "Audio" ? AudioCV::Audio : AudioCV::CV;
-
-    std::vector<int> leftInputs;
-    
-    if (values.contains("left_input_from")) 
-    {
-        leftInputs = values["left_input_from"].get<std::vector<int>>();
-    }
-
-    std::vector<int> rightInputs;
-    if (values.contains("right_input_from")) 
-    {
-        rightInputs = values["right_input_from"].get<std::vector<int>>();
-    }
-
-    int outputId = -1;
-    if (values.contains("output_id")) 
-    {
-        outputId = values["output_id"].get<int>();
-        juce::AudioBuffer<float> buff(2, m_SamplesPerBlockExpected);
-        m_AudioLookup.emplace(outputId, buff);
-    }
-    
-    int id = values["global_index"].get<int>();
-    float init = values["initial_value"].get<float>();
-
-    auto mathsModule = std::make_unique<AudioMathsModule>(
-        m_CvParamLookup, m_AudioLookup, leftInputs, rightInputs, outputId, audioCv, m_MathsFunctionLookup[mathsType], id, init
-    );
-    m_ProcessorModules.push_back(std::move(mathsModule));
-}
-
-void MainComponent::createMathsModuleFromJson(const json& values) 
-{
-    MathsModuleType mathsType = (MathsModuleType)values["type_int"].get<int>();
-
-    std::vector<int> leftIn;
-    if (values.contains("left_input_from"))
-    {
-        leftIn = values["left_input_from"].get<std::vector<int>>();
-    }
-
-    int outputId = -1;
-    if (values.contains("output_id")) 
-    {
-        outputId = values["output_id"].get<int>();
-        std::vector<float> temp(m_SamplesPerBlockExpected, 1);
-        m_CvParamLookup.emplace(outputId, std::move(temp));
-    }
-
-    int id = values["global_index"].get<int>();
-
-    if (mathsType == MathsModuleType::Map) 
-    {
-        int minIn = values["min_in"].get<int>();
-        int maxIn = values["max_in"].get<int>();
-        int minOut = values["min_out"].get<int>();
-        int maxOut = values["max_out"].get<int>();
-
-        auto mathsModule = std::make_unique<MathsModule>(
-            m_CvParamLookup, leftIn, outputId, minIn, maxIn, minOut, maxOut, mathsType, id
-        );
-        m_ProcessorModules.push_back(std::move(mathsModule));
-    }
-    else 
-    {
-        float init = values["initial_value"].get<float>();
-
-        std::vector<int> rightIn;
-        if (values.contains("right_input_from"))
-        {
-            rightIn = values["right_input_from"].get<std::vector<int>>();
-        }
-
-        auto mathsModule = std::make_unique<MathsModule>(
-            m_CvParamLookup, leftIn, rightIn, outputId, mathsType, m_MathsFunctionLookup[mathsType], id, init
-        );
-        m_ProcessorModules.push_back(std::move(mathsModule));
-    }
-}
-
-void MainComponent::createAudioOutputModuleFromJson(const json& values) 
-{
-    std::vector<int> leftIndexes, rightIndexes;
-    
-    if (values.contains("left_input_from")) 
-    {
-        leftIndexes = values["left_input_from"].get<std::vector<int>>();
-    }
-    if (values.contains("right_input_from")) 
-    {
-        rightIndexes = values["right_input_from"].get<std::vector<int>>();
-    }
-    
-    int id = values["global_index"].get<int>();
-
-    auto audioOut = std::make_unique<AudioOutputModule>(
-        m_AudioLookup, leftIndexes, rightIndexes, id
-    );
-    m_AudioOutputModules.push_back(std::move(audioOut));
-}
-
-void MainComponent::createOscillatorModuleFromJson(const json& values) 
-{    
-    OscillatorType t = (OscillatorType)values["type_int"].get<int>();
-    
-    std::vector<int> freqIns;
-    if (values.contains("freq_input_from")) 
-    {
-        freqIns = values["freq_input_from"].get<std::vector<int>>();
-    }
-
-    std::vector<int> pwIns;
-    if (values.contains("pw_input_from")) 
-    {
-        pwIns = values["pw_input_from"].get<std::vector<int>>();
-    }
-
-    int soundIdx = -1;
-    if (values.contains("sound_output_to")) 
-    {
-        soundIdx = values["sound_output_to"].get<int>();
-        juce::AudioBuffer<float> buff(2, m_SamplesPerBlockExpected);
-        m_AudioLookup.emplace(soundIdx, buff);
-    }
-
-    int cvIdx = -1;
-    if (values.contains("cv_out_to")) 
-    {
-        cvIdx = values["cv_out_to"].get<int>();
-        std::vector<float> temp(m_SamplesPerBlockExpected, 1);
-        m_CvParamLookup.emplace(cvIdx, std::move(temp));
-    }
-
-    int id = values["global_index"].get<int>();
-
-    auto osc = std::make_unique<OscillatorModule>(
-        t, m_CvParamLookup, m_AudioLookup, freqIns, pwIns, soundIdx, cvIdx, id
-    );
-    m_ProcessorModules.push_back(std::move(osc));
-}
-
-void MainComponent::createAdsrModuleFromJson(const json& values) 
-{
-    std::vector<int> inputIndexes;
-    if (values.contains("input_from")) 
-    {
-        inputIndexes = values["input_from"].get<std::vector<int>>();
-    }
-
-    int triggerInput = -1;
-    if (values.contains("trigger_input")) 
-    {
-        triggerInput = values["trigger_input"].get<int>();
-    }
-
-    int outputIndex = -1;
-    if (values.contains("output_to")) 
-    {
-        outputIndex = values["output_to"].get<int>();
-        juce::AudioBuffer<float> buff(2, m_SamplesPerBlockExpected);
-        m_AudioLookup.emplace(outputIndex, buff);
-    }
-
-    // for now, these are required to exist
-    int attack = values["attack_from"].get<int>();
-    int decay = values["decay_from"].get<int>();
-    int sustain = values["sustain_from"].get<int>();
-    int release = values["release_from"].get<int>();
-    int id = values["global_index"].get<int>();
-
-    auto adsr = std::make_unique<ADSRModule>(
-        m_AudioLookup, m_CvParamLookup, inputIndexes, outputIndex, attack, decay, sustain, release, triggerInput, id
-    );
-    m_ProcessorModules.push_back(std::move(adsr));
 }

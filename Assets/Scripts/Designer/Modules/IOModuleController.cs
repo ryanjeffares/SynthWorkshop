@@ -4,16 +4,6 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-public enum AudioCV
-{
-    Audio, CV, Either
-}
-
-public enum InputOutput
-{
-    Input, Output
-}
-
 public class IOModuleController : ModuleParent
 {
     private InputOutput _inputOutput;

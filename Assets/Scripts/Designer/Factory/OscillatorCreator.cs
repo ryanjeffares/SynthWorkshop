@@ -6,32 +6,27 @@ public class OscillatorCreator : IModuleCreator
     {
         if (input.Length > 2) return null;
 
-        GameObject osc;
         OscillatorType type;
 
         switch (input[0])
         {
             case "saw~":
                 {
-                    osc = Object.Instantiate(prefab, position, Quaternion.identity, parent);
                     type = OscillatorType.Saw;
                     break;
                 }
             case "pulse~":
                 {
-                    osc = Object.Instantiate(prefab, position, Quaternion.identity, parent);
                     type = OscillatorType.Pulse;
                     break;
                 }
             case "tri~":
                 {
-                    osc = Object.Instantiate(prefab, position, Quaternion.identity, parent);
                     type = OscillatorType.Tri;
                     break;
                 }
             case "sine~":
-                {
-                    osc = Object.Instantiate(prefab, position, Quaternion.identity, parent);
+                {                    
                     type = OscillatorType.Sine;
                     break;
                 }
@@ -47,6 +42,7 @@ public class OscillatorCreator : IModuleCreator
             }
         }
 
+        var osc = Object.Instantiate(prefab, position, Quaternion.identity, parent);
         osc.GetComponent<OscillatorModuleController>().SetType(type);
         if (frequency > 0)
         {

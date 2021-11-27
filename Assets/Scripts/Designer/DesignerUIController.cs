@@ -19,7 +19,9 @@ public class DesignerUIController : MonoBehaviour, IPointerClickHandler
         Oscillator,
         ADSR,
         NumberBox,
-        Filter
+        Filter,
+        Toggle,
+        Bang
     }
     
     [SerializeField] private Button stopButton, clearButton;
@@ -46,6 +48,8 @@ public class DesignerUIController : MonoBehaviour, IPointerClickHandler
     private int _numberBoxCount = 0;
     private int _adsrModuleCount = 0;
     private int _effectModuleCount = 0;
+    private int _toggleModuleCount = 0;
+    private int _bangModuleCount = 0;
     
     private int _soundOutputIndex = 0;
     private int _cvOutputIndex = 0;
@@ -87,6 +91,8 @@ public class DesignerUIController : MonoBehaviour, IPointerClickHandler
         _currentArrangement["number_boxes"] = new Dictionary<string, Dictionary<string, object>>();
         _currentArrangement["adsr_modules"] = new Dictionary<string, Dictionary<string, object>>();
         _currentArrangement["effect_modules"] = new Dictionary<string, Dictionary<string, object>>();
+        _currentArrangement["toggle_modules"] = new Dictionary<string, Dictionary<string, object>>();
+        _currentArrangement["bang_modules"] = new Dictionary<string, Dictionary<string, object>>();
     }
 
     private void Start()
@@ -112,7 +118,8 @@ public class DesignerUIController : MonoBehaviour, IPointerClickHandler
 
     private void OnInputSubmit(GameObject inputField, string input, Vector3 position)
     {
-        var mod = _moduleFactory.CreateModule(mainContent.transform, position, input.Split(' '));
+        var mod = _moduleFactory.CreateModule(mainContent.transform, position, input.Split(' '));       
+
         if (mod != null)
         {
             _instantiatedModules.Add(mod);
@@ -137,9 +144,21 @@ public class DesignerUIController : MonoBehaviour, IPointerClickHandler
             {
                 NumberBoxCreated(n);
             }
-            else if(mod.TryGetComponent<FilterModuleController>(out var f))
+            else if (mod.TryGetComponent<FilterModuleController>(out var f))
             {
                 FilterCreated(f);
+            }
+            else if (mod.TryGetComponent<ToggleModuleController>(out var t))
+            {
+                ToggleCreated(t);
+            }
+            else if (mod.TryGetComponent<ADSRModuleController>(out var a))
+            {
+                AdsrCreated(a);
+            }
+            else if (mod.TryGetComponent<BangModuleController>(out var b))
+            {
+                BangCreated(b);
             }
 
             Destroy(inputField);
@@ -312,6 +331,75 @@ public class DesignerUIController : MonoBehaviour, IPointerClickHandler
         _soundOutputIndex++;
 
         SynthWorkshopLibrary.CreateNewModule((int)ModuleCategory.Filter, JObject.FromObject(dict).ToString());
+    }
+
+    private void ToggleCreated(ToggleModuleController toggle)
+    {
+        var globalId = _totalModuleCount;
+
+        var dict = new Dictionary<string, object>
+        {
+            {"global_index", globalId},
+        };
+
+        var id = $"toggle_{_toggleModuleCount++}";
+        _currentArrangement["toggle_modules"].Add(id, dict);
+
+        toggle.SetIdentifier(id, globalId);
+        toggle.toggleChanged.AddListener(state =>
+        {
+            SynthWorkshopLibrary.TriggerCallback(globalId, state);
+        });
+
+        _totalModuleCount++;
+
+        SynthWorkshopLibrary.CreateNewModule((int)ModuleCategory.Toggle, JObject.FromObject(dict).ToString());
+    }
+
+    private void AdsrCreated(ADSRModuleController moduleController)
+    {
+        moduleController.SetOutputIndex(_soundOutputIndex);
+
+        var dict = new Dictionary<string, object>
+        {
+            {"global_index", _totalModuleCount },
+            {"output_to", _soundOutputIndex },
+            {"attack", moduleController.Attack },
+            {"decay", moduleController.Decay },
+            {"sustain", moduleController.Sustain },
+            {"release", moduleController.Release }
+        };
+
+        var id = $"adsr_{_adsrModuleCount++}";
+        _currentArrangement["adsr_modules"].Add(id, dict);
+        moduleController.SetIdentifier(id, _totalModuleCount);
+
+        _totalModuleCount++;
+        _soundOutputIndex++;
+
+        SynthWorkshopLibrary.CreateNewModule((int)ModuleCategory.ADSR, JObject.FromObject(dict).ToString());
+    }
+
+    private void BangCreated(BangModuleController bangController)
+    {
+        var globalId = _totalModuleCount;
+
+        var dict = new Dictionary<string, object>
+        {
+            {"global_index", globalId }
+        };
+
+        var id = $"bang_{_bangModuleCount++}";
+        _currentArrangement["bang_modules"].Add(id, dict);
+        bangController.SetIdentifier(id, globalId);
+        bangController.buttonPressed.AddListener(() =>
+        {
+            SynthWorkshopLibrary.TriggerCallback(globalId, true);
+        });
+
+        _totalModuleCount++;
+
+        SynthWorkshopLibrary.CreateNewModule((int)ModuleCategory.Bang, JObject.FromObject(dict).ToString());
     }
 
     /// <summary>

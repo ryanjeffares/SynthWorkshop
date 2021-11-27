@@ -7,7 +7,17 @@ using UnityEngine.EventSystems;
 
 public enum ModuleType
 {
-    OscillatorModule, KnobModule, IOModule, MathsModule, NumberBox, ADSR, ButtonModule, ToggleModule, FilterModule
+    OscillatorModule, KnobModule, IOModule, MathsModule, NumberBox, ADSR, ButtonModule, ToggleModule, FilterModule, BangModule
+}
+
+public enum AudioCV
+{
+    Audio, CV, Either, Trigger
+}
+
+public enum InputOutput
+{
+    Input, Output
 }
 
 public abstract class ModuleParent : MonoBehaviour, IDragHandler, IBeginDragHandler, IPointerClickHandler
@@ -43,7 +53,7 @@ public abstract class ModuleParent : MonoBehaviour, IDragHandler, IBeginDragHand
     public string IdentifierName { get; private set; }
     public int GlobalIndex { get; private set; }
 
-    public string DisplayName => nameText.text;
+    public string DisplayName => nameText == null ? moduleType.ToString() : nameText.text;
 
     private void Awake()
     {
@@ -57,8 +67,7 @@ public abstract class ModuleParent : MonoBehaviour, IDragHandler, IBeginDragHand
 
     private void OnDestroy()
     {
-        ModuleDestroyed?.Invoke(gameObject);
-        SynthWorkshopLibrary.ModuleDestroyed(moduleType == ModuleType.IOModule, GlobalIndex);
+        ModuleDestroyed?.Invoke(gameObject);        
         ChildDestroyed();
     }
 
@@ -89,6 +98,14 @@ public abstract class ModuleParent : MonoBehaviour, IDragHandler, IBeginDragHand
     {
         if (eventData.clickCount == 2)
         {
+            int moduleTypeInt = moduleType switch
+            {
+                ModuleType.IOModule => 0,
+                ModuleType.ToggleModule => 2,
+                ModuleType.BangModule => 2,
+                _ => 1
+            };
+            SynthWorkshopLibrary.ModuleDestroyed(moduleTypeInt, GlobalIndex);
             Destroy(gameObject);
         }
     }

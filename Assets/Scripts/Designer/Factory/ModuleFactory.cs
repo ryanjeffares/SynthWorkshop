@@ -13,6 +13,9 @@ public class ModuleFactory : MonoBehaviour
     [SerializeField] private GameObject mathsMapPrefab;
     [SerializeField] private GameObject numberBoxPrefab;
     [SerializeField] private GameObject filterPrefab;
+    [SerializeField] private GameObject togglePrefab;
+    [SerializeField] private GameObject adsrPrefab;
+    [SerializeField] private GameObject bangPrefab;
 
     private static readonly Dictionary<string[], IModuleCreator> CreatorLookup = new Dictionary<string[], IModuleCreator>
     {
@@ -24,6 +27,9 @@ public class ModuleFactory : MonoBehaviour
         {new[]{"map"}, new MathsMapCreator() },
         {new[]{"num"}, new NumberBoxCreator() },
         {new[]{"filt~"}, new FilterCreator() },
+        {new[]{"toggle"}, new ToggleCreator() },
+        {new[]{"adsr~"}, new AdsrCreator() },
+        {new[]{"bang"}, new BangCreator() },
     };
 
     private static Dictionary<Type, GameObject> PrefabLookup;
@@ -39,7 +45,10 @@ public class ModuleFactory : MonoBehaviour
             {typeof(AudioMathsCreator), audioMathsPrefab},
             {typeof(MathsMapCreator), mathsMapPrefab},
             {typeof(NumberBoxCreator), numberBoxPrefab},
-            {typeof(FilterCreator), filterPrefab},
+            {typeof(FilterCreator), filterPrefab},            
+            {typeof(ToggleCreator), togglePrefab},
+            {typeof(AdsrCreator), adsrPrefab},
+            {typeof(BangCreator), bangPrefab},
         };
     }
 

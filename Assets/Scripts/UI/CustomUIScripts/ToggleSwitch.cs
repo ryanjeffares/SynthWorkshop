@@ -6,6 +6,7 @@ using UnityEngine.Events;
 
 public class ToggleSwitch : MonoBehaviour, IPointerClickHandler, IPointerEnterHandler, IPointerExitHandler
 {
+    [SerializeField] private float interpTime = 0.1f;
     [SerializeField] private Color offColour, onColour;
     [SerializeField] private Image background;
     [SerializeField] private GameObject indicatorIconParent;
@@ -38,7 +39,7 @@ public class ToggleSwitch : MonoBehaviour, IPointerClickHandler, IPointerEnterHa
         onColour = on;
         if (interpolate)
         {
-            StartCoroutine(background.LerpColour(state ? onColour : offColour, 0.3f, curve: curve));
+            StartCoroutine(background.LerpColour(state ? onColour : offColour, interpTime, curve: curve));
         }
         else
         {
@@ -70,12 +71,12 @@ public class ToggleSwitch : MonoBehaviour, IPointerClickHandler, IPointerEnterHa
         {
             StartCoroutine(indicatorIconParent.transform.gameObject.InterpolatePosition(
                 new Vector3(GetComponent<RectTransform>().sizeDelta.x / (state ? 4.0f : -4.0f), 0),
-                0.3f,
+                interpTime,
                 curve
             ));
-            StartCoroutine(background.LerpColour(state ? onColour : offColour, 0.3f));
-            StartCoroutine(offIcon.LerpColour(state ? offIconColour : onIconColour, 0.3f, curve: curve));
-            StartCoroutine(onIcon.LerpColour(state ? onIconColour : offIconColour, 0.3f, curve: curve));
+            StartCoroutine(background.LerpColour(state ? onColour : offColour, interpTime));
+            StartCoroutine(offIcon.LerpColour(state ? offIconColour : onIconColour, interpTime, curve: curve));
+            StartCoroutine(onIcon.LerpColour(state ? onIconColour : offIconColour, interpTime, curve: curve));
         }
         else
         {

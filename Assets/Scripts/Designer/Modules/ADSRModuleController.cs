@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -5,9 +6,31 @@ using UnityEngine;
 
 public class ADSRModuleController : ModuleParent
 {
+    public float Attack { get; private set; }
+    public float Decay { get; private set; }
+    public float Sustain { get; private set; }
+    public float Release { get; private set; }
+
     protected override void ChildAwake()
     {
         moduleType = ModuleType.ADSR;
+    }
+
+    public void Setup(float attack, float decay, float sustain, float release, bool display)
+    {
+        Attack = attack;
+        Decay = decay;
+        Sustain = sustain;
+        Release = release;
+
+        nameText.text = display 
+            ? $"adsr~ {Math.Round(attack, 2)} {Math.Round(decay, 2)} {Math.Round(sustain, 2)} {Math.Round(release, 2)}"
+            : $"adsr~";
+    }
+
+    public void SetOutputIndex(int idx)
+    {
+        connectors.Last().SetOutputIndex(idx);
     }
     
     public override List<ModuleException> CheckErrors()

@@ -14,80 +14,33 @@
 
 #include "Module.h"
 
-class NumberBoxModule : public Module
+namespace SynthWorkshop
 {
-public:
-
-    NumberBoxModule(std::unordered_map<int, std::vector<float>>& cv, std::unordered_map<int, juce::AudioBuffer<float>>& audio, std::vector<int> inputs, int output, int id, float init) 
-        : m_CvParamLookup(cv), m_AudioLookup(audio), m_LeftInputs(inputs), m_OutputIndex(output), m_InitialValue(init) 
+    namespace Modules
     {
-        m_ModuleId = id;
-    }
-
-    void getNextAudioBlock(int numSamples, int numChannels)
-    {
-        if (!m_ReadyToPlay) return;
-
-        for (int sample = 0; sample < numSamples; sample++)
+        class NumberBoxModule : public ProcessorModule
         {
-            float value = 0;
-            if (m_LeftInputs.size() > 0)
-            {
-                for (auto l : m_LeftInputs)
-                {
-                    value += m_CvParamLookup[l][sample];
-                }
+        public:
 
-                m_InitialValue = value;
+            NumberBoxModule(CVMap& cv, AudioMap& audio, std::vector<int> inputs, int output, int id, float init);
+
+            void prepareToPlay(int samplesPerBlockExpected, double sampleRate) override {}
+            void getNextAudioBlock(int numSamples, int numChannels) override;
+            void setInputIndex(int outputIndex, int targetIndex) override;
+            void removeInputIndex(int outputIndex, int targetIndex) override;
+
+            inline void setValue(float value)
+            {
+                m_InitialValue.store(value);
             }
 
-            for (int i = 0; i < m_CvParamLookup[m_OutputIndex].size(); i++)
-            {
-                m_CvParamLookup[m_OutputIndex][i] = m_InitialValue;
-            }
-        }
+        private:
+
+            std::vector<int> m_LeftInputs;
+
+            int m_OutputIndex;
+
+            std::atomic<float> m_InitialValue;
+        };
     }
-
-    void setReady(bool state)
-    {
-        m_ReadyToPlay = state;
-    }
-
-    void setInputIndex(int outputIndex, int targetIndex)
-    {
-        juce::ScopedLock sl(m_Cs);
-
-        if (targetIndex == 0)
-        {
-            m_LeftInputs.push_back(outputIndex);
-        }
-    }
-
-    void removeInputIndex(int outputIndex, int targetIndex)
-    {
-        juce::ScopedLock sl(m_Cs);
-
-        for (auto it = m_LeftInputs.begin(); it != m_LeftInputs.end();)
-        {
-            if (*it == outputIndex)
-            {
-                it = m_LeftInputs.erase(it);
-            }
-            else
-            {
-                ++it;
-            }
-        }
-    }
-
-private:
-
-    std::unordered_map<int, std::vector<float>>& m_CvParamLookup;
-    std::unordered_map<int, juce::AudioBuffer<float>>& m_AudioLookup;
-
-    std::vector<int> m_LeftInputs;
-
-    int m_OutputIndex;
-
-    float m_InitialValue;    
-};
+}

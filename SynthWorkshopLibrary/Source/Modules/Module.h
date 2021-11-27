@@ -11,31 +11,104 @@
 #pragma once
 #include <JuceHeader.h>
 
-class Module
+#include "../Utils/Enums.h"
+
+namespace SynthWorkshop
 {
-public:
-    
-    Module() = default;
-    virtual ~Module() = default;
+    namespace Modules
+    {
+        class Module
+        {
+        public:
 
-    using AudioMap = std::unordered_map<int, juce::AudioBuffer<float>>;
-    using CVMap = std::unordered_map<int, std::vector<float>>;
-    
-    virtual void prepareToPlay(int samplesPerBlockExpected, double sampleRate) {}
-    virtual void getNextAudioBlock(int numSamples, int numChannels) {}
-    virtual void getNextAudioBlock(const juce::AudioSourceChannelInfo& bufferToFill) {}
-    virtual void releaseResources() {}
-    
-    virtual void setReady(bool) = 0;
-    virtual void setInputIndex(int outputIndex, int targetIndex) = 0;
-    virtual void removeInputIndex(int outputIndex, int targetIndex) = 0;
-    
-    int getModuleId() const { return m_ModuleId; }
+            Module() = default;
+            virtual ~Module() = default;
 
-protected:
+            using AudioMap = std::unordered_map<int, juce::AudioBuffer<float>>;
+            using CVMap = std::unordered_map<int, std::vector<float>>;
 
-    bool m_ReadyToPlay = false;
-    int m_ModuleId;
+            virtual void releaseResources() {}
 
-    juce::CriticalSection m_Cs;
-};
+            virtual void setReady(bool state)
+            {
+                m_ReadyToPlay = state;
+            }
+
+            inline int getModuleId() const { return m_ModuleId; }
+
+        protected:
+
+            bool m_ReadyToPlay = false;
+            int m_ModuleId;
+
+            juce::CriticalSection m_Cs;
+        };
+
+        class ProcessorModule : virtual public Module
+        {
+        public:
+
+            ProcessorModule(int id, AudioMap& audioLookup, CVMap& cvMap)
+                : m_AudioLookup(audioLookup), m_CvParamLookup(cvMap)
+            {
+                m_ModuleId = id;
+            }
+
+            ProcessorModule() = delete;
+
+            virtual void prepareToPlay(int samplesPerBlockExpected, double sampleRate) = 0;
+            virtual void getNextAudioBlock(int numSamples, int numChannels) = 0;
+
+            virtual void setInputIndex(int outputIndex, int targetIndex) = 0;
+            virtual void removeInputIndex(int outputIndex, int targetIndex) = 0;
+
+            // virtual Triggerable* asTriggerable() {}
+
+        protected:
+
+            AudioMap& m_AudioLookup;
+            CVMap& m_CvParamLookup;
+        };
+
+        class OutputModule : virtual public Module
+        {
+        public:
+
+            OutputModule(int id, AudioMap& audioLookup)
+                : m_AudioLookup(audioLookup)
+            {
+                m_ModuleId = id;
+            }
+
+            OutputModule() = delete;
+
+            virtual void prepareToPlay(int samplesPerBlockExpected, double sampleRate) = 0;
+            virtual void getNextAudioBlock(const juce::AudioSourceChannelInfo& bufferToFill) = 0;
+
+            virtual void setInputIndex(int outputIndex, int targetIndex) = 0;
+            virtual void removeInputIndex(int outputIndex, int targetIndex) = 0;
+
+        protected:
+
+            AudioMap& m_AudioLookup;
+        };
+
+        class Triggerable : virtual public Module
+        {
+        public:
+
+            Triggerable(int id) 
+            {
+                m_ModuleId = id;
+            }
+            Triggerable() = delete;
+
+            virtual void triggerCallback(bool) = 0;
+            virtual void setTriggerTarget(bool add, Triggerable* target) {}
+
+        protected:
+
+            std::vector<Triggerable*> m_Targets;
+        };
+    }
+}

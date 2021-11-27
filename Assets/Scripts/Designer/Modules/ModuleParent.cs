@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
+using System.Collections;
 
 public enum ModuleType
 {
@@ -94,20 +95,41 @@ public abstract class ModuleParent : MonoBehaviour, IDragHandler, IBeginDragHand
         return res;
     }
 
+    private bool _firstClickReceived;
+    private bool _secondClickReceived;
+
     public void OnPointerClick(PointerEventData eventData)
     {
-        if (eventData.clickCount == 2)
+        if (!_firstClickReceived)
         {
-            int moduleTypeInt = moduleType switch
-            {
-                ModuleType.IOModule => 0,
-                ModuleType.ToggleModule => 2,
-                ModuleType.BangModule => 2,
-                _ => 1
-            };
-            SynthWorkshopLibrary.ModuleDestroyed(moduleTypeInt, GlobalIndex);
-            Destroy(gameObject);
+            _firstClickReceived = true;
+            StartCoroutine(WaitForDoubleClick(eventData));
         }
+        else
+        {
+            if (!_secondClickReceived)
+            {
+                _secondClickReceived = true;
+            }
+        }
+    }
+
+    private IEnumerator WaitForDoubleClick(PointerEventData eventData)
+    {
+        yield return new WaitForSeconds(0.2f);
+
+        int moduleTypeInt = moduleType switch
+        {
+            ModuleType.IOModule => 0,
+            ModuleType.ToggleModule => 2,
+            ModuleType.BangModule => 2,
+            _ => 1
+        };
+        SynthWorkshopLibrary.ModuleDestroyed(moduleTypeInt, GlobalIndex);
+        Destroy(gameObject);
+
+        _firstClickReceived = false;
+        _secondClickReceived = false;
     }
 
     public virtual void OnBeginDrag(PointerEventData eventData)

@@ -67,12 +67,33 @@ public class TextInputField : MonoBehaviour, IPointerEnterHandler, IPointerExitH
         _inputField.Select();
     }
 
+    private bool _firstClickReceived;
+    private bool _secondClickReceived;
+
     public void OnPointerClick(PointerEventData eventData)
     {
-        if (eventData.clickCount == 2)
+        if (!_firstClickReceived)
         {
-            Destroy(gameObject);
+            _firstClickReceived = true;
+            StartCoroutine(WaitForDoubleClick(eventData));
         }
+        else
+        {
+            if (!_secondClickReceived)
+            {
+                _secondClickReceived = true;
+            }
+        }
+    }
+
+    private IEnumerator WaitForDoubleClick(PointerEventData eventData)
+    {
+        yield return new WaitForSeconds(0.2f);
+
+        Destroy(gameObject);
+
+        _firstClickReceived = false;
+        _secondClickReceived = false;
     }
 
     public void OnPointerEnter(PointerEventData eventData)

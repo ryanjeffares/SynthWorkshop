@@ -1,12 +1,9 @@
-using System;
 using System.Linq;
+using System.Collections;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.IO;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
-using UnityEditor;
 using Newtonsoft.Json.Linq;
 
 public class DesignerUIController : MonoBehaviour, IPointerClickHandler
@@ -106,14 +103,37 @@ public class DesignerUIController : MonoBehaviour, IPointerClickHandler
         ModuleParent.ModuleDestroyed -= ModuleDestroyedCallback;
     }
 
+    private bool _firstClickReceived;
+    private bool _secondClickReceived;
+
     public void OnPointerClick(PointerEventData eventData)
     {
-        if (eventData.clickCount == 2)
+        if (!_firstClickReceived)
         {
-            var inputField = Instantiate(inputFieldPrefab, eventData.position, Quaternion.identity, mainContent.transform).GetComponent<TextInputField>();            
-            inputField.Select();
-            inputField.onSubmit.AddListener(input => OnInputSubmit(inputField.gameObject, inputField.GetText(), eventData.position));            
+            _firstClickReceived = true;
+            StartCoroutine(WaitForDoubleClick(eventData));
         }
+        else
+        {
+            if (!_secondClickReceived)
+            {
+                _secondClickReceived = true;
+            }
+        }
+    }
+
+    private IEnumerator WaitForDoubleClick(PointerEventData eventData)
+    {
+        yield return new WaitForSeconds(0.2f);
+        if (_secondClickReceived)
+        {
+            var inputField = Instantiate(inputFieldPrefab, eventData.position, Quaternion.identity, mainContent.transform).GetComponent<TextInputField>();
+            inputField.Select();
+            inputField.onSubmit.AddListener(input => OnInputSubmit(inputField.gameObject, inputField.GetText(), eventData.position));
+        }
+
+        _firstClickReceived = false;
+        _secondClickReceived = false;
     }
 
     private void OnInputSubmit(GameObject inputField, string input, Vector3 position)

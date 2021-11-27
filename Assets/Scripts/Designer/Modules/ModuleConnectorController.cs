@@ -279,21 +279,42 @@ public class ModuleConnectorController : MonoBehaviour, IPointerEnterHandler, IP
             parentModule.draggable = true;
         }
     }
-    
+
+    private bool _firstClickReceived;
+    private bool _secondClickReceived;
+
     public void OnPointerClick(PointerEventData eventData)
     {
-        if (eventData.clickCount == 2)
+        if (!_firstClickReceived)
         {
-            if (_connectionDisplay == null)
+            _firstClickReceived = true;
+            StartCoroutine(WaitForDoubleClick(eventData));
+        }
+        else
+        {
+            if (!_secondClickReceived)
             {
-                _connectionDisplay = Instantiate(connectionDisplayPrefab, transform);
-                _connectionDisplay.GetComponent<ConnectionDisplayController>().Setup(this);
-            }
-            else
-            {
-                Destroy(_connectionDisplay);
+                _secondClickReceived = true;
             }
         }
+    }
+
+    private IEnumerator WaitForDoubleClick(PointerEventData eventData)
+    {
+        yield return new WaitForSeconds(0.2f);
+
+        if (_connectionDisplay == null)
+        {
+            _connectionDisplay = Instantiate(connectionDisplayPrefab, transform);
+            _connectionDisplay.GetComponent<ConnectionDisplayController>().Setup(this);
+        }
+        else
+        {
+            Destroy(_connectionDisplay);
+        }
+
+        _firstClickReceived = false;
+        _secondClickReceived = false;
     }
 
     public void RemoveConnection(ModuleConnectorController toRemove)

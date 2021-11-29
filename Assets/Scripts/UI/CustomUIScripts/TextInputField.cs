@@ -7,7 +7,7 @@ using UnityEngine.EventSystems;
 using TMPro;
 
 [RequireComponent(typeof(TMP_InputField))]
-public class TextInputField : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler
+public class TextInputField : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerDownHandler
 {
     [SerializeField] private TextMeshProUGUI placeholder;
     [SerializeField] private Image background, horizontalLine;
@@ -70,7 +70,7 @@ public class TextInputField : MonoBehaviour, IPointerEnterHandler, IPointerExitH
     private bool _firstClickReceived;
     private bool _secondClickReceived;
 
-    public void OnPointerClick(PointerEventData eventData)
+    public void OnPointerDown(PointerEventData eventData)
     {
         if (!_firstClickReceived)
         {
@@ -90,7 +90,10 @@ public class TextInputField : MonoBehaviour, IPointerEnterHandler, IPointerExitH
     {
         yield return new WaitForSeconds(0.2f);
 
-        Destroy(gameObject);
+        if (_secondClickReceived)
+        {
+            Destroy(gameObject);
+        }
 
         _firstClickReceived = false;
         _secondClickReceived = false;

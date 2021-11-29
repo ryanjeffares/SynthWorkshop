@@ -8,7 +8,7 @@ using UnityEngine.UI;
 using UnityEngine.UI.Extensions;
 
 public class ModuleConnectorController : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, 
-    IDragHandler, IBeginDragHandler, IEndDragHandler, IPointerClickHandler
+    IDragHandler, IBeginDragHandler, IEndDragHandler, IPointerDownHandler
 {
     [SerializeField] private GameObject wirePrefab;
     [SerializeField] private GameObject connectionDisplayPrefab;
@@ -82,10 +82,6 @@ public class ModuleConnectorController : MonoBehaviour, IPointerEnterHandler, IP
 
         var wire = _instantiatedWires.Last();
         wire.transform.position = eventData.position;
-
-        var diff = wire.transform.position - transform.position;
-        wire.GetComponent<UILineRenderer>().Points[0] = diff;
-        wire.GetComponent<UILineRenderer>().SetAllDirty();
     }
 
     public void OnEndDrag(PointerEventData eventData)
@@ -283,12 +279,12 @@ public class ModuleConnectorController : MonoBehaviour, IPointerEnterHandler, IP
     private bool _firstClickReceived;
     private bool _secondClickReceived;
 
-    public void OnPointerClick(PointerEventData eventData)
+    public void OnPointerDown(PointerEventData eventData)
     {
         if (!_firstClickReceived)
         {
             _firstClickReceived = true;
-            StartCoroutine(WaitForDoubleClick(eventData));
+            StartCoroutine(WaitForDoubleClick());
         }
         else
         {
@@ -299,18 +295,21 @@ public class ModuleConnectorController : MonoBehaviour, IPointerEnterHandler, IP
         }
     }
 
-    private IEnumerator WaitForDoubleClick(PointerEventData eventData)
+    private IEnumerator WaitForDoubleClick()
     {
         yield return new WaitForSeconds(0.2f);
 
-        if (_connectionDisplay == null)
+        if (_secondClickReceived)
         {
-            _connectionDisplay = Instantiate(connectionDisplayPrefab, transform);
-            _connectionDisplay.GetComponent<ConnectionDisplayController>().Setup(this);
-        }
-        else
-        {
-            Destroy(_connectionDisplay);
+            if (_connectionDisplay == null)
+            {
+                _connectionDisplay = Instantiate(connectionDisplayPrefab, transform);
+                _connectionDisplay.GetComponent<ConnectionDisplayController>().Setup(this);
+            }
+            else
+            {
+                Destroy(_connectionDisplay);
+            }
         }
 
         _firstClickReceived = false;

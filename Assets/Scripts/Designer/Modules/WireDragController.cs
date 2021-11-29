@@ -33,21 +33,31 @@ public class WireDragController : MonoBehaviour
         {
             targetController = null;
         }
-    }    
+    }
+
+    Vector3 _previousParentPos;
 
     private void Update()
     {
+        var parentPos = parentController.transform.localPosition;
+        parentPos.y += 15;
+        parentPos = Vector3.Lerp(_previousParentPos, parentPos, Time.deltaTime);
+
+        var diff = parentPos - transform.localPosition;
+        _lineRenderer.Points[1] = diff;
+        _lineRenderer.SetVerticesDirty();
+
+        _previousParentPos = parentPos;
+
         if (!isConnected) return;
+
+        transform.position = targetController.transform.position;
 
         // was connected but one of its connections has been destroyed, it is not needed anymore
         if (parentController == null || targetController == null)
         {
             Destroy(gameObject);
             return;
-        }
-        
-        var diff = transform.position - targetController.transform.position;
-        _lineRenderer.Points[1] = diff;
-        _lineRenderer.SetAllDirty();
+        }     
     }
 }

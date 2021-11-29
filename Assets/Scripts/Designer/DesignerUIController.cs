@@ -6,7 +6,7 @@ using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using Newtonsoft.Json.Linq;
 
-public class DesignerUIController : MonoBehaviour, IPointerClickHandler
+public class DesignerUIController : MonoBehaviour, IPointerDownHandler
 {
     private enum ModuleCategory
     {
@@ -106,7 +106,7 @@ public class DesignerUIController : MonoBehaviour, IPointerClickHandler
     private bool _firstClickReceived;
     private bool _secondClickReceived;
 
-    public void OnPointerClick(PointerEventData eventData)
+    public void OnPointerDown(PointerEventData eventData)
     {
         if (!_firstClickReceived)
         {
@@ -125,6 +125,7 @@ public class DesignerUIController : MonoBehaviour, IPointerClickHandler
     private IEnumerator WaitForDoubleClick(PointerEventData eventData)
     {
         yield return new WaitForSeconds(0.2f);
+
         if (_secondClickReceived)
         {
             var inputField = Instantiate(inputFieldPrefab, eventData.position, Quaternion.identity, mainContent.transform).GetComponent<TextInputField>();

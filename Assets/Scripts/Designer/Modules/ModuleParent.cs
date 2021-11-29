@@ -21,7 +21,7 @@ public enum InputOutput
     Input, Output
 }
 
-public abstract class ModuleParent : MonoBehaviour, IDragHandler, IBeginDragHandler, IPointerClickHandler
+public abstract class ModuleParent : MonoBehaviour, IDragHandler, IPointerDownHandler
 {
     public readonly struct ModuleException
     {
@@ -45,9 +45,6 @@ public abstract class ModuleParent : MonoBehaviour, IDragHandler, IBeginDragHand
     [SerializeField] protected Text nameText;
     [SerializeField] protected List<ModuleConnectorController> connectors;
 
-    protected Vector3 mousePosition, startLocalPos;
-    protected float maxHorizontal, maxVertical;
-
     public ModuleType moduleType;
     public bool draggable = true;
     
@@ -58,9 +55,6 @@ public abstract class ModuleParent : MonoBehaviour, IDragHandler, IBeginDragHand
 
     private void Awake()
     {
-        var rect = transform.parent.GetComponent<RectTransform>().rect;
-        maxHorizontal = rect.width / 2;
-        maxVertical = rect.height / 2;
         ChildAwake();
     }
 
@@ -98,12 +92,12 @@ public abstract class ModuleParent : MonoBehaviour, IDragHandler, IBeginDragHand
     private bool _firstClickReceived;
     private bool _secondClickReceived;
 
-    public void OnPointerClick(PointerEventData eventData)
+    public void OnPointerDown(PointerEventData eventData)
     {
         if (!_firstClickReceived)
         {
             _firstClickReceived = true;
-            StartCoroutine(WaitForDoubleClick(eventData));
+            StartCoroutine(WaitForDoubleClick());
         }
         else
         {
@@ -114,49 +108,31 @@ public abstract class ModuleParent : MonoBehaviour, IDragHandler, IBeginDragHand
         }
     }
 
-    private IEnumerator WaitForDoubleClick(PointerEventData eventData)
+    private IEnumerator WaitForDoubleClick()
     {
         yield return new WaitForSeconds(0.2f);
 
-        int moduleTypeInt = moduleType switch
+        if (_secondClickReceived)
         {
-            ModuleType.IOModule => 0,
-            ModuleType.ToggleModule => 2,
-            ModuleType.BangModule => 2,
-            _ => 1
-        };
-        SynthWorkshopLibrary.ModuleDestroyed(moduleTypeInt, GlobalIndex);
-        Destroy(gameObject);
+            int moduleTypeInt = moduleType switch
+            {
+                ModuleType.IOModule => 0,
+                ModuleType.ToggleModule => 2,
+                ModuleType.BangModule => 2,
+                _ => 1
+            };
+            SynthWorkshopLibrary.ModuleDestroyed(moduleTypeInt, GlobalIndex);
+            Destroy(gameObject);
+        }
 
         _firstClickReceived = false;
         _secondClickReceived = false;
     }
 
-    public virtual void OnBeginDrag(PointerEventData eventData)
-    {
-        if (!draggable) return;
-        mousePosition = eventData.position;
-        startLocalPos = transform.localPosition;
-    }
-
     public virtual void OnDrag(PointerEventData eventData)
     {
         if (!draggable) return;
-        
-        var x = eventData.position.x - mousePosition.x;
-        var y = eventData.position.y - mousePosition.y;
-        var newPos = transform.localPosition;
-        
-        if (startLocalPos.x + x < maxHorizontal && startLocalPos.x + x > -maxHorizontal)
-        {
-            newPos.x = startLocalPos.x + x;
-        }
-        if (startLocalPos.y + y < maxVertical && startLocalPos.y + y > -maxVertical)
-        {
-            newPos.y = startLocalPos.y + y;
-        }
-        
-        transform.localPosition = newPos;
+        transform.position = eventData.position;
     }
 
     public int GetIndexOfConnector(ModuleConnectorController controller)

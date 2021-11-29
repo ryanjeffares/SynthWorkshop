@@ -56,6 +56,7 @@ public class DesignerUIController : MonoBehaviour, IPointerDownHandler
 
     private void Awake()
     {
+        Application.targetFrameRate = 60;
         ModuleParent.ModuleDestroyed += ModuleDestroyedCallback;
 
         _moduleFactory = GetComponent<ModuleFactory>();

@@ -27,7 +27,8 @@ public class DesignerUIController : MonoBehaviour, IPointerDownHandler
     [SerializeField] private GameObject mainContent;
     [SerializeField] private GameObject errorScrollView, errorContent, errorPrefab;
     [SerializeField] private GameObject inputFieldPrefab;
-    [SerializeField] private Slider masterVolume;    
+    [SerializeField] private Slider masterVolume;
+    [SerializeField] private Text fpsDisplay;
 
     private ModuleFactory _moduleFactory;
 
@@ -98,6 +99,12 @@ public class DesignerUIController : MonoBehaviour, IPointerDownHandler
         SynthWorkshopLibrary.HelloWorldFromMain();
     }
 
+    private void Update()
+    {
+        var fps = 1f / Time.deltaTime;
+        fpsDisplay.text = $"{Mathf.Round(fps)} FPS";
+    }
+
     private void OnDestroy()
     {
         ModuleParent.ModuleDestroyed -= ModuleDestroyedCallback;
@@ -139,6 +146,12 @@ public class DesignerUIController : MonoBehaviour, IPointerDownHandler
 
     private void OnInputSubmit(GameObject inputField, string input, Vector3 position)
     {
+        if (input.Equals("delete", System.StringComparison.OrdinalIgnoreCase))
+        {
+            Destroy(inputField);
+            return;
+        }
+
         var mod = _moduleFactory.CreateModule(mainContent.transform, position, input.Split(' '));       
 
         if (mod != null)

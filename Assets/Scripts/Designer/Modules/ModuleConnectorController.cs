@@ -32,7 +32,6 @@ public class ModuleConnectorController : MonoBehaviour, IPointerEnterHandler, IP
 
     private int _cvOutputIndex, _audioOutputIndex;
 
-    private bool _pointerDown, _pointerEntered;
     private GameObject _connectionDisplay;
 
     private void Awake()
@@ -255,8 +254,6 @@ public class ModuleConnectorController : MonoBehaviour, IPointerEnterHandler, IP
 
     public void OnPointerEnter(PointerEventData eventData)
     {
-        _pointerEntered = true;
-
         if (inputOutput == InputOutput.Input) return;
 
         Cursor.SetCursor(altCursor, Vector2.zero, CursorMode.ForceSoftware);
@@ -265,8 +262,6 @@ public class ModuleConnectorController : MonoBehaviour, IPointerEnterHandler, IP
 
     public void OnPointerExit(PointerEventData eventData)
     {
-        _pointerEntered = false;
-
         if (inputOutput == InputOutput.Input) return;
         Cursor.SetCursor(null, Vector2.zero, CursorMode.ForceSoftware);
 

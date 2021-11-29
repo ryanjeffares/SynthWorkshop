@@ -109,4 +109,17 @@ public static class Extensions
         if (x > max) return max;
         return x;
     }
+
+    public static bool ContainsIgnoreCase(this string[] array, string toFind)
+    {
+        foreach (var str in array)
+        {
+            if (str.Equals(toFind, System.StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
 }

@@ -27,7 +27,9 @@
 #include "Modules/ADSRModule.h"
 #include "Modules/NumberBoxModule.h"
 #include "Modules/FilterModule.h"
-#include "Modules/Module.h"
+#include "Modules/ToggleModule.h"
+#include "Modules/BangModule.h"
+#include "Modules/BangDelayModule.h"
 
 using namespace nlohmann;
 
@@ -42,29 +44,30 @@ public:
     void getNextAudioBlock(const juce::AudioSourceChannelInfo& bufferToFill) override;
     void releaseResources() override;
 
-    bool createModulesFromJson(const char* jsonText);
-
     void stopAudio();
     void resumeAudio();
 
     void setCvParam(int index, float value);
     float getCvParam(int index);
+    bool getTriggerableState(int moduleId);
+
+    void triggerCallback(int moduleId, bool state);
+
     void createCvBufferWithKey(int key);
     void createCvBufferWithKey(int key, float value);
+
     bool setModuleInputIndex(bool audioModule, bool add, int moduleId, int outputIndex, int targetIndex);    
-    
+    bool setTriggerTarget(bool add, int senderId, int targetId);
+
     void setAudioMathsIncomingSignal(int moduleId, int type);
+    void setNumberBoxValue(int moduleId, float value);
 
     void setMasterVolume(float);
 
     const char* helloWorld() 
     {
         return "Hello World from MainComponent";
-    }
-
-    using CVMap = std::unordered_map<int, std::vector<float>>;
-    using AudioMap = std::unordered_map<int, juce::AudioBuffer<float>>;
-    using FunctionMap = std::unordered_map<MathsModuleType, std::function<float(float, float)>>;
+    }    
 
     bool createAudioMathsModule(const char* json);
     bool createMathsModule(const char* json);
@@ -73,27 +76,33 @@ public:
     bool createAdsrModule(const char* json);
     bool createNumberModule(const char* json);
     bool createFilterModule(const char* json);
+    bool createToggleModule(const char* json);
+    bool createBangModule(const char* json);
+    bool createBangDelayModule(const char* json);
 
-    void destroyModule(bool audio, int moduleId);
+    void destroyModule(int moduleType, int moduleId);
 
     void clearModules();
 
 private:
 
-    Module* m_LastCreatedProcessorModule = nullptr;
-    Module* m_LastCreatedOutputModule = nullptr;
-    int m_ModuleIdToDestroy;
-
     void checkForUpdates();
 
-    void createAudioMathsModuleFromJson(const json& values);
-    void createMathsModuleFromJson(const json& values);
-    void createAudioOutputModuleFromJson(const json& values);
-    void createOscillatorModuleFromJson(const json& values);
-    void createAdsrModuleFromJson(const json& values);
+    bool removeTriggerTarget(int senderId, int targetId);
+    bool addTriggerTarget(int senderId, int targetId);
 
-    std::vector<std::unique_ptr<Module>> m_AudioOutputModules;
-    std::vector<std::unique_ptr<Module>> m_ProcessorModules;
+    SynthWorkshop::Modules::ProcessorModule* m_LastCreatedProcessorModule = nullptr;
+    SynthWorkshop::Modules::OutputModule* m_LastCreatedOutputModule = nullptr;
+    SynthWorkshop::Modules::Triggerable* m_LastCreatedTriggerModule = nullptr;
+    int m_ModuleIdToDestroy;
+
+    std::vector<std::unique_ptr<SynthWorkshop::Modules::ProcessorModule>> m_ProcessorModules;
+    std::vector<std::unique_ptr<SynthWorkshop::Modules::OutputModule>> m_AudioOutputModules;
+    std::vector<std::unique_ptr<SynthWorkshop::Modules::Triggerable>> m_TriggerModules;
+
+    using CVMap = std::unordered_map<int, std::vector<float>>;
+    using AudioMap = std::unordered_map<int, juce::AudioBuffer<float>>;
+    using FunctionMap = std::unordered_map<SynthWorkshop::Enums::MathsModuleType, std::function<float(float, float)>>;
 
     CVMap m_CvParamLookup;
     AudioMap m_AudioLookup;
@@ -101,17 +110,12 @@ private:
 
     float m_MasterVolume;
     
-    std::atomic<bool> m_ModulesCreated;
     std::atomic<bool> m_ShouldStopAudio;
-    std::atomic<bool> m_ModuleCreationCanProceed;
-    std::atomic<bool> m_FirstRun;
-    std::atomic<bool> m_NewProcessorModuleCreated, m_NewOutputModuleCreated;
-    std::atomic<bool> m_ShouldDestroyProcessorModule, m_ShouldDestroyOutputModule;
+    std::atomic<bool> m_NewProcessorModuleCreated, m_NewOutputModuleCreated, m_NewTriggerModuleCreated;
+    std::atomic<bool> m_ShouldDestroyProcessorModule, m_ShouldDestroyOutputModule, m_ShouldDestroyTriggerModule;
     std::atomic<bool> m_ShouldClearModules;
-    std::condition_variable m_WaitCondition;
-    std::mutex m_Mutex;
-    
-    bool m_UnityThreadNotified = false;
+
+    juce::CriticalSection m_Cs;
     
     double m_SampleRate;
     int m_SamplesPerBlockExpected;

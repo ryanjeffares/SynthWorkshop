@@ -35,34 +35,34 @@ extern "C"
 
     EXPORT void shutdown(void* mc) 
     {
-        ((MainComponent*)mc)->clearModules();
-        delete (MainComponent*)mc;
+        auto main = (MainComponent*)mc;
+        if (main == nullptr) return;
+        delete main;
         juce::shutdownJuce_GUI();
     }
 
     EXPORT const char* helloWorldFromMain(void* mc) 
     {
+        if (mc == nullptr) return "";
         return ((MainComponent*)mc)->helloWorld();
     }
 
     EXPORT void stopAudio(void* mc) 
     {
+        if (mc == nullptr) return;
         ((MainComponent*)mc)->stopAudio();
     }
 
     EXPORT void resumeAudio(void* mc)
     {
+        if (mc == nullptr) return;
         ((MainComponent*)mc)->resumeAudio();
-    }
-
-    EXPORT bool createModulesFromJson(void* mc, const char* jsonText) 
-    {
-        return ((MainComponent*)mc)->createModulesFromJson(jsonText);
     }
 
     EXPORT bool createSingleModule(void* mc, int type, const char* jsonText)
     {
         auto mainComponent = (MainComponent*)mc;
+        if (mainComponent == nullptr) return false;
         switch (type)
         {
             case 0:
@@ -79,60 +79,89 @@ extern "C"
                 return mainComponent->createNumberModule(jsonText);
             case 6:
                 return mainComponent->createFilterModule(jsonText);
+            case 7:
+                return mainComponent->createToggleModule(jsonText);
+            case 8:
+                return mainComponent->createBangModule(jsonText);
+            case 9:
+                return mainComponent->createBangDelayModule(jsonText);
             default:
                 return false;
         }
     }
 
-    EXPORT void destroyModule(void* mc, bool audio, int moduleId)
+    EXPORT void destroyModule(void* mc, int moduleType, int moduleId)
     {
         auto ptr = (MainComponent*)mc;
 
-        // this function is being called on scene exit because OnDestroy() is called for each game object
-        // it causes crashes i SUSPECT because MainComponent is destroyed before its called
         if (ptr != nullptr)
         {
-            ptr->destroyModule(audio, moduleId);
+            ptr->destroyModule(moduleType, moduleId);
         }
     }
 
     EXPORT bool setModuleInputIndex(void* mc, bool audioModule, bool add, int moduleId, int outputIndex, int targetIndex)
     {
-        if (mc == nullptr)
-        {
-            return false;
-        }
-
+        if (mc == nullptr) return false;
         return ((MainComponent*)mc)->setModuleInputIndex(audioModule, add, moduleId, outputIndex, targetIndex);
+    }
+
+    EXPORT bool setTriggerTarget(void* mc, bool add, int senderId, int targetId)
+    {
+        if (mc == nullptr) return false;
+        return ((MainComponent*)mc)->setTriggerTarget(add, senderId, targetId);
     }
 
     EXPORT void setCvParam(void* mc, int idx, float val) 
     {
+        if (mc == nullptr) return;
         ((MainComponent*)mc)->setCvParam(idx, val);
     }
 
     EXPORT float getCvParam(void* mc, int idx)
     {
+        if (mc == nullptr) return 0;
         return ((MainComponent*)mc)->getCvParam(idx);
+    }
+
+    EXPORT bool getTriggerableState(void* mc, int id)
+    {
+        return ((MainComponent*)mc)->getTriggerableState(id);
+    }
+
+    EXPORT void triggerCallback(void* mc, int moduleId, bool state)
+    {
+        if (mc == nullptr) return;
+        ((MainComponent*)mc)->triggerCallback(moduleId, state);
     }
 
     EXPORT void createCvBufferWithKey(void* mc, int key)
     {
+        if (mc == nullptr) return;
         ((MainComponent*)mc)->createCvBufferWithKey(key);
     }
 
     EXPORT void createCvBufferWithKeyAndValue(void* mc, int key, float value)
     {
+        if (mc == nullptr) return;
         ((MainComponent*)mc)->createCvBufferWithKey(key, value);
     }
 
     EXPORT void setAudioMathsIncomingSignal(void* mc, int id, int type)
     {
+        if (mc == nullptr) return;
         ((MainComponent*)mc)->setAudioMathsIncomingSignal(id, type);
+    }
+
+    EXPORT void setNumberBoxValue(void* mc, int id, float value)
+    {
+        if (mc == nullptr) return;
+        ((MainComponent*)mc)->setNumberBoxValue(id, value);
     }
 
     EXPORT void setMasterVolume(void* mc, float value) 
     {
+        if (mc == nullptr) return;
         ((MainComponent*)mc)->setMasterVolume(value);
     }
 }

@@ -9,25 +9,48 @@
     </GROUP>
     <GROUP id="{19819F02-E101-BC10-41DE-1EC631B78EB1}" name="Source">
       <GROUP id="{7C361C90-D1EC-9328-274A-A552DA687561}" name="Modules">
+        <FILE id="M4c5uq" name="ADSRModule.cpp" compile="1" resource="0" file="Source/Modules/ADSRModule.cpp"/>
         <FILE id="E3agle" name="ADSRModule.h" compile="0" resource="0" file="Source/Modules/ADSRModule.h"/>
+        <FILE id="ZQNdRx" name="AudioMathsModule.cpp" compile="1" resource="0"
+              file="Source/Modules/AudioMathsModule.cpp"/>
         <FILE id="RnJBPp" name="AudioMathsModule.h" compile="0" resource="0"
               file="Source/Modules/AudioMathsModule.h"/>
+        <FILE id="PKZw4C" name="AudioOutputModule.cpp" compile="1" resource="0"
+              file="Source/Modules/AudioOutputModule.cpp"/>
         <FILE id="P6Jw5L" name="AudioOutputModule.h" compile="0" resource="0"
               file="Source/Modules/AudioOutputModule.h"/>
+        <FILE id="yma9VK" name="BangDelayModule.cpp" compile="1" resource="0"
+              file="Source/Modules/BangDelayModule.cpp"/>
+        <FILE id="E9s7LX" name="BangDelayModule.h" compile="0" resource="0"
+              file="Source/Modules/BangDelayModule.h"/>
+        <FILE id="UFphEJ" name="BangModule.cpp" compile="1" resource="0" file="Source/Modules/BangModule.cpp"/>
+        <FILE id="CiZIwT" name="BangModule.h" compile="0" resource="0" file="Source/Modules/BangModule.h"/>
+        <FILE id="lEG1Yu" name="FilterModule.cpp" compile="1" resource="0"
+              file="Source/Modules/FilterModule.cpp"/>
         <FILE id="QIkhha" name="FilterModule.h" compile="0" resource="0" file="Source/Modules/FilterModule.h"/>
+        <FILE id="tkIouV" name="MathsModule.cpp" compile="1" resource="0" file="Source/Modules/MathsModule.cpp"/>
         <FILE id="dhPSpp" name="MathsModule.h" compile="0" resource="0" file="Source/Modules/MathsModule.h"/>
         <FILE id="f2bh7T" name="Module.h" compile="0" resource="0" file="Source/Modules/Module.h"/>
+        <FILE id="rtoxQY" name="NumberBoxModule.cpp" compile="1" resource="0"
+              file="Source/Modules/NumberBoxModule.cpp"/>
         <FILE id="YhWDLq" name="NumberBoxModule.h" compile="0" resource="0"
               file="Source/Modules/NumberBoxModule.h"/>
+        <FILE id="LkGSno" name="OscillatorModule.cpp" compile="1" resource="0"
+              file="Source/Modules/OscillatorModule.cpp"/>
         <FILE id="CtkmQL" name="OscillatorModule.h" compile="0" resource="0"
               file="Source/Modules/OscillatorModule.h"/>
+        <FILE id="hnn9qy" name="ToggleModule.cpp" compile="1" resource="0"
+              file="Source/Modules/ToggleModule.cpp"/>
+        <FILE id="xjWJfY" name="ToggleModule.h" compile="0" resource="0" file="Source/Modules/ToggleModule.h"/>
+      </GROUP>
+      <GROUP id="{20E75E54-4A76-5FA0-C2AF-BCE728EAEB56}" name="Utils">
+        <FILE id="Wdt115" name="Enums.h" compile="0" resource="0" file="Source/Utils/Enums.h"/>
       </GROUP>
       <FILE id="ncJ33j" name="Exports.cpp" compile="1" resource="0" file="Source/Exports.cpp"/>
       <FILE id="Lblrj1" name="Exports.h" compile="0" resource="0" file="Source/Exports.h"/>
       <FILE id="D1sr3C" name="MainComponent.cpp" compile="1" resource="0"
             file="Source/MainComponent.cpp"/>
       <FILE id="P36BoV" name="MainComponent.h" compile="0" resource="0" file="Source/MainComponent.h"/>
-      <FILE id="zYzq6i" name="Typedefs.h" compile="0" resource="0" file="Source/Typedefs.h"/>
     </GROUP>
   </MAINGROUP>
   <JUCEOPTIONS JUCE_STRICT_REFCOUNTEDPOINTER="1"/>

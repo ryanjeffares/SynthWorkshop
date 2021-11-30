@@ -22,7 +22,7 @@ public class DesignerUIController : MonoBehaviour, IPointerDownHandler
         BangDelay
     }
     
-    [SerializeField] private Button stopButton, clearButton;
+    [SerializeField] private Button stopButton, clearButton, hideUiButton;
     [SerializeField] private Button closeErrors;
     [SerializeField] private AnimationCurve convex;
     [SerializeField] private GameObject mainContent;
@@ -30,6 +30,7 @@ public class DesignerUIController : MonoBehaviour, IPointerDownHandler
     [SerializeField] private GameObject inputFieldPrefab;
     [SerializeField] private Slider masterVolume;
     [SerializeField] private Text fpsDisplay;
+    [SerializeField] private Text instructions;
 
     private ModuleFactory _moduleFactory;
 
@@ -54,6 +55,7 @@ public class DesignerUIController : MonoBehaviour, IPointerDownHandler
     private int _cvOutputIndex = 0;
 
     private bool _audioShouldStop;
+    private bool _uiShowing = true;
 
     private void Awake()
     {
@@ -81,6 +83,15 @@ public class DesignerUIController : MonoBehaviour, IPointerDownHandler
         });
         closeErrors.onClick.AddListener(() => errorScrollView.SetActive(false));
         clearButton.onClick.AddListener(ClearAllModules);
+        hideUiButton.onClick.AddListener(() => 
+        {
+            _uiShowing = !_uiShowing;
+            stopButton.gameObject.SetActive(_uiShowing);
+            clearButton.gameObject.SetActive(_uiShowing);
+            masterVolume.gameObject.SetActive(_uiShowing);
+            instructions.gameObject.SetActive(_uiShowing);
+            fpsDisplay.gameObject.SetActive(_uiShowing);
+        });
         
         masterVolume.onValueChanged.AddListener(SynthWorkshopLibrary.SetMasterVolume);
 

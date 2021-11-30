@@ -30,7 +30,7 @@ namespace SynthWorkshop
             void setInputIndex(int outputIndex, int targetIndex) override;
             void removeInputIndex(int outputIndex, int targetIndex) override;
 
-            void triggerCallback(bool) override;
+            void triggerCallback(Triggerable* sender, bool state) override;
 
         private:
 

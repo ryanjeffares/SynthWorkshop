@@ -50,6 +50,9 @@ static class SynthWorkshopLibrary
     private static extern float getCvParam(IntPtr mc, int index);
 
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    private static extern bool getTriggerableState(IntPtr mc, int moduleId);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
     private static extern void triggerCallback(IntPtr mc, int moduleId, bool state);
 
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
@@ -139,6 +142,11 @@ static class SynthWorkshopLibrary
     public static float GetCvParam(int index)
     {
         return getCvParam(MainComponent, index);
+    }
+
+    public static bool GetTriggerableState(int moduleId)
+    {
+        return getTriggerableState(MainComponent, moduleId);
     }
 
     public static void TriggerCallback(int moduleId, bool state)

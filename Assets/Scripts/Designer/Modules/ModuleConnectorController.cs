@@ -72,6 +72,7 @@ public class ModuleConnectorController : MonoBehaviour, IPointerEnterHandler, IP
         _dragging = true;
         var wire = Instantiate(wirePrefab, transform);
         wire.GetComponent<WireDragController>().parentController = this;
+        wire.GetComponent<WireDragController>().WireType = audioCv;
         _instantiatedWires.Add(wire);
     }
 
@@ -94,8 +95,7 @@ public class ModuleConnectorController : MonoBehaviour, IPointerEnterHandler, IP
         var wireController = wire.GetComponent<WireDragController>();
         var target = wireController.targetController;
 
-        var res = 
-            (parentModule.moduleType == ModuleType.ToggleModule || parentModule.moduleType == ModuleType.BangModule)
+        var res = parentModule.isTriggerable
             ? HandleTriggerConnection(target, wire, wireController)
             : HandleProcessorConnection(target, wire, wireController);
 
@@ -218,17 +218,28 @@ public class ModuleConnectorController : MonoBehaviour, IPointerEnterHandler, IP
 
         foreach (var dc in destroyedConnectors.Where(d => connectedModuleConnectors.Contains(d)))
         {
-            switch (parentModule.moduleType)
+            if (parentModule.isTriggerable)
             {
-                case ModuleType.ToggleModule:
-                case ModuleType.BangModule:
-                    SynthWorkshopLibrary.SetTriggerTarget(false, dc.parentModule.GlobalIndex, parentModule.GlobalIndex);
-                    break;
-                default:
-                    var isAudio = parentModule.moduleType == ModuleType.IOModule;
-                    SynthWorkshopLibrary.SetModuleInputIndex(isAudio, false, parentModule.GlobalIndex,
-                        isAudio ? dc._audioOutputIndex : dc._cvOutputIndex, parentModule.GetIndexOfConnector(this));
-                    break;
+                if (parentModule.moduleType == ModuleType.BangDelayModule && parentModule.GetIndexOfConnector(this) == 1)
+                {
+                    SynthWorkshopLibrary.SetModuleInputIndex(
+                        false,
+                        false,
+                        parentModule.GlobalIndex,
+                        dc._cvOutputIndex,
+                        1
+                    );
+                }
+                else
+                {
+                    SynthWorkshopLibrary.SetTriggerTarget(false, parentModule.GlobalIndex, dc.parentModule.GlobalIndex);
+                }
+            }
+            else
+            {
+                var isAudio = parentModule.moduleType == ModuleType.IOModule;
+                SynthWorkshopLibrary.SetModuleInputIndex(isAudio, false, parentModule.GlobalIndex,
+                    isAudio ? dc._audioOutputIndex : dc._cvOutputIndex, parentModule.GetIndexOfConnector(this));
             }
 
             var wire = _instantiatedWires.FirstOrDefault(w => destroyedConnectors.Contains(w.GetComponent<WireDragController>().targetController));
@@ -319,22 +330,20 @@ public class ModuleConnectorController : MonoBehaviour, IPointerEnterHandler, IP
 
             if (wire == null) return;
             
-            switch (parentModule.moduleType)
+            if (parentModule.isTriggerable)
             {
-                case ModuleType.BangModule:
-                case ModuleType.ToggleModule:
-                    SynthWorkshopLibrary.SetTriggerTarget(false, parentModule.GlobalIndex, toRemove.parentModule.GlobalIndex);
-                    break;
-                default:
-                    var isAudio = toRemove.parentModule.moduleType == ModuleType.IOModule;
-                    SynthWorkshopLibrary.SetModuleInputIndex(
-                        isAudio,
-                        false,
-                        toRemove.parentModule.GlobalIndex,
-                        audioCv == AudioCV.Audio ? _audioOutputIndex : _cvOutputIndex,
-                        toRemove.parentModule.GetIndexOfConnector(toRemove)
-                    );
-                    break;
+                SynthWorkshopLibrary.SetTriggerTarget(false, parentModule.GlobalIndex, toRemove.parentModule.GlobalIndex);
+            }
+            else
+            {
+                var isAudio = toRemove.parentModule.moduleType == ModuleType.IOModule;
+                SynthWorkshopLibrary.SetModuleInputIndex(
+                    isAudio,
+                    false,
+                    toRemove.parentModule.GlobalIndex,
+                    audioCv == AudioCV.Audio ? _audioOutputIndex : _cvOutputIndex,
+                    toRemove.parentModule.GetIndexOfConnector(toRemove)
+                );
             }
 
             toRemove.SourceConnectionRemoved(this);
@@ -347,23 +356,34 @@ public class ModuleConnectorController : MonoBehaviour, IPointerEnterHandler, IP
 
             if (wire == null) return;
 
-            switch (toRemove.parentModule.moduleType)
+            if (parentModule.isTriggerable)
             {
-                case ModuleType.BangModule:
-                case ModuleType.ToggleModule:
-                    SynthWorkshopLibrary.SetTriggerTarget(false, toRemove.parentModule.GlobalIndex, parentModule.GlobalIndex);
-                    break;
-                default:
-                    var isAudio = parentModule.moduleType == ModuleType.IOModule;
-                    var outIndex = audioCv == AudioCV.Audio ? toRemove._audioOutputIndex : toRemove._cvOutputIndex;
+                if (parentModule.moduleType == ModuleType.BangDelayModule && parentModule.GetIndexOfConnector(this) == 1)
+                {
                     SynthWorkshopLibrary.SetModuleInputIndex(
-                        isAudio,
+                        false,
                         false,
                         parentModule.GlobalIndex,
-                        outIndex,
-                        parentModule.GetIndexOfConnector(this)
+                        toRemove._cvOutputIndex,
+                        1
                     );
-                    break;
+                }
+                else
+                {
+                    SynthWorkshopLibrary.SetTriggerTarget(false, toRemove.parentModule.GlobalIndex, parentModule.GlobalIndex);
+                }
+            }
+            else
+            {
+                var isAudio = parentModule.moduleType == ModuleType.IOModule;
+                var outIndex = audioCv == AudioCV.Audio ? toRemove._audioOutputIndex : toRemove._cvOutputIndex;
+                SynthWorkshopLibrary.SetModuleInputIndex(
+                    isAudio,
+                    false,
+                    parentModule.GlobalIndex,
+                    outIndex,
+                    parentModule.GetIndexOfConnector(this)
+                );
             }
 
             toRemove.RemoveWire(wire, this);

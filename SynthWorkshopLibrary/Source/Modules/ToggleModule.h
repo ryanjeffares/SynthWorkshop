@@ -20,8 +20,9 @@ namespace SynthWorkshop
         public:
             ToggleModule(int id);
 
-            void triggerCallback(bool state) override;
-            void setTriggerTarget(bool add, Triggerable* target) override;
+            void triggerCallback(Triggerable* sender, bool state) override;
+            void addTriggerTarget(Triggerable* target) override;
+            void removeTriggerTarget(int targetId) override;
         };
     }
 }

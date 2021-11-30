@@ -11,6 +11,8 @@ public class BangModuleController : ModuleParent
 
     public UnityEvent buttonPressed = new UnityEvent();
 
+    private bool _state;
+
     protected override void ChildAwake()
     {
         button.onClick.AddListener(() =>
@@ -21,8 +23,18 @@ public class BangModuleController : ModuleParent
         });
     }
 
+    private void Update()
+    {
+        var state = SynthWorkshopLibrary.GetTriggerableState(GlobalIndex);
+        if (_state != state)
+        {
+            _state = state;
+            StartCoroutine(image.LerpColour(_state ? Color.grey : Color.white, 0.05f));
+        }
+    }
+
     public override List<ModuleException> CheckErrors()
     {
-        throw new System.NotImplementedException();
+        return new List<ModuleException>();
     }
 }

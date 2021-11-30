@@ -18,7 +18,8 @@ public class DesignerUIController : MonoBehaviour, IPointerDownHandler
         NumberBox,
         Filter,
         Toggle,
-        Bang
+        Bang,
+        BangDelay
     }
     
     [SerializeField] private Button stopButton, clearButton;
@@ -92,6 +93,7 @@ public class DesignerUIController : MonoBehaviour, IPointerDownHandler
         _currentArrangement["effect_modules"] = new Dictionary<string, Dictionary<string, object>>();
         _currentArrangement["toggle_modules"] = new Dictionary<string, Dictionary<string, object>>();
         _currentArrangement["bang_modules"] = new Dictionary<string, Dictionary<string, object>>();
+        _currentArrangement["bang_delay_modules"] = new Dictionary<string, Dictionary<string, object>>();
     }
 
     private void Start()
@@ -194,6 +196,10 @@ public class DesignerUIController : MonoBehaviour, IPointerDownHandler
             else if (mod.TryGetComponent<BangModuleController>(out var b))
             {
                 BangCreated(b);
+            }
+            else if (mod.TryGetComponent<BangDelayModuleController>(out var bd))
+            {
+                BangDelayCreated(bd);
             }
 
             Destroy(inputField);
@@ -435,6 +441,23 @@ public class DesignerUIController : MonoBehaviour, IPointerDownHandler
         _totalModuleCount++;
 
         SynthWorkshopLibrary.CreateNewModule((int)ModuleCategory.Bang, JObject.FromObject(dict).ToString());
+    }
+
+    private void BangDelayCreated(BangDelayModuleController bangDelayModule)
+    {
+        var globalId = _totalModuleCount;
+
+        var dict = new Dictionary<string, object>
+        {
+            {"global_index", globalId },
+            {"delay", bangDelayModule.Delay },
+        };
+
+        var id = $"bang_delay_{_bangModuleCount++}";
+        _currentArrangement["bang_delay_modules"].Add(id, dict);
+        bangDelayModule.SetIdentifier(id, globalId);
+        _totalModuleCount++;
+        SynthWorkshopLibrary.CreateNewModule((int)ModuleCategory.BangDelay, JObject.FromObject(dict).ToString());
     }
 
     /// <summary>

@@ -29,6 +29,7 @@
 #include "Modules/FilterModule.h"
 #include "Modules/ToggleModule.h"
 #include "Modules/BangModule.h"
+#include "Modules/BangDelayModule.h"
 
 using namespace nlohmann;
 
@@ -48,6 +49,7 @@ public:
 
     void setCvParam(int index, float value);
     float getCvParam(int index);
+    bool getTriggerableState(int moduleId);
 
     void triggerCallback(int moduleId, bool state);
 
@@ -76,6 +78,7 @@ public:
     bool createFilterModule(const char* json);
     bool createToggleModule(const char* json);
     bool createBangModule(const char* json);
+    bool createBangDelayModule(const char* json);
 
     void destroyModule(int moduleType, int moduleId);
 
@@ -83,16 +86,15 @@ public:
 
 private:
 
-    void checkForUpdates();    
+    void checkForUpdates();
+
+    bool removeTriggerTarget(int senderId, int targetId);
+    bool addTriggerTarget(int senderId, int targetId);
 
     SynthWorkshop::Modules::ProcessorModule* m_LastCreatedProcessorModule = nullptr;
     SynthWorkshop::Modules::OutputModule* m_LastCreatedOutputModule = nullptr;
     SynthWorkshop::Modules::Triggerable* m_LastCreatedTriggerModule = nullptr;
     int m_ModuleIdToDestroy;
-
-    SynthWorkshop::Modules::BangModule* m_BangToRetrigger = nullptr;
-    std::atomic<int> m_BangRetriggerSampleCounter{ 0 };
-    double m_BangTimeSamples;
 
     std::vector<std::unique_ptr<SynthWorkshop::Modules::ProcessorModule>> m_ProcessorModules;
     std::vector<std::unique_ptr<SynthWorkshop::Modules::OutputModule>> m_AudioOutputModules;

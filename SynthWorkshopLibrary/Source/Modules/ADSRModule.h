@@ -32,7 +32,7 @@ namespace SynthWorkshop
 
             // Triggerable* asTriggerable() override;
 
-            void triggerCallback(bool state) override;
+            void triggerCallback(Triggerable* sender, bool state) override;
 
         private:
 

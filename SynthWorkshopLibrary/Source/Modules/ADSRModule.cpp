@@ -109,36 +109,22 @@ void ADSRModule::removeInputIndex(int outputIndex, int targetIndex)
 
     if (vec == nullptr) return;
 
-    for (auto it = vec->begin(); it != vec->end();)
+    auto it = std::find(vec->begin(), vec->end(), outputIndex);
+    if (it != vec->end())
     {
-        if (*it == outputIndex)
-        {
-            it = vec->erase(it);
-        }
-        else
-        {
-            ++it;
-        }
+        vec->erase(it);
     }
 }
 
-//Triggerable* ADSRModule::asTriggerable()
-//{
-//    return dynamic_cast<Triggerable*>(this);
-//}
-
-void ADSRModule::triggerCallback(bool state)
+void ADSRModule::triggerCallback(Triggerable* sender, bool state)
 {
-    if (m_Envelope.isActive() != state)
+    if (state)
     {
-        if (state)
-        {
-            m_EnvelopeShouldNoteOn.store(true);
-        }
-        else
-        {
-            m_EnvelopeShouldNoteOff.store(true);
-        }
+        m_EnvelopeShouldNoteOn.store(true);
+    }
+    else
+    {
+        m_EnvelopeShouldNoteOff.store(true);
     }
 }
 

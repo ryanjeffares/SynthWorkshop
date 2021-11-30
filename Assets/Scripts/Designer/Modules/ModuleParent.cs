@@ -8,7 +8,7 @@ using System.Collections;
 
 public enum ModuleType
 {
-    OscillatorModule, KnobModule, IOModule, MathsModule, NumberBox, ADSR, ButtonModule, ToggleModule, FilterModule, BangModule
+    OscillatorModule, KnobModule, IOModule, MathsModule, NumberBox, ADSR, ButtonModule, ToggleModule, FilterModule, BangModule, BangDelayModule
 }
 
 public enum AudioCV
@@ -47,6 +47,7 @@ public abstract class ModuleParent : MonoBehaviour, IDragHandler, IPointerDownHa
 
     public ModuleType moduleType;
     public bool draggable = true;
+    public bool isTriggerable;
     
     public string IdentifierName { get; private set; }
     public int GlobalIndex { get; private set; }

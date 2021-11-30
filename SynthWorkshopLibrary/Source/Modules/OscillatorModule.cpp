@@ -112,20 +112,14 @@ void OscillatorModule::removeInputIndex(int outputIndex, int targetIndex)
 
     if (vec == nullptr) return;
 
-    for (auto it = vec->begin(); it != vec->end();)
+    auto it = std::find(vec->begin(), vec->end(), outputIndex);
+    if (it != vec->end())
     {
-        if (*it == outputIndex)
-        {
-            it = vec->erase(it);
-        }
-        else
-        {
-            ++it;
-        }
+        vec->erase(it);
     }
 }
 
-void OscillatorModule::triggerCallback(bool state)
+void OscillatorModule::triggerCallback(Triggerable* sender, bool state)
 {
     m_ShouldResetPhase.store(state);
 }

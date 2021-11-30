@@ -29,6 +29,7 @@ public class ModuleFactory : MonoBehaviour
     [SerializeField] private GameObject togglePrefab;
     [SerializeField] private GameObject adsrPrefab;
     [SerializeField] private GameObject bangPrefab;
+    [SerializeField] private GameObject bangDelayPrefab;
 
     private readonly StringCompare _stringCompare = new StringCompare();
 
@@ -45,6 +46,7 @@ public class ModuleFactory : MonoBehaviour
         {new[]{"toggle"}, new ToggleCreator() },
         {new[]{"adsr~"}, new AdsrCreator() },
         {new[]{"bang"}, new BangCreator() },
+        {new[]{"delay"}, new BangDelayCreator() },
     };
 
     private static Dictionary<Type, GameObject> PrefabLookup;
@@ -64,6 +66,7 @@ public class ModuleFactory : MonoBehaviour
             {typeof(ToggleCreator), togglePrefab},
             {typeof(AdsrCreator), adsrPrefab},
             {typeof(BangCreator), bangPrefab},
+            {typeof(BangDelayCreator), bangDelayPrefab},
         };
     }   
 

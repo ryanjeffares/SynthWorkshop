@@ -62,8 +62,6 @@ namespace SynthWorkshop
             virtual void setInputIndex(int outputIndex, int targetIndex) = 0;
             virtual void removeInputIndex(int outputIndex, int targetIndex) = 0;
 
-            // virtual Triggerable* asTriggerable() {}
-
         protected:
 
             AudioMap& m_AudioLookup;
@@ -103,12 +101,26 @@ namespace SynthWorkshop
             }
             Triggerable() = delete;
 
-            virtual void triggerCallback(bool) = 0;
-            virtual void setTriggerTarget(bool add, Triggerable* target) {}
+            virtual void triggerCallback(Triggerable* sender, bool) = 0;
+            virtual void addTriggerTarget(Triggerable* target) {}
+            virtual void removeTriggerTarget(int targetId) {}
+
+            inline bool getState() const { return m_State.load(); }
+            inline void setState(bool state, bool invoke) 
+            { 
+                m_State.store(state);
+                if (invoke)
+                {
+                    triggerCallback(this, m_State.load());
+                }
+            }
 
         protected:
 
-            std::vector<Triggerable*> m_Targets;
+            std::atomic_bool m_State{ false };
+            // making this a map where the key should be the module id
+            // because modules are destroyed before setTriggerTarget is called
+            std::unordered_map<int, Triggerable*> m_Targets;
         };
     }
 }

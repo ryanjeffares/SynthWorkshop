@@ -119,7 +119,7 @@ MonoBehaviour:
   m_points:
   - {x: 0, y: 0}
   - {x: 0, y: 0}
-  lineThickness: 10
+  lineThickness: 5
   relativeSize: 0
   lineList: 0
   lineCaps: 0

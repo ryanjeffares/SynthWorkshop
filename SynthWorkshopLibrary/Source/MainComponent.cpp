@@ -57,7 +57,6 @@ void MainComponent::prepareToPlay(int spbe, double sr)
 {
     m_SampleRate = sr;
     m_SamplesPerBlockExpected = spbe;
-    m_BangTimeSamples = 0.2 * m_SampleRate;
 }
 
 void MainComponent::releaseResources() 
@@ -90,13 +89,11 @@ void MainComponent::getNextAudioBlock(const juce::AudioSourceChannelInfo& buffer
     int numSamples = bufferToFill.buffer->getNumSamples();
     int numChannels = bufferToFill.buffer->getNumChannels();
 
-    if (m_BangToRetrigger != nullptr)
+    for (auto& trig : m_TriggerModules)
     {
-        m_BangRetriggerSampleCounter += bufferToFill.numSamples;
-        if (m_BangRetriggerSampleCounter >= m_BangTimeSamples)
+        if (auto bang = dynamic_cast<BangModule*>(trig.get()))
         {
-            m_BangToRetrigger->triggerCallback(false);
-            m_BangToRetrigger = nullptr;
+            bang->getNextAudioBlock(numSamples, numChannels);
         }
     }
     
@@ -255,6 +252,25 @@ float MainComponent::getCvParam(int index)
     return 0;
 }
 
+bool MainComponent::getTriggerableState(int moduleId)
+{
+    auto it = std::find_if(
+        m_TriggerModules.begin(),
+        m_TriggerModules.end(),
+        [moduleId](const std::unique_ptr<Triggerable>& mod)
+        {
+            return mod->getModuleId() == moduleId;
+        }
+    );
+
+    if (it != m_TriggerModules.end())
+    {
+        return (*it)->getState();
+    }
+
+    return false;
+}
+
 void MainComponent::triggerCallback(int moduleId, bool state)
 {
     auto it = std::find_if(
@@ -268,16 +284,7 @@ void MainComponent::triggerCallback(int moduleId, bool state)
 
     if (it != m_TriggerModules.end())
     {
-        if (auto bang = dynamic_cast<BangModule*>((*it).get()))
-        {
-            m_BangRetriggerSampleCounter.store(0);
-            m_BangToRetrigger = bang;
-            m_BangToRetrigger->triggerCallback(true);
-        }
-        else
-        {
-            (*it)->triggerCallback(state);
-        }
+        (*it)->triggerCallback(it->get(), state);
     }
 }
 
@@ -349,6 +356,18 @@ bool MainComponent::setModuleInputIndex(bool audioModule, bool add, int moduleId
 
 bool MainComponent::setTriggerTarget(bool add, int senderId, int targetId)
 {
+    if (add)
+    {
+        return addTriggerTarget(senderId, targetId);
+    }
+    else
+    {
+        return removeTriggerTarget(senderId, targetId);
+    }
+}
+
+bool MainComponent::addTriggerTarget(int senderId, int targetId)
+{
     auto senderIt = std::find_if(
         m_TriggerModules.begin(),
         m_TriggerModules.end(),
@@ -370,8 +389,8 @@ bool MainComponent::setTriggerTarget(bool add, int senderId, int targetId)
         );
 
         if (targetIt != m_TriggerModules.end())
-        {            
-            (*senderIt)->setTriggerTarget(add, (*targetIt).get());
+        {
+            (*senderIt)->addTriggerTarget(targetIt->get());
             return true;
         }
 
@@ -387,11 +406,103 @@ bool MainComponent::setTriggerTarget(bool add, int senderId, int targetId)
 
         if (targetProcessorIt != m_ProcessorModules.end())
         {
-            if (auto t = dynamic_cast<Triggerable*>((*targetProcessorIt).get()))
+            if (auto t = dynamic_cast<Triggerable*>(targetProcessorIt->get()))
             {
-                (*senderIt)->setTriggerTarget(true, t);
+                (*senderIt)->addTriggerTarget(t);
                 return true;
             }
+        }
+    }
+    else
+    {
+        auto processorSenderIt = std::find_if(
+            m_ProcessorModules.begin(),
+            m_ProcessorModules.end(),
+            [senderId](const std::unique_ptr<ProcessorModule>& mod)
+            {
+                return mod->getModuleId() == senderId;
+            }
+        );
+
+        if (processorSenderIt != m_ProcessorModules.end())
+        {
+            auto targetIt = std::find_if(
+                m_TriggerModules.begin(),
+                m_TriggerModules.end(),
+                [targetId](const std::unique_ptr<Triggerable>& mod)
+                {
+                    return mod->getModuleId() == targetId;
+                }
+            );
+
+            if (targetIt != m_TriggerModules.end())
+            {
+                if (auto t = dynamic_cast<Triggerable*>(processorSenderIt->get()))
+                {
+                    t->addTriggerTarget(targetIt->get());
+                    return true;
+                }
+            }
+
+            // could be a processor module
+            auto targetProcessorIt = std::find_if(
+                m_ProcessorModules.begin(),
+                m_ProcessorModules.end(),
+                [targetId](const std::unique_ptr<ProcessorModule>& mod)
+                {
+                    return mod->getModuleId() == targetId;
+                }
+            );
+
+            if (targetProcessorIt != m_ProcessorModules.end())
+            {
+                if (auto targetT = dynamic_cast<Triggerable*>(targetProcessorIt->get()))
+                {
+                    if (auto senderT = dynamic_cast<Triggerable*>(processorSenderIt->get()))
+                    {
+                        senderT->addTriggerTarget(targetT);
+                        return true;
+                    }
+                }
+            }
+        }
+    }
+
+    return false;
+}
+
+bool MainComponent::removeTriggerTarget(int senderId, int targetId)
+{
+    auto it = std::find_if(
+        m_TriggerModules.begin(),
+        m_TriggerModules.end(),
+        [senderId](const std::unique_ptr<Triggerable>& trig)
+        {
+            return trig->getModuleId() == senderId;
+        }
+    );
+
+    if (it != m_TriggerModules.end())
+    {
+        (*it)->removeTriggerTarget(targetId);
+        return true;
+    }
+
+    auto processorIt = std::find_if(
+        m_ProcessorModules.begin(),
+        m_ProcessorModules.end(),
+        [senderId](const std::unique_ptr<ProcessorModule>& mod)
+        {
+            return mod->getModuleId() == senderId;
+        }
+    );
+
+    if (processorIt != m_ProcessorModules.end())
+    {
+        if (auto t = dynamic_cast<Triggerable*>(processorIt->get()))
+        {
+            t->removeTriggerTarget(targetId);
+            return true;
         }
     }
 
@@ -921,9 +1032,32 @@ bool MainComponent::createBangModule(const char* json)
 
         int id = j["global_index"].get<int>();
 
-        m_LastCreatedTriggerModule = new BangModule(id);
+        m_LastCreatedTriggerModule = new BangModule(id, m_AudioLookup, m_CvParamLookup);
         m_LastCreatedTriggerModule->setReady(true);
+        dynamic_cast<ProcessorModule*>(m_LastCreatedTriggerModule)->prepareToPlay(m_SamplesPerBlockExpected, m_SampleRate);
         m_NewTriggerModuleCreated.store(true);
+
+        return true;
+    }
+    catch (const std::exception& e)
+    {
+        return false;
+    }
+}
+
+bool MainComponent::createBangDelayModule(const char* jsonText)
+{
+    try
+    {
+        auto j = json::parse(jsonText);
+
+        auto id = j["global_index"].get<int>();
+        auto delay = j["delay"].get<float>();
+
+        m_LastCreatedProcessorModule = new BangDelayModule(id, delay, m_AudioLookup, m_CvParamLookup);
+        m_LastCreatedProcessorModule->setReady(true);
+        m_LastCreatedProcessorModule->prepareToPlay(m_SamplesPerBlockExpected, m_SampleRate);
+        m_NewProcessorModuleCreated.store(true);
 
         return true;
     }

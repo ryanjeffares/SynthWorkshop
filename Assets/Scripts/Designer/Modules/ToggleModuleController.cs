@@ -9,6 +9,8 @@ public class ToggleModuleController : ModuleParent
 
     public UnityEvent<bool> toggleChanged = new UnityEvent<bool>();
 
+    private bool _state;
+
     protected override void ChildAwake()
     {
         toggleSwitch.onValueChange.AddListener(state =>
@@ -20,6 +22,16 @@ public class ToggleModuleController : ModuleParent
     public void SetState(bool state, bool sendCallback)
     {
         toggleSwitch.Set(state, sendCallback);
+    }
+
+    private void Update()
+    {
+        var state = SynthWorkshopLibrary.GetTriggerableState(GlobalIndex);
+        if (_state != state)
+        {
+            _state = state;
+            toggleSwitch.Set(_state, false);
+        }
     }
 
     public override List<ModuleException> CheckErrors()

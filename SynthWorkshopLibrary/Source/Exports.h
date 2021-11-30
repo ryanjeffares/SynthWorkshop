@@ -83,6 +83,8 @@ extern "C"
                 return mainComponent->createToggleModule(jsonText);
             case 8:
                 return mainComponent->createBangModule(jsonText);
+            case 9:
+                return mainComponent->createBangDelayModule(jsonText);
             default:
                 return false;
         }
@@ -120,6 +122,11 @@ extern "C"
     {
         if (mc == nullptr) return 0;
         return ((MainComponent*)mc)->getCvParam(idx);
+    }
+
+    EXPORT bool getTriggerableState(void* mc, int id)
+    {
+        return ((MainComponent*)mc)->getTriggerableState(id);
     }
 
     EXPORT void triggerCallback(void* mc, int moduleId, bool state)

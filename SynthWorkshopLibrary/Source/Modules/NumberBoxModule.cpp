@@ -58,15 +58,9 @@ void NumberBoxModule::removeInputIndex(int outputIndex, int targetIndex)
 {
     juce::ScopedLock sl(m_Cs);
 
-    for (auto it = m_LeftInputs.begin(); it != m_LeftInputs.end();)
+    auto it = std::find(m_LeftInputs.begin(), m_LeftInputs.end(), outputIndex);
+    if (it != m_LeftInputs.end())
     {
-        if (*it == outputIndex)
-        {
-            it = m_LeftInputs.erase(it);
-        }
-        else
-        {
-            ++it;
-        }
+        m_LeftInputs.erase(it);
     }
 }

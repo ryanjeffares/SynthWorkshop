@@ -21,7 +21,11 @@
               file="Source/Modules/AudioOutputModule.cpp"/>
         <FILE id="P6Jw5L" name="AudioOutputModule.h" compile="0" resource="0"
               file="Source/Modules/AudioOutputModule.h"/>
-        <FILE id="Rq3CGR" name="BangModule.cpp" compile="1" resource="0" file="Source/Modules/BangModule.cpp"/>
+        <FILE id="R74ZVa" name="BangDelayModule.cpp" compile="1" resource="0"
+              file="Source/Modules/BangDelayModule.cpp"/>
+        <FILE id="MdXb27" name="BangDelayModule.h" compile="0" resource="0"
+              file="Source/Modules/BangDelayModule.h"/>
+        <FILE id="zhct78" name="BangModule.cpp" compile="1" resource="0" file="Source/Modules/BangModule.cpp"/>
         <FILE id="iVQJgK" name="BangModule.h" compile="0" resource="0" file="Source/Modules/BangModule.h"/>
         <FILE id="b3CZbr" name="FilterModule.cpp" compile="1" resource="0"
               file="Source/Modules/FilterModule.cpp"/>

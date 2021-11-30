@@ -65,16 +65,10 @@ void AudioOutputModule::removeInputIndex(int outputIndex, int inputIndex)
 {
     juce::ScopedLock sl(m_Cs);
 
-    auto& vec = inputIndex ? m_RightInputIndexes : m_LeftInputIndexes;
-    for (auto it = vec.begin(); it != vec.end();)
+    auto vec = inputIndex ? &m_RightInputIndexes : &m_LeftInputIndexes;
+    auto it = std::find(vec->begin(), vec->end(), outputIndex);
+    if (it != vec->end())
     {
-        if (*it == outputIndex)
-        {
-            it = vec.erase(it);
-        }
-        else
-        {
-            ++it;
-        }
+        vec->erase(it);
     }
 }

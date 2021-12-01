@@ -6,11 +6,17 @@ Note: any recent work I've done on this for MacOS has been done on an M1 chip, s
 # To Do
 * Wires are un-fucked but see if we can fix the position jumping around when you move to target module
 * Number box destroys performance in debug
+* Zoom with two fingers on iOS/scroll on desktop
+	* Move view when zoomed
 * Message box
+	* I'm thinking a message box can only give an output to a number box, number boxes have a special case to accept values from message and hold only that value
+	* Requires fixing the above issue with number boxes killing the performance in debug lol
+* Grouping modules together into submodules
 * Detect clicks on wires...
 * Use a key other than `~` to denote audio, as it is a pain to type on iOS
 	* maybe have a dropdown of suggestions, no other characters really work i think
-* Load arrangement from json - finish this when line connectors are in
+	* maybe its not that bad
+* Load arrangement from json
 * Hunt for bugs - seems pretty robust now but be ever vigilant
 * Crash on shutdown i suspect because audio thread is modifying vectors while unity thread tries to remove connections
 * UI!!!!

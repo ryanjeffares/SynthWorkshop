@@ -5,8 +5,9 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using Newtonsoft.Json.Linq;
+using System;
 
-public class DesignerUIController : MonoBehaviour, IPointerDownHandler
+public class DesignerUIController : MonoBehaviour, IPointerDownHandler, IBeginDragHandler, IDragHandler
 {
     private enum ModuleCategory
     {
@@ -22,13 +23,14 @@ public class DesignerUIController : MonoBehaviour, IPointerDownHandler
         BangDelay
     }
     
-    [SerializeField] private Button stopButton, clearButton, hideUiButton;
+    [SerializeField] private Button stopButton, clearButton, hideUiButton, centreButton;
     [SerializeField] private Button closeErrors;
     [SerializeField] private AnimationCurve convex;
     [SerializeField] private GameObject mainContent;
     [SerializeField] private GameObject errorScrollView, errorContent, errorPrefab;
     [SerializeField] private GameObject inputFieldPrefab;
     [SerializeField] private Slider masterVolume;
+    [SerializeField] private Slider zoomSlider;
     [SerializeField] private Text fpsDisplay;
     [SerializeField] private Text instructions;
 
@@ -83,6 +85,7 @@ public class DesignerUIController : MonoBehaviour, IPointerDownHandler
         });
         closeErrors.onClick.AddListener(() => errorScrollView.SetActive(false));
         clearButton.onClick.AddListener(ClearAllModules);
+        centreButton.onClick.AddListener(() => mainContent.transform.localPosition = Vector3.zero);
         hideUiButton.onClick.AddListener(() => 
         {
             _uiShowing = !_uiShowing;
@@ -94,6 +97,11 @@ public class DesignerUIController : MonoBehaviour, IPointerDownHandler
         });
         
         masterVolume.onValueChanged.AddListener(SynthWorkshopLibrary.SetMasterVolume);
+        zoomSlider.onValueChanged.AddListener(val =>
+        {
+            mainContent.transform.localScale = new Vector3(val, val);
+            zoomSlider.GetComponentInChildren<Text>().text = $"Zoom: {Math.Round(val, 2)}";
+        });
 
         _currentArrangement["control_modules"] = new Dictionary<string, Dictionary<string, object>>();
         _currentArrangement["oscillator_modules"] = new Dictionary<string, Dictionary<string, object>>();
@@ -113,15 +121,51 @@ public class DesignerUIController : MonoBehaviour, IPointerDownHandler
         SynthWorkshopLibrary.HelloWorldFromMain();
     }
 
+    float _mouseScrollValue;
+
     private void Update()
     {
         var fps = 1f / Time.deltaTime;
         fpsDisplay.text = $"{Mathf.Round(fps)} FPS";
+
+        var scroll = Input.mouseScrollDelta.y;
+        if (scroll != _mouseScrollValue)
+        {
+            scroll *= 0.1f;            
+            var scale = mainContent.transform.localScale;
+            scale += new Vector3(scroll, scroll);            
+            if (scale.x < 0.01f || scale.y < 0.01f)
+            {
+                scale = Vector3.zero;
+            }
+            if (scale.x > 3 || scale.y > 3)
+            {
+                scale = new Vector3(3, 3);
+            }
+            mainContent.transform.localScale = scale;
+            zoomSlider.SetValueWithoutNotify(scale.x);
+            zoomSlider.GetComponentInChildren<Text>().text = $"Zoom: {Math.Round(scale.x, 2)}";
+        }
+        _mouseScrollValue = scroll;
     }
 
     private void OnDestroy()
     {
         ModuleParent.ModuleDestroyed -= ModuleDestroyedCallback;
+    }
+
+    private Vector2 _mousePos;
+
+    public void OnBeginDrag(PointerEventData eventData)
+    {
+        _mousePos = eventData.position;
+    }
+
+    public void OnDrag(PointerEventData eventData)
+    {
+        var diff = eventData.position - _mousePos;
+        mainContent.transform.position += (Vector3)diff;
+        _mousePos = eventData.position;
     }
 
     private bool _firstClickReceived;

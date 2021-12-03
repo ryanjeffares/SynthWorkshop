@@ -127,9 +127,9 @@ public class ModuleConnectorController : MonoBehaviour, IPointerEnterHandler, IP
             return true; 
         }
 
-        if (target.parentModule is MathsModuleController m)
+        if (target.parentModule is MathsModuleController m && target.parentModule.GetIndexOfConnector(target) == 1)
         {
-            if (m.audioCv == AudioCV.Audio && m.IncomingSignalType != AudioCV.Either)
+            if (m.IncomingSignalType != AudioCV.Either)
             {
                 return m.IncomingSignalType != audioCv;
             }
@@ -144,7 +144,8 @@ public class ModuleConnectorController : MonoBehaviour, IPointerEnterHandler, IP
             || (target.audioCv != AudioCV.Trigger || audioCv != AudioCV.Trigger)
             || (inputOutput == target.inputOutput)
             || connectedModuleConnectors.Contains(target)
-            || target.connectedModuleConnectors.Contains(this);
+            || target.connectedModuleConnectors.Contains(this)
+            || target.parentModule == parentModule;
     }
 
     private bool HandleProcessorConnection(ModuleConnectorController target, GameObject wire, WireDragController wireController)
@@ -240,6 +241,11 @@ public class ModuleConnectorController : MonoBehaviour, IPointerEnterHandler, IP
                 var isAudio = parentModule.moduleType == ModuleType.IOModule;
                 SynthWorkshopLibrary.SetModuleInputIndex(isAudio, false, parentModule.GlobalIndex,
                     isAudio ? dc._audioOutputIndex : dc._cvOutputIndex, parentModule.GetIndexOfConnector(this));
+
+                if (parentModule is MathsModuleController m && m.GetIndexOfConnector(this) == 1 && connectedModuleConnectors.Count == 1)
+                {
+                    m.SetAudioOrCvIncoming(AudioCV.Either, this);
+                }
             }
 
             var wire = _instantiatedWires.FirstOrDefault(w => destroyedConnectors.Contains(w.GetComponent<WireDragController>().targetController));
@@ -384,6 +390,13 @@ public class ModuleConnectorController : MonoBehaviour, IPointerEnterHandler, IP
                     outIndex,
                     parentModule.GetIndexOfConnector(this)
                 );
+
+                if (parentModule is MathsModuleController m 
+                    && m.GetIndexOfConnector(this) == 1
+                    && connectedModuleConnectors.Count == 1)
+                {
+                    m.SetAudioOrCvIncoming(AudioCV.Either, this);
+                }
             }
 
             toRemove.RemoveWire(wire, this);

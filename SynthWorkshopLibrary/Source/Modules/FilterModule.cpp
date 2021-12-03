@@ -22,7 +22,7 @@ FilterModule::FilterModule(AudioMap& audio, CVMap& cv, std::vector<int> audioInp
 {
     m_Cutoff = 20000.f;
     m_Q = static_cast<float> (1.0 / juce::MathConstants<double>::sqrt2);
-    m_FilterType = FiltType::lowPass;
+    m_FilterType = FiltType::lowpass;
 }
 
 FilterModule::FilterModule(AudioMap& audio, CVMap& cv, std::vector<int> audioInputs, std::vector<int> freqInputs, std::vector<int> qInputs, std::vector<int> typeInputs, int output, int id, float cutoff, float q, int type)
@@ -47,8 +47,9 @@ void FilterModule::prepareToPlay(int samplesPerBlockExpected, double sampleRate)
     spec.sampleRate = sampleRate;
     spec.numChannels = 2;
     m_Filter.prepare(spec);
-    m_Filter.parameters->type = m_FilterType;
-    m_Filter.parameters->setCutOffFrequency(sampleRate, m_Cutoff, m_Q);
+    m_Filter.setCutoffFrequency(m_Cutoff);
+    m_Filter.setResonance(m_Q);
+    m_Filter.setType(m_FilterType);       
 }
 
 void FilterModule::getNextAudioBlock(int numSamples, int numChannels)
@@ -64,7 +65,12 @@ void FilterModule::getNextAudioBlock(int numSamples, int numChannels)
                 cutoff += m_CvParamLookup[i][sample];
             }
 
-            m_Cutoff = cutoff;
+            if (m_Cutoff != cutoff)
+            {
+                m_Cutoff = cutoff < 20 ? 20 : cutoff;
+                m_Cutoff = cutoff > m_SampleRate * 0.5f ? m_SampleRate * 0.5f : cutoff;
+                m_Filter.setCutoffFrequency(m_Cutoff);
+            }
         }
 
         // get q
@@ -76,7 +82,11 @@ void FilterModule::getNextAudioBlock(int numSamples, int numChannels)
                 q += m_CvParamLookup[i][sample];
             }
 
-            m_Q = q;
+            if (m_Q != q)
+            {
+                m_Q = q <= 0 ? 1e-05f : q;
+                m_Filter.setResonance(m_Q);
+            }
         }
 
         // get type
@@ -93,11 +103,12 @@ void FilterModule::getNextAudioBlock(int numSamples, int numChannels)
                 type = 2;
             }
 
-            m_FilterType = (FiltType)type;
+            if (m_FilterType != (FiltType)type)
+            {
+                m_FilterType = (FiltType)type;
+                m_Filter.setType(m_FilterType);
+            }
         }
-
-        m_Filter.parameters->type = m_FilterType;
-        m_Filter.parameters->setCutOffFrequency(m_SampleRate, m_Cutoff, m_Q);
 
         for (int channel = 0; channel < numChannels; channel++)
         {
@@ -107,7 +118,7 @@ void FilterModule::getNextAudioBlock(int numSamples, int numChannels)
                 input += m_AudioLookup[i].getSample(channel, sample);
             }
 
-            m_AudioLookup[m_OutputIndex].setSample(channel, sample, m_Filter.processSample(input));
+            m_AudioLookup[m_OutputIndex].setSample(channel, sample, m_Filter.processSample(channel, input));
         }
     }
 }

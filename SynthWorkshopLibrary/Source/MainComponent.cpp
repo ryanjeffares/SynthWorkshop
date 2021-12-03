@@ -113,7 +113,6 @@ void MainComponent::getNextAudioBlock(const juce::AudioSourceChannelInfo& buffer
 // should only be called from the audio thread
 void MainComponent::checkForUpdates()
 {
-    // this is a temp hacky fix to try get rid of crashes on shutdown
     if (m_ShouldClearModules.load())
     {
         juce::ScopedLock sl(m_Cs);
@@ -1138,7 +1137,6 @@ void MainComponent::destroyModule(int moduleType, int moduleId)
     }
 }
 
-// ONLY call when about to deallocate the class
 void MainComponent::clearModules()
 {
     m_ShouldClearModules.store(true);

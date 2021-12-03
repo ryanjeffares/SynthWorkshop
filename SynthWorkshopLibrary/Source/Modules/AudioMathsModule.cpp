@@ -45,14 +45,14 @@ void AudioMathsModule::getNextAudioBlock(int numSamples, int numChannels)
                 {
                     if (m_AudioCvIncoming == AudioCV::Audio)
                     {
-                        if (m_AudioLookup.find(r) != m_AudioLookup.end())
+                        if (mapContains(m_AudioLookup, r))
                         {
                             affectingVal += m_AudioLookup[r].getSample(channel, sample);
                         }
                     }
                     else
                     {
-                        if (m_CvParamLookup.find(r) != m_CvParamLookup.end())
+                        if (mapContains(m_AudioLookup, r))
                         {
                             affectingVal += m_CvParamLookup[r][sample];
                         }

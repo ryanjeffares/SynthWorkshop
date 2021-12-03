@@ -562,6 +562,7 @@ public class DesignerUIController : MonoBehaviour, IPointerDownHandler, IBeginDr
             Destroy(m);
         }
         _instantiatedModules.Clear();
+        SynthWorkshopLibrary.ClearAllModules();
     }              
 
     // returns true if there are any errors that should halt exporting - will allow exporting with warnings only and display everything on the screen

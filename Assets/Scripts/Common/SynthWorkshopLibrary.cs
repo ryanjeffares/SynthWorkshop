@@ -38,6 +38,9 @@ static class SynthWorkshopLibrary
     private static extern void destroyModule(IntPtr mc, int moduleType, int globalIndex);
 
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    private static extern void clearAllModules(IntPtr mc);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
     private static extern bool setModuleInputIndex(IntPtr mc, bool audioOutput, bool add, int moduleId, int outputIndex, int targetIndex);
 
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
@@ -125,6 +128,11 @@ static class SynthWorkshopLibrary
     public static void ModuleDestroyed(int moduleType, int globalIndex)
     {
         destroyModule(MainComponent, moduleType, globalIndex);
+    }
+
+    public static void ClearAllModules()
+    {
+        clearAllModules(MainComponent);
     }
 
     public static bool SetModuleInputIndex(bool audioOutput, bool add, int moduleId, int outputIndex, int targetIndex)

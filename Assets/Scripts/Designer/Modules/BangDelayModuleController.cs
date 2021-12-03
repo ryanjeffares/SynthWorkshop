@@ -9,7 +9,7 @@ public class BangDelayModuleController : ModuleParent
     public void Setup(float delay)
     {
         Delay = delay;
-        nameText.text = $"delay {delay}";
+        nameText.text = $"bdelay {delay}";
     }    
 
     public override List<ModuleException> CheckErrors()

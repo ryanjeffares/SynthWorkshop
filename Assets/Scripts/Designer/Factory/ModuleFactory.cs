@@ -5,19 +5,6 @@ using UnityEngine;
 
 public class ModuleFactory : MonoBehaviour
 {
-    private class StringCompare : IEqualityComparer<string>
-    {
-        public bool Equals(string x, string y)
-        {
-            return x.Equals(y, StringComparison.OrdinalIgnoreCase);
-        }
-
-        public int GetHashCode(string obj)
-        {
-            return obj.GetHashCode();
-        }
-    }
-
     [SerializeField] private GameObject oscillatorPrefab;
     [SerializeField] private GameObject knobPrefab;
     [SerializeField] private GameObject ioPrefab;
@@ -32,8 +19,6 @@ public class ModuleFactory : MonoBehaviour
     [SerializeField] private GameObject bangDelayPrefab;
     [SerializeField] private GameObject soundfilePrefab;
 
-    private readonly StringCompare _stringCompare = new StringCompare();
-
     private static readonly Dictionary<string[], IModuleCreator> CreatorLookup = new Dictionary<string[], IModuleCreator>
     {
         {new[]{"saw~", "pulse~", "tri~", "sine~"}, new OscillatorCreator() },
@@ -47,7 +32,7 @@ public class ModuleFactory : MonoBehaviour
         {new[]{"toggle"}, new ToggleCreator() },
         {new[]{"adsr~"}, new AdsrCreator() },
         {new[]{"bang"}, new BangCreator() },
-        {new[]{"delay"}, new BangDelayCreator() },
+        {new[]{"bdelay"}, new BangDelayCreator() },
         {new[]{"soundfile~"}, new SoundfileCreator() },
     };
 

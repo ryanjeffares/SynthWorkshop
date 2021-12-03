@@ -102,6 +102,11 @@ extern "C"
         }
     }
 
+    EXPORT void clearAllModules(void* mc)
+    {
+        ((MainComponent*)mc)->clearModules();
+    }
+
     EXPORT bool setModuleInputIndex(void* mc, bool audioModule, bool add, int moduleId, int outputIndex, int targetIndex)
     {
         if (mc == nullptr) return false;

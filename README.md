@@ -1,34 +1,19 @@
-# SynthWorkshop
-A game about building modular synths.
+# Synth Workshop
+A visual medium for creating music inspired by Pure Data and Max/MSP, with a focus on intuitiveness.
 
-Note: any recent work I've done on this for MacOS has been done on an M1 chip, so if you want to run this on MacOS with an Intel CPU you should build the library with the MacOS_x86 exporter in Projucer, put the bundle in Plugins/macOs_x86/, and adjust the string in Scripts/Common/SynthWorkshopLibrary.cs line 8.
+---
 
-# To Do
-* Wires are un-fucked but see if we can fix the position jumping around when you move to target module
-* Zoom with two fingers on iOS
-* Message box
-	* I'm thinking a message box can only give an output to a number box, number boxes have a special case to accept values from message and hold only that value
-* File browser
-* Grouping modules together into submodules
-* Detect clicks on wires...
-* Update `_currentArrangement` properly so we can use it to save arrangements
-* Use a key other than `~` to denote audio, as it is a pain to type on iOS
-	* maybe have a dropdown of suggestions, no other characters really work i think
-	* maybe its not that bad
-* Load arrangement from json
-* Hunt for bugs - seems pretty robust now but be ever vigilant
-* UI!!!!
-	* font??
-	* General make it actually look good
-* More maths - increment/decrement, constants like pi, two pi, e...
-* Comments
-* Better sampler
-	* Current one is intended to be simple, but lets improve it, get looping in
-	* Should have pitch shifting sampler, multi sampler...
-	* Waveform display!
-* Counter
-* Table
-* Repeating trigger/metronome
-* Basic effects
-* Delay lines
-* Buffers
+## Running
+You can run Synth Workshop from Unity. I work with Unity version 2020.3.0f1, so that version or newer should be fine. You could also build it, which you must do for iOS.
+
+Synth Workshop runs on Windows, Mac, and iOS. The audio is handled by a plugin written in C++ using the JUCE framework, which can be found in the SynthWorkshopLibrary directory in the root of the project. The plugin is placed in the platform specific folder in Assets/Plugins - I may not have an up-to-date build there for your platform, so I would install JUCE if you don't already have it and build the plugin using Projucer (`SynthWorkshopLibrary.jucer` for Windows, `SynthWorkshopBundle` for Mac, and `SynthWorkshopStatic` for iOS*), and place the build in the right folder.
+
+## Documentation
+I keep documentation for the node-based visual scripting "language" in the Documentation folder.
+
+## Contributing
+The code is **not** documented and kind of a rats' nest, but be my guest!
+
+---
+
+* When building for iOS, as well as the static library, all of the C++ header files must be in the Plugins/iOS folder too. To ensure they are up to date, you can run `copy_headers.py` and give it the path to the Source folder in the JUCE project like this: `python3 copy_headers.py ~/path_to_unity_project/SynthWorkshopLibrary/Source` and for the love of God, don't put a trailing / on that path, the Python code is terrible.

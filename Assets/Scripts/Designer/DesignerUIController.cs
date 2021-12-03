@@ -148,8 +148,16 @@ public class DesignerUIController : MonoBehaviour, IPointerDownHandler, IBeginDr
                 if (distance != _pinchDistance)
                 {
                     var scale = mainContent.transform.localScale;
-                    scale.x += distance - _pinchDistance;
-                    scale.y += distance - _pinchDistance;
+                    scale.x += (distance - _pinchDistance) * Time.deltaTime;
+                    scale.y += (distance - _pinchDistance) * Time.deltaTime;
+                    if (scale.y <= 0 || scale.x <= 0)
+                    {
+                        scale = new Vector3(0.01f, 0.01f);
+                    }
+                    if (scale.y > 3 || scale.x > 3)
+                    {
+                        scale = new Vector3(3, 3);
+                    }
                     mainContent.transform.localScale = scale;
                     _pinchDistance = distance;
                 }

@@ -131,31 +131,61 @@ public class DesignerUIController : MonoBehaviour, IPointerDownHandler, IBeginDr
     }
 
     float _mouseScrollValue;
+    float _pinchDistance;
 
     private void Update()
     {
         var fps = 1f / Time.deltaTime;
         fpsDisplay.text = $"{Mathf.Round(fps)} FPS";
 
-        var scroll = Input.mouseScrollDelta.y;
-        if (scroll != _mouseScrollValue)
+        if (Application.isMobilePlatform)
         {
-            scroll *= 0.1f;            
-            var scale = mainContent.transform.localScale;
-            scale += new Vector3(scroll, scroll);            
-            if (scale.x < 0.01f || scale.y < 0.01f)
+            if (Input.touchCount == 2)
             {
-                scale = new Vector3(0.01f, 0.01f);
+                var touch1 = Input.GetTouch(0).position;
+                var touch2 = Input.GetTouch(1).position;
+                var distance = Mathf.Abs(Vector2.Distance(touch1, touch2));
+                if (distance != _pinchDistance)
+                {
+                    var direction = distance > _pinchDistance;
+                    var scale = mainContent.transform.localScale;
+                    if (direction)
+                    {
+                        scale.x += Time.deltaTime;
+                        scale.y += Time.deltaTime;
+                    }
+                    else
+                    {
+                        scale.x -= Time.deltaTime;
+                        scale.y -= Time.deltaTime;
+                    }
+                    mainContent.transform.localScale = scale;
+                    _pinchDistance = distance;
+                }
             }
-            if (scale.x > 3 || scale.y > 3)
-            {
-                scale = new Vector3(3, 3);
-            }
-            mainContent.transform.localScale = scale;
-            zoomSlider.SetValueWithoutNotify(scale.x);
-            zoomSlider.GetComponentInChildren<Text>().text = $"Zoom: {Math.Round(scale.x, 2)}";
         }
-        _mouseScrollValue = scroll;
+        else
+        {
+            var scroll = Input.mouseScrollDelta.y;
+            if (scroll != _mouseScrollValue)
+            {
+                scroll *= 0.1f;
+                var scale = mainContent.transform.localScale;
+                scale += new Vector3(scroll, scroll);
+                if (scale.x < 0.01f || scale.y < 0.01f)
+                {
+                    scale = new Vector3(0.01f, 0.01f);
+                }
+                if (scale.x > 3 || scale.y > 3)
+                {
+                    scale = new Vector3(3, 3);
+                }
+                mainContent.transform.localScale = scale;
+                zoomSlider.SetValueWithoutNotify(scale.x);
+                zoomSlider.GetComponentInChildren<Text>().text = $"Zoom: {Math.Round(scale.x, 2)}";
+            }
+            _mouseScrollValue = scroll;
+        }
     }
 
     private void OnDestroy()
@@ -167,14 +197,20 @@ public class DesignerUIController : MonoBehaviour, IPointerDownHandler, IBeginDr
 
     public void OnBeginDrag(PointerEventData eventData)
     {
-        _mousePos = eventData.position;
+        if (Input.touchCount == 1)
+        {
+            _mousePos = eventData.position;
+        }
     }
 
     public void OnDrag(PointerEventData eventData)
     {
-        var diff = eventData.position - _mousePos;
-        mainContent.transform.position += (Vector3)diff;
-        _mousePos = eventData.position;
+        if (Input.touchCount == 1)
+        {
+            var diff = eventData.position - _mousePos;
+            mainContent.transform.position += (Vector3)diff;
+            _mousePos = eventData.position;
+        }
     }
 
     private bool _firstClickReceived;

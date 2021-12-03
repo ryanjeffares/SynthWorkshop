@@ -147,18 +147,9 @@ public class DesignerUIController : MonoBehaviour, IPointerDownHandler, IBeginDr
                 var distance = Mathf.Abs(Vector2.Distance(touch1, touch2));
                 if (distance != _pinchDistance)
                 {
-                    var direction = distance > _pinchDistance;
                     var scale = mainContent.transform.localScale;
-                    if (direction)
-                    {
-                        scale.x += Time.deltaTime;
-                        scale.y += Time.deltaTime;
-                    }
-                    else
-                    {
-                        scale.x -= Time.deltaTime;
-                        scale.y -= Time.deltaTime;
-                    }
+                    scale.x += distance - _pinchDistance;
+                    scale.y += distance - _pinchDistance;
                     mainContent.transform.localScale = scale;
                     _pinchDistance = distance;
                 }
@@ -218,6 +209,9 @@ public class DesignerUIController : MonoBehaviour, IPointerDownHandler, IBeginDr
 
     public void OnPointerDown(PointerEventData eventData)
     {
+#if UNITY_IOS
+        if (Input.touchCount == 2) return;
+#endif
         if (!_firstClickReceived)
         {
             _firstClickReceived = true;

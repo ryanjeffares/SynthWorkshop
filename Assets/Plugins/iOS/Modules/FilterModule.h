@@ -22,7 +22,7 @@ namespace SynthWorkshop
         {
         public:
 
-            using FiltType = juce::dsp::StateVariableFilter::StateVariableFilterType;
+            using FiltType = juce::dsp::StateVariableTPTFilter<float>::Type;
 
             FilterModule(AudioMap& audio, CVMap& cv, std::vector<int> audioInputs, std::vector<int> freqInputs, std::vector<int> qInputs, std::vector<int> typeInputs, int output, int id);
             FilterModule(AudioMap& audio, CVMap& cv, std::vector<int> audioInputs, std::vector<int> freqInputs, std::vector<int> qInputs, std::vector<int> typeInputs, int output, int id, float cutoff, float q, int type);
@@ -35,7 +35,7 @@ namespace SynthWorkshop
 
         private:
 
-            juce::dsp::StateVariableFilter::Filter<float> m_Filter;
+            juce::dsp::StateVariableTPTFilter<float> m_Filter;
 
             std::vector<int> m_AudioInputIndexes;
 

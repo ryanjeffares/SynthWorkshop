@@ -1,14 +1,10 @@
-import argparse
 import os
 import time
 from shutil import copyfile
 
 start_time = time.time()
 
-parser = argparse.ArgumentParser(description='Provide source path for header files.')
-parser.add_argument('source', type=str, help='Source directory for headers, e.g. C:/Users/ryand/Dev/Kalide/KalideLibrary/KalideLibrary/Source')
-
-source_path = parser.parse_args().source
+source_path = "../../SynthWorkshopLibrary/Source"
 source_header_files = []
 
 print("\n.........\n")

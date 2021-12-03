@@ -38,6 +38,32 @@ namespace SynthWorkshop
 
         protected:
 
+            static inline bool mapContains(const AudioMap& audioMap, int key)
+            {
+                for (auto& it = audioMap.begin(); it != audioMap.end(); it++)
+                {
+                    if ((*it).first == key)
+                    {
+                        return true;
+                    }
+                }
+
+                return false;
+            }
+
+            static inline bool mapContains(const CVMap& cvMap, int key)
+            {
+                for (auto& it = cvMap.begin(); it != cvMap.end(); it++)
+                {
+                    if ((*it).first == key)
+                    {
+                        return true;
+                    }
+                }
+
+                return false;
+            }
+
             bool m_ReadyToPlay = false;
             int m_ModuleId;
 

@@ -24,12 +24,13 @@ public class DesignerUIController : MonoBehaviour, IPointerDownHandler, IBeginDr
         Soundfile
     }
     
-    [SerializeField] private Button stopButton, clearButton, hideUiButton, centreButton;
+    [SerializeField] private Button stopButton, clearButton, hideUiButton, centreButton, docsButton;
     [SerializeField] private Button closeErrors;
     [SerializeField] private AnimationCurve convex;
     [SerializeField] private GameObject mainContent;
     [SerializeField] private GameObject errorScrollView, errorContent, errorPrefab;
     [SerializeField] private GameObject inputFieldPrefab;
+    [SerializeField] private GameObject documentationPrefab;
     [SerializeField] private Slider masterVolume;
     [SerializeField] private Slider zoomSlider;
     [SerializeField] private Text fpsDisplay;
@@ -99,6 +100,7 @@ public class DesignerUIController : MonoBehaviour, IPointerDownHandler, IBeginDr
             zoomSlider.gameObject.SetActive(_uiShowing);
             centreButton.gameObject.SetActive(_uiShowing);
         });
+        docsButton.onClick.AddListener(() => Instantiate(documentationPrefab, transform));
         
         masterVolume.onValueChanged.AddListener(SynthWorkshopLibrary.SetMasterVolume);
         zoomSlider.onValueChanged.AddListener(val =>

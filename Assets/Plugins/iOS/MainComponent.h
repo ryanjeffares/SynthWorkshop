@@ -30,6 +30,7 @@
 #include "Modules/ToggleModule.h"
 #include "Modules/BangModule.h"
 #include "Modules/BangDelayModule.h"
+#include "Modules/SoundfileModule.h"
 
 using namespace nlohmann;
 
@@ -61,6 +62,7 @@ public:
 
     void setAudioMathsIncomingSignal(int moduleId, int type);
     void setNumberBoxValue(int moduleId, float value);
+    bool setSoundfileModuleSample(int moduleId, const char* filePath);
 
     void setMasterVolume(float);
 
@@ -79,6 +81,7 @@ public:
     bool createToggleModule(const char* json);
     bool createBangModule(const char* json);
     bool createBangDelayModule(const char* json);
+    bool createSoundfileModule(const char* json);
 
     void destroyModule(int moduleType, int moduleId);
 

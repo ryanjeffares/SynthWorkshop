@@ -40,7 +40,7 @@ namespace SynthWorkshop
 
             static inline bool mapContains(const AudioMap& audioMap, int key)
             {
-                for (auto& it = audioMap.begin(); it != audioMap.end(); it++)
+                for (auto it = audioMap.begin(); it != audioMap.end(); it++)
                 {
                     if ((*it).first == key)
                     {
@@ -53,7 +53,7 @@ namespace SynthWorkshop
 
             static inline bool mapContains(const CVMap& cvMap, int key)
             {
-                for (auto& it = cvMap.begin(); it != cvMap.end(); it++)
+                for (auto it = cvMap.begin(); it != cvMap.end(); it++)
                 {
                     if ((*it).first == key)
                     {

@@ -26,6 +26,8 @@ void BangDelayModule::prepareToPlay(int samplesPerBlockExpected, double sampleRa
 
 void BangDelayModule::getNextAudioBlock(int numSamples, int numChannels)
 {
+    if (!m_ReadyToPlay) return;
+
     for (auto sample = 0; sample < numSamples; sample++)
     {
         float delay = 0;

@@ -41,6 +41,10 @@
               file="Source/Modules/OscillatorModule.cpp"/>
         <FILE id="CtkmQL" name="OscillatorModule.h" compile="0" resource="0"
               file="Source/Modules/OscillatorModule.h"/>
+        <FILE id="yzRtWl" name="SoundfileModule.cpp" compile="1" resource="0"
+              file="Source/Modules/SoundfileModule.cpp"/>
+        <FILE id="lrnPXN" name="SoundfileModule.h" compile="0" resource="0"
+              file="Source/Modules/SoundfileModule.h"/>
         <FILE id="v6yW33" name="ToggleModule.cpp" compile="1" resource="0"
               file="Source/Modules/ToggleModule.cpp"/>
         <FILE id="QnbMQ1" name="ToggleModule.h" compile="0" resource="0" file="Source/Modules/ToggleModule.h"/>

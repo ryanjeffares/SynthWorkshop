@@ -2786,6 +2786,7 @@ MonoBehaviour:
   adsrPrefab: {fileID: 8634049905847545279, guid: 5affcd14d771744498acbf74019dc23b, type: 3}
   bangPrefab: {fileID: 6479439793043078108, guid: 6b6cace7040fbd0489dd620f97907758, type: 3}
   bangDelayPrefab: {fileID: 3083474249322564378, guid: 9e72dc88130b36e498e567a7e5b4c23a, type: 3}
+  soundfilePrefab: {fileID: 3025077814940508369, guid: 04dda3d9e26325e4aa8dee4a16d6de9c, type: 3}
 --- !u!1 &1750060564
 GameObject:
   m_ObjectHideFlags: 0

@@ -20,7 +20,8 @@ public class DesignerUIController : MonoBehaviour, IPointerDownHandler, IBeginDr
         Filter,
         Toggle,
         Bang,
-        BangDelay
+        BangDelay,
+        Soundfile
     }
     
     [SerializeField] private Button stopButton, clearButton, hideUiButton, centreButton;
@@ -52,6 +53,7 @@ public class DesignerUIController : MonoBehaviour, IPointerDownHandler, IBeginDr
     private int _effectModuleCount = 0;
     private int _toggleModuleCount = 0;
     private int _bangModuleCount = 0;
+    private int _soundfileModuleCount = 0;
     
     private int _soundOutputIndex = 0;
     private int _cvOutputIndex = 0;
@@ -94,6 +96,8 @@ public class DesignerUIController : MonoBehaviour, IPointerDownHandler, IBeginDr
             masterVolume.gameObject.SetActive(_uiShowing);
             instructions.gameObject.SetActive(_uiShowing);
             fpsDisplay.gameObject.SetActive(_uiShowing);
+            zoomSlider.gameObject.SetActive(_uiShowing);
+            centreButton.gameObject.SetActive(_uiShowing);
         });
         
         masterVolume.onValueChanged.AddListener(SynthWorkshopLibrary.SetMasterVolume);
@@ -113,6 +117,7 @@ public class DesignerUIController : MonoBehaviour, IPointerDownHandler, IBeginDr
         _currentArrangement["toggle_modules"] = new Dictionary<string, Dictionary<string, object>>();
         _currentArrangement["bang_modules"] = new Dictionary<string, Dictionary<string, object>>();
         _currentArrangement["bang_delay_modules"] = new Dictionary<string, Dictionary<string, object>>();
+        _currentArrangement["soundfile_modules"] = new Dictionary<string, Dictionary<string, object>>();
     }
 
     private void Start()
@@ -136,7 +141,7 @@ public class DesignerUIController : MonoBehaviour, IPointerDownHandler, IBeginDr
             scale += new Vector3(scroll, scroll);            
             if (scale.x < 0.01f || scale.y < 0.01f)
             {
-                scale = Vector3.zero;
+                scale = new Vector3(0.01f, 0.01f);
             }
             if (scale.x > 3 || scale.y > 3)
             {
@@ -255,6 +260,10 @@ public class DesignerUIController : MonoBehaviour, IPointerDownHandler, IBeginDr
             else if (mod.TryGetComponent<BangDelayModuleController>(out var bd))
             {
                 BangDelayCreated(bd);
+            }
+            else if (mod.TryGetComponent<SoundfileModuleController>(out var sf))
+            {
+                SoundfileCreated(sf);
             }
 
             Destroy(inputField);
@@ -513,6 +522,28 @@ public class DesignerUIController : MonoBehaviour, IPointerDownHandler, IBeginDr
         bangDelayModule.SetIdentifier(id, globalId);
         _totalModuleCount++;
         SynthWorkshopLibrary.CreateNewModule((int)ModuleCategory.BangDelay, JObject.FromObject(dict).ToString());
+    }
+
+    private void SoundfileCreated(SoundfileModuleController soundfileModule)
+    {
+        var globalId = _totalModuleCount;
+        var soundOut = _soundOutputIndex;
+
+        var dict = new Dictionary<string, object>
+        {
+            {"global_index", globalId },
+            {"output_index", soundOut }
+        };
+
+        var id = $"soundfile_module_{_soundfileModuleCount++}";
+        _currentArrangement["soundfile_modules"].Add(id, dict);
+        soundfileModule.SetIdentifier(id, globalId);
+        soundfileModule.SetOutputIndex(soundOut);
+
+        _totalModuleCount++;
+        _soundOutputIndex++;
+
+        SynthWorkshopLibrary.CreateNewModule((int)ModuleCategory.Soundfile, JObject.FromObject(dict).ToString());
     }
 
     /// <summary>

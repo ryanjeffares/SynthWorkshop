@@ -85,6 +85,8 @@ extern "C"
                 return mainComponent->createBangModule(jsonText);
             case 9:
                 return mainComponent->createBangDelayModule(jsonText);
+            case 10:
+                return mainComponent->createSoundfileModule(jsonText);
             default:
                 return false;
         }
@@ -133,7 +135,7 @@ extern "C"
     {
         if (mc == nullptr) return;
         ((MainComponent*)mc)->triggerCallback(moduleId, state);
-    }
+    }    
 
     EXPORT void createCvBufferWithKey(void* mc, int key)
     {
@@ -157,6 +159,11 @@ extern "C"
     {
         if (mc == nullptr) return;
         ((MainComponent*)mc)->setNumberBoxValue(id, value);
+    }
+
+    EXPORT bool setSoundfileModuleSample(void* mc, int moduleId, const char* filePath)
+    {
+        return ((MainComponent*)mc)->setSoundfileModuleSample(moduleId, filePath);
     }
 
     EXPORT void setMasterVolume(void* mc, float value) 

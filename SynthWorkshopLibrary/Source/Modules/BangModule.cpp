@@ -25,6 +25,8 @@ void BangModule::prepareToPlay(int samplesPerBlockExpected, double sampleRate)
 
 void BangModule::getNextAudioBlock(int numSamples, int numChannels)
 {
+    if (!m_ReadyToPlay) return;
+
     for (int sample = 0; sample < numSamples; sample++)
     {
         if (m_Banging.load())

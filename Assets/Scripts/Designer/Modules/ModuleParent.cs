@@ -8,7 +8,7 @@ using System.Collections;
 
 public enum ModuleType
 {
-    OscillatorModule, KnobModule, IOModule, MathsModule, NumberBox, ADSR, ButtonModule, ToggleModule, FilterModule, BangModule, BangDelayModule
+    OscillatorModule, KnobModule, IOModule, MathsModule, NumberBox, ADSR, ButtonModule, ToggleModule, FilterModule, BangModule, BangDelayModule, SoundfileModule
 }
 
 public enum AudioCV
@@ -62,8 +62,7 @@ public abstract class ModuleParent : MonoBehaviour, IDragHandler, IPointerDownHa
     protected virtual void ChildAwake() { }
 
     private void OnDestroy()
-    {
-        ModuleDestroyed?.Invoke(gameObject);        
+    {           
         ChildDestroyed();
     }
 
@@ -122,6 +121,8 @@ public abstract class ModuleParent : MonoBehaviour, IDragHandler, IPointerDownHa
                 ModuleType.BangModule => 2,
                 _ => 1
             };
+
+            ModuleDestroyed?.Invoke(gameObject);
             SynthWorkshopLibrary.ModuleDestroyed(moduleTypeInt, GlobalIndex);
             Destroy(gameObject);
         }

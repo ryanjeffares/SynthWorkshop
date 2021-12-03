@@ -68,6 +68,9 @@ static class SynthWorkshopLibrary
     private static extern void setNumberBoxValue(IntPtr mc, int globalId, float value);
 
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    private static extern bool setSoundfileModuleSample(IntPtr mc, int globalId, string path);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
     private static extern void setMasterVolume(IntPtr mc, float value);
 
     private static readonly IntPtr MainComponent;
@@ -172,6 +175,11 @@ static class SynthWorkshopLibrary
     public static void SetNumberBoxValue(int globalId, float value)
     {
         setNumberBoxValue(MainComponent, globalId, value);
+    }
+
+    public static bool SetSoundfileSample(int globalId, string path)
+    {
+        return setSoundfileModuleSample(MainComponent, globalId, path);
     }
     
     public static void SetMasterVolume(float value)

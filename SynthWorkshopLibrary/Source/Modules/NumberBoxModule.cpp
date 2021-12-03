@@ -37,10 +37,7 @@ void NumberBoxModule::getNextAudioBlock(int numSamples, int numChannels)
             m_InitialValue.store(value);
         }
 
-        for (int i = 0; i < m_CvParamLookup[m_OutputIndex].size(); i++)
-        {
-            m_CvParamLookup[m_OutputIndex][i] = m_InitialValue.load();
-        }
+        m_CvParamLookup[m_OutputIndex][sample] = m_InitialValue.load();
     }
 }
 

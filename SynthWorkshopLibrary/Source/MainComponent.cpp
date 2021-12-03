@@ -91,9 +91,9 @@ void MainComponent::getNextAudioBlock(const juce::AudioSourceChannelInfo& buffer
 
     for (auto& trig : m_TriggerModules)
     {
-        if (auto bang = dynamic_cast<BangModule*>(trig.get()))
+        if (auto processor = dynamic_cast<ProcessorModule*>(trig.get()))
         {
-            bang->getNextAudioBlock(numSamples, numChannels);
+            processor->getNextAudioBlock(numSamples, numChannels);
         }
     }
     
@@ -547,6 +547,30 @@ void MainComponent::setNumberBoxValue(int moduleId, float value)
             mod->setValue(value);
         }
     }
+}
+
+bool MainComponent::setSoundfileModuleSample(int moduleId, const char* filePath)
+{
+    auto it = std::find_if(
+        m_ProcessorModules.begin(),
+        m_ProcessorModules.end(),
+        [moduleId](const std::unique_ptr<ProcessorModule>& mod)
+        {
+            return mod->getModuleId() == moduleId;
+        }
+    );
+
+    if (it != m_ProcessorModules.end())
+    {
+        if (auto sf = dynamic_cast<SoundfileModule*>(it->get()))
+        {
+            juce::String p(filePath);
+            sf->setSample(p);
+            return true;
+        }
+    }
+
+    return false;
 }
 
 void MainComponent::setMasterVolume(float value) 
@@ -1055,6 +1079,35 @@ bool MainComponent::createBangDelayModule(const char* jsonText)
         auto delay = j["delay"].get<float>();
 
         m_LastCreatedProcessorModule = new BangDelayModule(id, delay, m_AudioLookup, m_CvParamLookup);
+        m_LastCreatedProcessorModule->setReady(true);
+        m_LastCreatedProcessorModule->prepareToPlay(m_SamplesPerBlockExpected, m_SampleRate);
+        m_NewProcessorModuleCreated.store(true);
+
+        return true;
+    }
+    catch (const std::exception& e)
+    {
+        return false;
+    }
+}
+
+bool MainComponent::createSoundfileModule(const char* jsonText)
+{
+    try
+    {
+        auto j = json::parse(jsonText);
+
+        auto id = j["global_index"].get<int>();
+        auto soundOut = j["output_index"].get<int>();
+        juce::AudioBuffer<float> buff(2, m_SamplesPerBlockExpected);
+        m_AudioLookup.emplace(soundOut, std::move(buff));
+
+        m_LastCreatedProcessorModule = new SoundfileModule(
+            id,
+            soundOut,
+            m_AudioLookup,
+            m_CvParamLookup
+        );
         m_LastCreatedProcessorModule->setReady(true);
         m_LastCreatedProcessorModule->prepareToPlay(m_SamplesPerBlockExpected, m_SampleRate);
         m_NewProcessorModuleCreated.store(true);

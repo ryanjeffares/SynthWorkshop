@@ -1,0 +1,9 @@
+[submodule "Assets/FancyTextRendering"]
+	path = Assets/FancyTextRendering
+	url = https://github.com/JimmyCushnie/FancyTextRendering.git
+[submodule "Assets/NaughtyAttributes"]
+	path = Assets/NaughtyAttributes
+	url = https://github.com/dbrizov/NaughtyAttributes.git
+[submodule "Assets/JimmysUnityUtilities"]
+	path = Assets/JimmysUnityUtilities
+	url = https://github.com/JimmyCushnie/JimmysUnityUtilities.git

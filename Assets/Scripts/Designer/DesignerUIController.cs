@@ -92,6 +92,7 @@ public class DesignerUIController : MonoBehaviour, IPointerDownHandler, IBeginDr
         hideUiButton.onClick.AddListener(() => 
         {
             _uiShowing = !_uiShowing;
+            hideUiButton.GetComponentInChildren<Text>().text = _uiShowing ? "Hide UI" : "Show UI";
             stopButton.gameObject.SetActive(_uiShowing);
             clearButton.gameObject.SetActive(_uiShowing);
             masterVolume.gameObject.SetActive(_uiShowing);
@@ -99,6 +100,7 @@ public class DesignerUIController : MonoBehaviour, IPointerDownHandler, IBeginDr
             fpsDisplay.gameObject.SetActive(_uiShowing);
             zoomSlider.gameObject.SetActive(_uiShowing);
             centreButton.gameObject.SetActive(_uiShowing);
+            docsButton.gameObject.SetActive(_uiShowing);
         });
         docsButton.onClick.AddListener(() => Instantiate(documentationPrefab, transform));
         

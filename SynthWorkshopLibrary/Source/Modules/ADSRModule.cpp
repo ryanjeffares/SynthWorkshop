@@ -135,10 +135,7 @@ void ADSRModule::updateEnvelope(int sample)
         float attack = 0;
         for (auto i : m_AttackIndexes)
         {            
-            if (mapContains(m_CvParamLookup, i))
-            {
-                attack += m_CvParamLookup[i][sample];
-            }
+            attack += m_CvParamLookup[i][sample];
         }
         m_Attack = attack;
     }
@@ -148,10 +145,7 @@ void ADSRModule::updateEnvelope(int sample)
         float decay = 0;
         for (auto i : m_DecayIndexes)
         {
-            if (mapContains(m_CvParamLookup, i))
-            {
-                decay += m_CvParamLookup[i][sample];
-            }
+            decay += m_CvParamLookup[i][sample];
         }
         m_Decay = decay;
     }
@@ -161,10 +155,7 @@ void ADSRModule::updateEnvelope(int sample)
         float sustain = 0;
         for (auto i : m_SustainIndexes)
         {
-            if (mapContains(m_CvParamLookup, i))
-            {
-                sustain += m_CvParamLookup[i][sample];
-            }
+            sustain += m_CvParamLookup[i][sample];
         }
         m_Sustain = sustain;
     }
@@ -174,10 +165,7 @@ void ADSRModule::updateEnvelope(int sample)
         float release = 0;
         for (auto i : m_ReleaseIndexes)
         {
-            if (mapContains(m_CvParamLookup, i))
-            {
-                release += m_CvParamLookup[i][sample];
-            }
+            release += m_CvParamLookup[i][sample];
         }
         m_Release = release;
     }

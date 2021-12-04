@@ -196,20 +196,28 @@ public class DesignerUIController : MonoBehaviour, IPointerDownHandler, IBeginDr
 
     public void OnBeginDrag(PointerEventData eventData)
     {
+#if UNITY_IOS
         if (Input.touchCount == 1)
         {
-            _mousePos = eventData.position;
-        }
+#endif
+        _mousePos = eventData.position;
+#if UNITY_IOS
     }
+#endif
+}
 
     public void OnDrag(PointerEventData eventData)
     {
+#if UNITY_IOS
         if (Input.touchCount == 1)
         {
+#endif
             var diff = eventData.position - _mousePos;
             mainContent.transform.position += (Vector3)diff;
             _mousePos = eventData.position;
+#if UNITY_IOS
         }
+#endif
     }
 
     private bool _firstClickReceived;
